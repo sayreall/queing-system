@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Import Players</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ["Rajdhani", "sans-serif"],
+              body: ["Manrope", "sans-serif"],
+            },
+            colors: {
+              beginner: "#22d3ee",
+              intermediate: "#f59e0b",
+              advanced: "#f43f5e",
+              ink: "#0b1020",
+              panel: "#121a2b",
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="min-h-screen bg-ink text-slate-100 font-body">
+    <div class="page-bg"></div>
+
+    <header class="px-6 py-6 md:px-10 md:py-8">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Player Import</p>
+          <h1 class="text-3xl md:text-4xl font-display font-semibold">Import Players</h1>
+        </div>
+        <a class="btn-secondary" href="index.html">Back to Dashboard</a>
+      </div>
+    </header>
+
+    <main class="px-4 pb-10 sm:px-6 md:px-10">
+      <div class="glass-card">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 class="text-xl font-display font-semibold">Upload Spreadsheet</h2>
+            <p class="text-sm text-slate-400">Upload .xlsx or .csv files with Name, Skill, and Gender columns.</p>
+          </div>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <input type="file" id="import-file" class="input-field" accept=".xlsx,.csv" />
+            <a class="btn-secondary" href="import-template.xlsx" download>Download Excel Template</a>
+            <a class="btn-secondary" href="import-template.csv" download>Download CSV Template</a>
+          </div>
+        </div>
+
+        <div class="mt-6 glass-subcard">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-display">Preview</h3>
+            <button class="btn-primary" id="import-save" disabled>Save to Queue</button>
+          </div>
+          <div class="mt-4 overflow-x-auto">
+            <table class="w-full text-sm" id="import-table">
+              <thead class="text-left text-slate-400">
+                <tr>
+                  <th class="py-2">Name</th>
+                  <th>Skill</th>
+                  <th>Gender</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="import-body">
+                <tr>
+                  <td class="py-4 text-slate-500" colspan="4">No file loaded.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-3 text-xs text-slate-400" id="import-summary"></p>
+        </div>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script type="module" src="import.js"></script>
+  </body>
+</html>

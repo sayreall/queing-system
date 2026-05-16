@@ -1,0 +1,465 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: radial-gradient(circle at top, rgba(59, 130, 246, 0.12), transparent 55%),
+    #0b1020;
+}
+
+.page-bg {
+  position: fixed;
+  inset: 0;
+  background-image: linear-gradient(120deg, rgba(148, 163, 184, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 20% 10%, rgba(56, 189, 248, 0.18), transparent 35%),
+    radial-gradient(circle at 80% 0%, rgba(244, 63, 94, 0.15), transparent 35%);
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.glass-card {
+  background: rgba(17, 24, 39, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(16px);
+  animation: fadeUp 0.6s ease;
+}
+
+.glass-subcard {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.9), rgba(14, 165, 233, 0.9));
+  color: #0b1020;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.72rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.25);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.72rem;
+  transition: border 0.2s ease, color 0.2s ease;
+}
+
+.btn-secondary:hover {
+  border-color: rgba(56, 189, 248, 0.6);
+  color: #f8fafc;
+}
+
+.input-field {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: #e2e8f0;
+  min-width: 180px;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+.stat-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 18px;
+  padding: 16px 18px;
+}
+
+.stat-label {
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.queue-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.queue-meta {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.queue-list {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  transition: transform 0.2s ease, border 0.2s ease;
+  flex-wrap: wrap;
+}
+
+.queue-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.queue-empty {
+  padding: 12px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.skill-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.skill-beginner {
+  background: rgba(34, 211, 238, 0.15);
+  color: #67e8f9;
+}
+
+.skill-intermediate {
+  background: rgba(245, 158, 11, 0.15);
+  color: #facc15;
+}
+
+.skill-advanced {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fda4af;
+}
+
+.badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.badge-beginner {
+  background: rgba(34, 211, 238, 0.15);
+  color: #67e8f9;
+}
+
+.badge-intermediate {
+  background: rgba(245, 158, 11, 0.15);
+  color: #facc15;
+}
+
+.badge-advanced {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fda4af;
+}
+
+.court-card {
+  display: grid;
+  gap: 12px;
+}
+
+.court-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.court-status {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  background: rgba(148, 163, 184, 0.12);
+  color: #e2e8f0;
+}
+
+.court-status.active {
+  background: rgba(34, 211, 238, 0.18);
+  color: #67e8f9;
+}
+
+.court-timer {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.team-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.team-card {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.team-label {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+.team-player {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.tv-queue {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+  font-size: 1.2rem;
+}
+
+#toast-container {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: grid;
+  gap: 10px;
+  z-index: 50;
+}
+
+.toast {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.85rem;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.3);
+  animation: fadeUp 0.3s ease;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Mobile Responsive ===== */
+
+@media (max-width: 768px) {
+  .team-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .glass-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .glass-subcard {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .input-field {
+    min-width: 0;
+    width: 100%;
+    font-size: 0.85rem;
+    padding: 10px 12px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 10px 14px;
+    font-size: 0.68rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+  }
+
+  .stat-label {
+    font-size: 0.6rem;
+  }
+
+  .queue-item {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    gap: 6px;
+  }
+
+  .queue-item .flex {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .court-timer {
+    font-size: 1.1rem;
+  }
+
+  .team-player {
+    font-size: 0.9rem;
+  }
+
+  #toast-container {
+    right: 10px;
+    left: 10px;
+    bottom: 10px;
+  }
+
+  .toast {
+    font-size: 0.8rem;
+    padding: 10px 12px;
+  }
+
+  /* Player table: horizontal scroll wrapper */
+  #players-table {
+    font-size: 0.75rem;
+  }
+
+  #players-table th,
+  #players-table td {
+    padding: 6px 4px;
+    white-space: nowrap;
+  }
+
+  #players-table .btn-secondary {
+    padding: 6px 10px;
+    font-size: 0.6rem;
+    width: auto;
+  }
+
+  #players-table select.input-field {
+    min-width: 0;
+    width: auto;
+    padding: 6px 8px;
+    font-size: 0.72rem;
+  }
+
+  /* Custom match panel */
+  #custom-match-panel {
+    padding: 10px;
+  }
+
+  /* Modal */
+  #custom-match-modal .glass-card {
+    padding: 16px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-card {
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .stat-value {
+    font-size: 1.1rem;
+    margin-top: 4px;
+  }
+
+  .stat-label {
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+  }
+
+  .queue-title {
+    font-size: 1rem;
+  }
+
+  .queue-meta {
+    font-size: 0.75rem;
+  }
+
+  .skill-pill {
+    font-size: 0.6rem;
+    padding: 4px 8px;
+  }
+
+  .court-title {
+    font-size: 0.95rem;
+  }
+
+  .court-status {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+  }
+
+  .team-label {
+    font-size: 0.6rem;
+  }
+
+  .team-card {
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+
+  .badge {
+    font-size: 0.6rem;
+    padding: 4px 8px;
+  }
+}
+
+/* TV Display mobile overrides */
+@media (max-width: 768px) {
+  .tv-court .team-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tv-queue {
+    font-size: 1rem;
+  }
+}

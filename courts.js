@@ -1,0 +1,379 @@
+import {
+  db,
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+  runTransaction,
+} from "./firebase.js";
+import { skillLabelFromKey, getQueueDocRef, skillKeyFromLabel } from "./queue.js";
+
+export const COURTS = [
+  { id: "court-1", name: "Court 1" },
+  { id: "court-2", name: "Court 2" },
+  { id: "court-3", name: "Court 3" },
+];
+
+export async function ensureCourtsExist() {
+  await Promise.all(
+    COURTS.map(async (court) => {
+      const courtRef = doc(db, "courts", court.id);
+      const snap = await getDoc(courtRef);
+      if (!snap.exists()) {
+        await setDoc(courtRef, {
+          name: court.name,
+          status: "Available",
+          matchId: null,
+          players: [],
+          skill: null,
+          startedAt: null,
+          updatedAt: serverTimestamp(),
+        });
+      }
+    })
+  );
+}
+
+export function listenToCourts(callback) {
+  return onSnapshot(query(collection(db, "courts"), orderBy("name")), (snapshot) => {
+    const courts = snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    }));
+    callback(courts);
+  });
+}
+
+export async function assignMatchToCourt(courtId, skillKey) {
+  const courtRef = doc(db, "courts", courtId);
+  const queueRef = getQueueDocRef(skillKey);
+  const matchRef = doc(collection(db, "matches"));
+  const now = serverTimestamp();
+
+  await runTransaction(db, async (tx) => {
+    const [courtSnap, queueSnap] = await Promise.all([
+      tx.get(courtRef),
+      tx.get(queueRef),
+    ]);
+
+    if (!courtSnap.exists()) return;
+    const court = courtSnap.data();
+    if (court.status !== "Available") return;
+
+    const order = queueSnap.exists() ? queueSnap.data().order || [] : [];
+    if (order.length < 4) return;
+
+    // Intelligent Matchmaking: Avoid playing with the same people
+    const poolSize = Math.min(order.length, 8);
+    const poolIds = order.slice(0, poolSize);
+    
+    const poolRefs = poolIds.map(id => doc(db, "players", id));
+    const poolSnaps = await Promise.all(poolRefs.map(ref => tx.get(ref)));
+    
+    const poolData = poolSnaps.map(snap => ({
+      id: snap.id,
+      playedWith: snap.exists() && snap.data().playedWith ? snap.data().playedWith : {}
+    }));
+
+    const getScore = (p1, p2) => (p1.playedWith[p2.id] || 0) + (p2.playedWith[p1.id] || 0);
+
+    const anchor = poolData[0];
+    let bestCombo = null;
+    let minScore = Infinity;
+    const others = poolData.slice(1);
+
+    if (others.length < 3) {
+      bestCombo = others.map(p => p.id);
+    } else {
+      for (let i = 0; i < others.length - 2; i++) {
+        for (let j = i + 1; j < others.length - 1; j++) {
+          for (let k = j + 1; k < others.length; k++) {
+            const p1 = others[i];
+            const p2 = others[j];
+            const p3 = others[k];
+            
+            let score = 0;
+            score += getScore(anchor, p1) + getScore(anchor, p2) + getScore(anchor, p3);
+            score += getScore(p1, p2) + getScore(p1, p3) + getScore(p2, p3);
+            
+            // Add a small penalty for skipping people higher in the queue (lower index)
+            score += (i + j + k) * 0.1;
+            
+            if (score < minScore) {
+              minScore = score;
+              bestCombo = [p1.id, p2.id, p3.id];
+            }
+          }
+        }
+      }
+    }
+
+    const selectedIds = [anchor.id, ...bestCombo];
+    const remaining = order.filter(id => !selectedIds.includes(id));
+
+    // Intelligent Team Selection: Minimize teammate overlap
+    const p = selectedIds.map(id => poolData.find(pd => pd.id === id));
+    const combos = [
+      { a: [p[0], p[1]], b: [p[2], p[3]] },
+      { a: [p[0], p[2]], b: [p[1], p[3]] },
+      { a: [p[0], p[3]], b: [p[1], p[2]] }
+    ];
+    
+    let bestTeamCombo = combos[0];
+    let minTeamScore = Infinity;
+    for (const c of combos) {
+      const score = getScore(c.a[0], c.a[1]) + getScore(c.b[0], c.b[1]);
+      if (score < minTeamScore) {
+        minTeamScore = score;
+        bestTeamCombo = c;
+      }
+    }
+
+    const teamA = [bestTeamCombo.a[0].id, bestTeamCombo.a[1].id].sort(() => Math.random() - 0.5);
+    const teamB = [bestTeamCombo.b[0].id, bestTeamCombo.b[1].id].sort(() => Math.random() - 0.5);
+    const finalPlayers = [...teamA, ...teamB];
+
+    tx.set(matchRef, {
+      courtId,
+      skill: skillLabelFromKey(skillKey),
+      players: finalPlayers,
+      teamA,
+      teamB,
+      status: "Active",
+      startedAt: now,
+      endedAt: null,
+      updatedAt: now,
+    });
+
+    tx.set(
+      queueRef,
+      {
+        skill: skillLabelFromKey(skillKey),
+        order: remaining,
+        updatedAt: now,
+      },
+      { merge: true }
+    );
+
+    tx.set(
+      courtRef,
+      {
+        status: "Active",
+        matchId: matchRef.id,
+        players: finalPlayers,
+        skill: skillLabelFromKey(skillKey),
+        startedAt: now,
+        updatedAt: now,
+      },
+      { merge: true }
+    );
+
+    finalPlayers.forEach((playerId) => {
+      tx.set(
+        doc(db, "players", playerId),
+        {
+          status: "Playing",
+          currentMatchId: matchRef.id,
+          updatedAt: now,
+        },
+        { merge: true }
+      );
+    });
+  });
+
+  return matchRef.id;
+}
+
+export async function toggleCourtStatus(courtId) {
+  const courtRef = doc(db, "courts", courtId);
+  const now = serverTimestamp();
+
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(courtRef);
+    if (!snap.exists()) throw new Error("Court not found");
+    const court = snap.data();
+    
+    if (court.status === "Active") {
+      throw new Error("Cannot toggle status of an active court.");
+    }
+    
+    const newStatus = court.status === "Available" ? "Inactive" : "Available";
+    tx.set(courtRef, { status: newStatus, updatedAt: now }, { merge: true });
+  });
+}
+
+export async function finishMatch(courtId) {
+  const courtRef = doc(db, "courts", courtId);
+
+  await runTransaction(db, async (tx) => {
+    const courtSnap = await tx.get(courtRef);
+    if (!courtSnap.exists()) return;
+
+    const court = courtSnap.data();
+    if (!court.matchId) return;
+
+    const matchRef = doc(db, "matches", court.matchId);
+    const matchSnap = await tx.get(matchRef);
+    const match = matchSnap.exists() ? matchSnap.data() : null;
+
+    const players = match?.players || court.players || [];
+    const now = serverTimestamp();
+
+    const playerRefs = players.map(id => doc(db, "players", id));
+    const playerSnaps = await Promise.all(playerRefs.map(ref => tx.get(ref)));
+
+    if (matchSnap.exists()) {
+      tx.set(
+        matchRef,
+        { status: "Completed", endedAt: now, updatedAt: now },
+        { merge: true }
+      );
+    }
+
+    tx.set(
+      courtRef,
+      {
+        status: "Available",
+        matchId: null,
+        players: [],
+        skill: null,
+        startedAt: null,
+        updatedAt: now,
+      },
+      { merge: true }
+    );
+
+    playerSnaps.forEach((snap, idx) => {
+      if (!snap.exists()) return;
+      const player = snap.data();
+      const playedWith = player.playedWith || {};
+
+      players.forEach((otherId) => {
+        if (otherId !== snap.id) {
+          playedWith[otherId] = (playedWith[otherId] || 0) + 1;
+        }
+      });
+
+      tx.set(
+        playerRefs[idx],
+        {
+          status: "Standby",
+          currentMatchId: null,
+          playedWith: playedWith,
+          lastMatchEndedAt: now,
+          updatedAt: now,
+        },
+        { merge: true }
+      );
+    });
+  });
+}
+
+export async function queueCustomMatch(playerIds, teamA, teamB) {
+  const matchRef = doc(collection(db, "matches"));
+  const now = serverTimestamp();
+
+  await runTransaction(db, async (tx) => {
+    const playerRefs = playerIds.map(id => doc(db, "players", id));
+    const playerSnaps = await Promise.all(playerRefs.map(ref => tx.get(ref)));
+    
+    const queuesToUpdate = new Map();
+    
+    playerSnaps.forEach((snap, idx) => {
+      if (!snap.exists()) return;
+      const player = snap.data();
+      if (player.status === "Waiting") {
+        const skillKey = skillKeyFromLabel(player.skill);
+        if (skillKey) {
+          if (!queuesToUpdate.has(skillKey)) queuesToUpdate.set(skillKey, []);
+          queuesToUpdate.get(skillKey).push(playerIds[idx]);
+        }
+      }
+    });
+
+    const queueRefs = Array.from(queuesToUpdate.keys()).map(skillKey => ({
+      skillKey,
+      ref: getQueueDocRef(skillKey)
+    }));
+    
+    const queueSnaps = await Promise.all(queueRefs.map(q => tx.get(q.ref)));
+    
+    queueSnaps.forEach((qSnap, idx) => {
+      if (qSnap.exists()) {
+        const skillKey = queueRefs[idx].skillKey;
+        const toRemove = queuesToUpdate.get(skillKey);
+        const order = qSnap.data().order || [];
+        const updated = order.filter(id => !toRemove.includes(id));
+        tx.set(queueRefs[idx].ref, { order: updated, updatedAt: now }, { merge: true });
+      }
+    });
+
+    tx.set(matchRef, {
+      courtId: null,
+      skill: "Custom",
+      players: playerIds,
+      teamA: teamA,
+      teamB: teamB,
+      status: "Pending",
+      createdAt: now,
+      startedAt: null,
+      endedAt: null,
+      updatedAt: now,
+    });
+
+    playerRefs.forEach(ref => {
+      tx.set(ref, {
+        status: "Stacked",
+        currentMatchId: matchRef.id,
+        updatedAt: now
+      }, { merge: true });
+    });
+  });
+}
+
+export async function activatePendingMatch(matchId, courtId) {
+  const courtRef = doc(db, "courts", courtId);
+  const matchRef = doc(db, "matches", matchId);
+  const now = serverTimestamp();
+
+  await runTransaction(db, async (tx) => {
+    const courtSnap = await tx.get(courtRef);
+    if (!courtSnap.exists()) throw new Error("Court not found");
+    if (courtSnap.data().status !== "Available") throw new Error("Court is not available");
+
+    const matchSnap = await tx.get(matchRef);
+    if (!matchSnap.exists()) throw new Error("Match not found");
+    const match = matchSnap.data();
+    if (match.status !== "Pending") throw new Error("Match is not pending");
+
+    const playerIds = match.players;
+    const playerRefs = playerIds.map(id => doc(db, "players", id));
+
+    tx.set(matchRef, {
+      courtId,
+      status: "Active",
+      startedAt: now,
+      updatedAt: now,
+    }, { merge: true });
+
+    tx.set(courtRef, {
+      status: "Active",
+      matchId: matchRef.id,
+      players: playerIds,
+      skill: "Custom",
+      startedAt: now,
+      updatedAt: now,
+    }, { merge: true });
+
+    playerRefs.forEach(ref => {
+      tx.set(ref, {
+        status: "Playing",
+        updatedAt: now
+      }, { merge: true });
+    });
+  });
+}

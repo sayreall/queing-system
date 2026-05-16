@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pickleball Doubles Queueing System</title>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ["Rajdhani", "sans-serif"],
+            body: ["Manrope", "sans-serif"],
+          },
+          colors: {
+            beginner: "#22d3ee",
+            intermediate: "#f59e0b",
+            advanced: "#f43f5e",
+            ink: "#0b1020",
+            panel: "#121a2b",
+          },
+          boxShadow: {
+            glow: "0 0 24px rgba(56, 189, 248, 0.18)",
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body class="min-h-screen bg-ink text-slate-100 font-body">
+  <div class="page-bg"></div>
+
+  <header class="px-6 py-6 md:px-10 md:py-8">
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Open Play Doubles</p>
+        <h1 class="text-3xl md:text-4xl font-display font-semibold">Deuce Club Queueing System</h1>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <a class="btn-primary" href="import.html">Import Players</a>
+        <a class="btn-secondary" href="tv.html">TV Display Mode</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="px-6 md:px-10">
+    <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div class="stat-card" id="stat-waiting">
+        <p class="stat-label">Total Waiting Players</p>
+        <p class="stat-value" data-stat="waiting">0</p>
+      </div>
+      <div class="stat-card" id="stat-matches">
+        <p class="stat-label">Active Matches</p>
+        <p class="stat-value" data-stat="matches">0</p>
+      </div>
+      <div class="stat-card" id="stat-courts">
+        <p class="stat-label">Available Courts</p>
+        <p class="stat-value" data-stat="courts">0</p>
+      </div>
+      <div class="stat-card" id="stat-queues">
+        <p class="stat-label">Queue Counts</p>
+        <div class="flex flex-wrap gap-2 text-sm text-slate-300">
+          <span class="badge badge-beginner" data-queue-count="beginner">Beginner 0</span>
+          <span class="badge badge-intermediate" data-queue-count="intermediate">Intermediate 0</span>
+          <span class="badge badge-advanced" data-queue-count="advanced">Advanced 0</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main class="px-6 py-8 md:px-10">
+    <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+      <section class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-display font-semibold">Queues</h2>
+          <span class="text-sm text-slate-400">Drag and drop to reorder</span>
+        </div>
+        
+        <div id="pending-matches-container"></div>
+
+        <div class="grid gap-4">
+          <div class="glass-card" data-skill-card="beginner">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 class="queue-title text-beginner">Beginner Queue</h3>
+                <p class="queue-meta">
+                  <span data-queue-total="beginner">0 waiting</span>
+                  <span class="mx-2 text-slate-500">|</span>
+                  <span data-queue-wait="beginner">Est wait 0 mins</span>
+                </p>
+              </div>
+              <span class="skill-pill skill-beginner">Beginner</span>
+            </div>
+            <ul class="queue-list" data-queue="beginner" id="queue-beginner">
+              <li class="queue-empty">Loading queue...</li>
+            </ul>
+          </div>
+
+          <div class="glass-card" data-skill-card="intermediate">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 class="queue-title text-intermediate">Intermediate Queue</h3>
+                <p class="queue-meta">
+                  <span data-queue-total="intermediate">0 waiting</span>
+                  <span class="mx-2 text-slate-500">|</span>
+                  <span data-queue-wait="intermediate">Est wait 0 mins</span>
+                </p>
+              </div>
+              <span class="skill-pill skill-intermediate">Intermediate</span>
+            </div>
+            <ul class="queue-list" data-queue="intermediate" id="queue-intermediate">
+              <li class="queue-empty">Loading queue...</li>
+            </ul>
+          </div>
+
+          <div class="glass-card" data-skill-card="advanced">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 class="queue-title text-advanced">Advanced Queue</h3>
+                <p class="queue-meta">
+                  <span data-queue-total="advanced">0 waiting</span>
+                  <span class="mx-2 text-slate-500">|</span>
+                  <span data-queue-wait="advanced">Est wait 0 mins</span>
+                </p>
+              </div>
+              <span class="skill-pill skill-advanced">Advanced</span>
+            </div>
+            <ul class="queue-list" data-queue="advanced" id="queue-advanced">
+              <li class="queue-empty">Loading queue...</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-display font-semibold">Courts</h2>
+          <span class="text-sm text-slate-400">Realtime match control</span>
+        </div>
+
+        <div class="grid gap-4" id="courts-container">
+          <div class="glass-card court-card" data-court-id="court-1">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h3 class="court-title">Court 1</h3>
+              <span class="court-status" data-court-status="court-1">Available</span>
+            </div>
+            <div class="court-timer" data-court-timer="court-1">00:00</div>
+            <div class="team-grid">
+              <div class="team-card">
+                <p class="team-label">Team A</p>
+                <p class="team-player" data-team-a="court-1">--</p>
+                <p class="team-player" data-team-a2="court-1">--</p>
+              </div>
+              <div class="team-card">
+                <p class="team-label">Team B</p>
+                <p class="team-player" data-team-b="court-1">--</p>
+                <p class="team-player" data-team-b2="court-1">--</p>
+              </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <button class="btn-primary flex-1" data-finish-match="court-1">Finish Match</button>
+              <button class="btn-secondary flex-1" data-toggle-court="court-1">Mark Inactive</button>
+            </div>
+          </div>
+
+          <div class="glass-card court-card" data-court-id="court-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h3 class="court-title">Court 2</h3>
+              <span class="court-status" data-court-status="court-2">Available</span>
+            </div>
+            <div class="court-timer" data-court-timer="court-2">00:00</div>
+            <div class="team-grid">
+              <div class="team-card">
+                <p class="team-label">Team A</p>
+                <p class="team-player" data-team-a="court-2">--</p>
+                <p class="team-player" data-team-a2="court-2">--</p>
+              </div>
+              <div class="team-card">
+                <p class="team-label">Team B</p>
+                <p class="team-player" data-team-b="court-2">--</p>
+                <p class="team-player" data-team-b2="court-2">--</p>
+              </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <button class="btn-primary flex-1" data-finish-match="court-2">Finish Match</button>
+              <button class="btn-secondary flex-1" data-toggle-court="court-2">Mark Inactive</button>
+            </div>
+          </div>
+
+          <div class="glass-card court-card" data-court-id="court-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h3 class="court-title">Court 3</h3>
+              <span class="court-status" data-court-status="court-3">Available</span>
+            </div>
+            <div class="court-timer" data-court-timer="court-3">00:00</div>
+            <div class="team-grid">
+              <div class="team-card">
+                <p class="team-label">Team A</p>
+                <p class="team-player" data-team-a="court-3">--</p>
+                <p class="team-player" data-team-a2="court-3">--</p>
+              </div>
+              <div class="team-card">
+                <p class="team-label">Team B</p>
+                <p class="team-player" data-team-b="court-3">--</p>
+                <p class="team-player" data-team-b2="court-3">--</p>
+              </div>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <button class="btn-primary flex-1" data-finish-match="court-3">Finish Match</button>
+              <button class="btn-secondary flex-1" data-toggle-court="court-3">Mark Inactive</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <section class="px-6 pb-10 md:px-10">
+    <div class="glass-card">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 class="text-xl font-display font-semibold">Player Management</h2>
+          <p class="text-sm text-slate-400">Add, edit, or manage player availability</p>
+        </div>
+        <form class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center w-full sm:w-auto" id="add-player-form">
+          <input type="text" id="player-name" placeholder="Player name" class="input-field" required />
+          <select id="player-skill" class="input-field" required>
+            <option value="">Skill level</option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+          </select>
+          <select id="player-gender" class="input-field" required>
+            <option value="">Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Unspecified">Unspecified</option>
+          </select>
+          <button class="btn-primary" type="submit">Add Player</button>
+          <button class="btn-secondary" type="button" id="debug-save">Debug Save</button>
+          <button class="btn-secondary" style="border-color: rgba(248, 113, 113, 0.4); color: #fca5a5;" type="button"
+            id="archive-all">End Day (Archive All)</button>
+        </form>
+      </div>
+
+      <div class="mt-6 grid gap-4 lg:grid-cols-[0.35fr_0.65fr]">
+        <div class="glass-subcard">
+          <label class="text-sm uppercase tracking-[0.2em] text-slate-400">Search</label>
+          <input id="player-search" class="input-field mt-2" placeholder="Search players" />
+          <label class="text-sm uppercase tracking-[0.2em] text-slate-400 mt-4 block">Filter</label>
+          <select id="player-filter" class="input-field mt-2 w-full">
+            <option value="All">All skills</option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+            <option value="Archived">Archived Status</option>
+          </select>
+
+          <div id="custom-match-panel" class="mt-6 p-4 border border-blue-500/30 bg-blue-500/10 rounded-xl">
+            <h3 class="font-display font-semibold text-blue-300">Custom Match</h3>
+            <p class="text-xs text-slate-300 mt-1">Select players from the table to stack a match.</p>
+            <p class="text-sm font-semibold mt-2"><span id="custom-match-count">0</span>/4 selected</p>
+            <button id="start-custom-match-btn" class="btn-primary w-full mt-3 opacity-50 cursor-not-allowed" disabled>Configure Match</button>
+          </div>
+        </div>
+        <div class="glass-subcard overflow-x-auto">
+          <table class="w-full text-sm whitespace-nowrap" id="players-table">
+            <thead class="text-left text-slate-400">
+              <tr>
+                <th class="py-2 w-8 text-center">Stack</th>
+                <th>Player</th>
+                <th>Gender</th>
+                <th>Status</th>
+                <th>Skill</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="players-body">
+              <tr>
+                <td class="py-4 text-slate-500" colspan="4">Loading players...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="custom-match-modal" class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="glass-card w-full max-w-lg relative">
+      <button id="close-custom-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+      <h2 class="text-2xl font-display font-semibold mb-2">Configure Custom Match</h2>
+      <p class="text-sm text-slate-400 mb-6">Assign the 4 selected players to teams. This match will wait for the next available court.</p>
+      
+      <div class="grid gap-4 sm:grid-cols-2 mb-6">
+        <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+          <h3 class="font-semibold mb-3 text-cyan-400">Team A</h3>
+          <select id="custom-team-a1" class="input-field w-full mb-2"></select>
+          <select id="custom-team-a2" class="input-field w-full"></select>
+        </div>
+        <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+          <h3 class="font-semibold mb-3 text-rose-400">Team B</h3>
+          <select id="custom-team-b1" class="input-field w-full mb-2"></select>
+          <select id="custom-team-b2" class="input-field w-full"></select>
+        </div>
+      </div>
+      
+      <button id="launch-custom-match" class="btn-primary w-full py-3 text-sm">Queue Custom Match</button>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  <script type="module" src="dashboard.js"></script>
+</body>
+
+</html>

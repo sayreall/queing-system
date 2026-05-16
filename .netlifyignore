@@ -1,0 +1,21 @@
+# Python & dev tools
+.venv/
+generate_template.py
+__pycache__/
+
+# Firebase CLI files (not needed on Netlify)
+.firebaserc
+firebase.json
+firestore.indexes.json
+firestore.rules
+
+# VS Code
+.vscode/
+
+# Agent skills
+.agents/
+
+# Misc
+skills-lock.json
+deploy
+use

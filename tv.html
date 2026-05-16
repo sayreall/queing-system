@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pickleball TV Display</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ["Rajdhani", "sans-serif"],
+              body: ["Manrope", "sans-serif"],
+            },
+            colors: {
+              beginner: "#22d3ee",
+              intermediate: "#f59e0b",
+              advanced: "#f43f5e",
+              ink: "#0b1020",
+              panel: "#121a2b",
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="min-h-screen bg-ink text-slate-100 font-body">
+    <div class="page-bg"></div>
+
+    <header class="px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm uppercase tracking-[0.4em] text-slate-400">Live Courts</p>
+          <h1 class="text-2xl md:text-5xl font-display font-semibold">Pickleball Queue Display</h1>
+        </div>
+        <a class="btn-secondary" href="index.html">Back to Admin</a>
+      </div>
+    </header>
+
+    <main class="px-8 pb-10">
+      <section class="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3" id="tv-courts">
+        <div class="glass-card tv-court" data-tv-court="court-1">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl sm:text-3xl font-display">Court 1</h2>
+            <span class="court-status" data-tv-status="court-1">Available</span>
+          </div>
+          <div class="court-timer text-xl sm:text-3xl" data-tv-timer="court-1">00:00</div>
+          <div class="team-grid">
+            <div class="team-card">
+              <p class="team-label">Team A</p>
+              <p class="team-player" data-tv-team-a="court-1">--</p>
+              <p class="team-player" data-tv-team-a2="court-1">--</p>
+            </div>
+            <div class="team-card">
+              <p class="team-label">Team B</p>
+              <p class="team-player" data-tv-team-b="court-1">--</p>
+              <p class="team-player" data-tv-team-b2="court-1">--</p>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card tv-court" data-tv-court="court-2">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl sm:text-3xl font-display">Court 2</h2>
+            <span class="court-status" data-tv-status="court-2">Available</span>
+          </div>
+          <div class="court-timer text-xl sm:text-3xl" data-tv-timer="court-2">00:00</div>
+          <div class="team-grid">
+            <div class="team-card">
+              <p class="team-label">Team A</p>
+              <p class="team-player" data-tv-team-a="court-2">--</p>
+              <p class="team-player" data-tv-team-a2="court-2">--</p>
+            </div>
+            <div class="team-card">
+              <p class="team-label">Team B</p>
+              <p class="team-player" data-tv-team-b="court-2">--</p>
+              <p class="team-player" data-tv-team-b2="court-2">--</p>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card tv-court" data-tv-court="court-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl sm:text-3xl font-display">Court 3</h2>
+            <span class="court-status" data-tv-status="court-3">Available</span>
+          </div>
+          <div class="court-timer text-xl sm:text-3xl" data-tv-timer="court-3">00:00</div>
+          <div class="team-grid">
+            <div class="team-card">
+              <p class="team-label">Team A</p>
+              <p class="team-player" data-tv-team-a="court-3">--</p>
+              <p class="team-player" data-tv-team-a2="court-3">--</p>
+            </div>
+            <div class="team-card">
+              <p class="team-label">Team B</p>
+              <p class="team-player" data-tv-team-b="court-3">--</p>
+              <p class="team-player" data-tv-team-b2="court-3">--</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-6 sm:mt-10 grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3" id="tv-queues">
+        <div class="glass-card">
+          <h3 class="queue-title text-beginner">Next Up - Beginner</h3>
+          <ol class="tv-queue" data-tv-queue="beginner"></ol>
+        </div>
+        <div class="glass-card">
+          <h3 class="queue-title text-intermediate">Next Up - Intermediate</h3>
+          <ol class="tv-queue" data-tv-queue="intermediate"></ol>
+        </div>
+        <div class="glass-card">
+          <h3 class="queue-title text-advanced">Next Up - Advanced</h3>
+          <ol class="tv-queue" data-tv-queue="advanced"></ol>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="tv-display.js"></script>
+  </body>
+</html>
