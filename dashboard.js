@@ -609,7 +609,7 @@ function bindEvents() {
 
     try {
       launchCustomBtn.disabled = true;
-      launchCustomBtn.textContent = "Queueing...";
+      launchCustomBtn.textContent = "Queuing...";
       const { queueCustomMatch } = await import("./courts.js");
       await queueCustomMatch(playersArr, [a1, a2], [b1, b2]);
       
