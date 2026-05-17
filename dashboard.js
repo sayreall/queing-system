@@ -1207,14 +1207,3 @@ function bindMatchLogEvents() {
 bootstrap();
 
 
-const PLAYERS_TO_IMPORT = ["Mitz", "Maxx", "Mitzel", "Dyan", "Howel", "Tobs", "Marcus", "nikka", "rui", "Mench", "Micah", "Chet + 1 hubby", "Dei", "Jeg", "Cris + 1 awasak", "Mak3n + 1 Hubby 🥰🥰", "tuni", "geng", "Fiorelli", "Henry", "Ellaine R.", "Agatha", "RR", "Onib", "Danniel", "Nicole R.", "zhyti", "Bryan", "Profy", "Ta Nhi", "Cy", "Chelle + 1 Hubby", "Judy Billan", "Jomar Billan", "Jenna Quierrez", "Axl Orcullo", "Mariz", "Gary +1 (Mabitac)", "Trisha", "Baisas", "Erica", "Rosemarie", "Paulo", "Jas", "claud", "Juliah", "Cheska", "Pojeg", "Kirt Bellido"];
-
-if (!localStorage.getItem("imported-50-players-v1")) {
-  localStorage.setItem("imported-50-players-v1", "true");
-  const entries = PLAYERS_TO_IMPORT.map(name => ({ name, skill: "Beginner" }));
-  import("./queue.js").then(module => {
-    module.addPlayersBulk(entries).then(() => {
-      console.log("Successfully imported 50 players!");
-    }).catch(err => console.error("Import failed:", err));
-  });
-}
