@@ -315,9 +315,15 @@ function renderPlayers() {
       return matchFilter && matchSearch;
     })
     .sort((a, b) => {
+      // Standby players first
       if (a.status === "Standby" && b.status !== "Standby") return -1;
       if (a.status !== "Standby" && b.status === "Standby") return 1;
-      return 0;
+
+      // Within same status: group by lastResult — Winners → Losers → No result
+      const order = { Win: 0, Loss: 1, null: 2, undefined: 2 };
+      const aOrder = order[a.lastResult] ?? 2;
+      const bOrder = order[b.lastResult] ?? 2;
+      return aOrder - bOrder;
     });
 
   if (!rows.length) {
