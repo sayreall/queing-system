@@ -17,14 +17,16 @@
             body: ["Manrope", "sans-serif"],
           },
           colors: {
-            beginner: "#22d3ee",
-            intermediate: "#f59e0b",
-            advanced: "#f43f5e",
-            ink: "#0b1020",
-            panel: "#121a2b",
+            beginner:     "#1fcfb1",
+            intermediate: "#F5C42A",
+            advanced:     "#f07840",
+            ink:          "#0a2e2e",
+            panel:        "#0f3d3d",
+            orange:       "#E85A1A",
+            gold:         "#F5C42A",
           },
           boxShadow: {
-            glow: "0 0 24px rgba(56, 189, 248, 0.18)",
+            glow: "0 0 24px rgba(31, 207, 177, 0.2)",
           },
         },
       },
@@ -33,14 +35,14 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 
-<body class="min-h-screen bg-ink text-slate-100 font-body">
+<body class="min-h-screen bg-ink font-body" style="color:#F2E8D5;">
   <div class="page-bg"></div>
 
   <header class="px-6 py-6 md:px-10 md:py-8">
     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div>
         <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Open Play Doubles</p>
-        <h1 class="text-3xl md:text-4xl font-display font-semibold">Deuce Club Queuing System</h1>
+        <h1 class="text-3xl md:text-4xl font-display font-semibold" style="color:#F5C42A;">Deuce Club Queuing System</h1>
       </div>
       <div class="flex flex-wrap gap-3">
         <a class="btn-primary" href="import.html">Import Players</a>
@@ -197,8 +199,8 @@
             <option value="Archived">Archived Status</option>
           </select>
 
-          <div id="custom-match-panel" class="mt-6 p-4 border border-blue-500/30 bg-blue-500/10 rounded-xl">
-            <h3 class="font-display font-semibold text-blue-300">Custom Match</h3>
+          <div id="custom-match-panel" class="mt-6 p-4 border rounded-xl" style="border-color:rgba(232,90,26,0.35);background:rgba(232,90,26,0.1);">
+            <h3 class="font-display font-semibold" style="color:#f07840;">Custom Match</h3>
             <p class="text-xs text-slate-300 mt-1">Select players from the table to stack a match.</p>
             <p class="text-sm font-semibold mt-2"><span id="custom-match-count">0</span>/4 selected</p>
             <button id="start-custom-match-btn" class="btn-primary w-full mt-3 opacity-50 cursor-not-allowed"
@@ -286,12 +288,12 @@
 
       <div class="grid gap-4 sm:grid-cols-2 mb-6">
         <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
-          <h3 class="font-semibold mb-3 text-cyan-400">Team A</h3>
+          <h3 class="font-semibold mb-3" style="color:#1fcfb1;">Team A</h3>
           <select id="custom-team-a1" class="input-field w-full mb-2"></select>
           <select id="custom-team-a2" class="input-field w-full"></select>
         </div>
         <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
-          <h3 class="font-semibold mb-3 text-rose-400">Team B</h3>
+          <h3 class="font-semibold mb-3" style="color:#E85A1A;">Team B</h3>
           <select id="custom-team-b1" class="input-field w-full mb-2"></select>
           <select id="custom-team-b2" class="input-field w-full"></select>
         </div>
@@ -312,13 +314,13 @@
 
       <div class="grid gap-4 sm:grid-cols-2 mb-4">
         <button id="winner-team-a-btn"
-          class="flex flex-col items-center gap-2 p-5 rounded-xl border-2 border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500/25 hover:border-cyan-400 transition-all cursor-pointer">
-          <span class="text-xs uppercase tracking-widest text-cyan-400">Team A Wins 🏆</span>
+          class="flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all cursor-pointer" style="border-color:rgba(31,207,177,0.4);background:rgba(31,207,177,0.1);">
+          <span class="text-xs uppercase tracking-widest" style="color:#1fcfb1;">Team A Wins 🏆</span>
           <span id="winner-team-a-names" class="font-semibold text-white text-center">Team A</span>
         </button>
         <button id="winner-team-b-btn"
-          class="flex flex-col items-center gap-2 p-5 rounded-xl border-2 border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/25 hover:border-rose-400 transition-all cursor-pointer">
-          <span class="text-xs uppercase tracking-widest text-rose-400">Team B Wins 🏆</span>
+          class="flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all cursor-pointer" style="border-color:rgba(232,90,26,0.4);background:rgba(232,90,26,0.1);">
+          <span class="text-xs uppercase tracking-widest" style="color:#E85A1A;">Team B Wins 🏆</span>
           <span id="winner-team-b-names" class="font-semibold text-white text-center">Team B</span>
         </button>
       </div>

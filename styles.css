@@ -1,5 +1,26 @@
+/* ===========================
+   THE DEUCE GAME — Color Palette
+   bg-base:   #0a2e2e  (very dark teal)
+   bg-card:   #0f3d3d  (dark teal card)
+   bg-sub:    #0d3030  (deep sub-card)
+   accent-or: #E85A1A  (vivid orange)
+   accent-gd: #F5C42A  (warm gold)
+   accent-tl: #1fcfb1  (bright teal/cyan)
+   text-base: #F2E8D5  (cream white)
+   text-muted:#a8c4be  (muted teal-grey)
+=========================== */
+
 :root {
   color-scheme: dark;
+  --bg-base:   #0a2e2e;
+  --bg-card:   #0f3d3d;
+  --bg-sub:    #0c3232;
+  --accent-or: #E85A1A;
+  --accent-gd: #F5C42A;
+  --accent-tl: #1fcfb1;
+  --text-base: #F2E8D5;
+  --text-muted:#a8c4be;
+  --border:    rgba(245, 196, 42, 0.18);
 }
 
 * {
@@ -7,37 +28,44 @@
 }
 
 body {
-  background: radial-gradient(circle at top, rgba(59, 130, 246, 0.12), transparent 55%),
-    #0b1020;
+  background: radial-gradient(ellipse at top left, rgba(31, 207, 177, 0.12), transparent 55%),
+    radial-gradient(ellipse at bottom right, rgba(232, 90, 26, 0.1), transparent 50%),
+    var(--bg-base);
+  color: var(--text-base);
 }
 
 .page-bg {
   position: fixed;
   inset: 0;
-  background-image: linear-gradient(120deg, rgba(148, 163, 184, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 20% 10%, rgba(56, 189, 248, 0.18), transparent 35%),
-    radial-gradient(circle at 80% 0%, rgba(244, 63, 94, 0.15), transparent 35%);
-  opacity: 0.75;
+  background-image:
+    radial-gradient(circle at 15% 10%, rgba(31, 207, 177, 0.15), transparent 35%),
+    radial-gradient(circle at 85% 5%,  rgba(232, 90, 26, 0.12), transparent 35%),
+    radial-gradient(circle at 50% 90%, rgba(245, 196, 42, 0.06), transparent 40%);
+  opacity: 0.8;
   pointer-events: none;
   z-index: -1;
 }
 
+/* ===== Cards ===== */
+
 .glass-card {
-  background: rgba(17, 24, 39, 0.78);
-  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: rgba(15, 61, 61, 0.82);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);
-  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 40px rgba(10, 20, 20, 0.45);
+  backdrop-filter: blur(18px);
   animation: fadeUp 0.6s ease;
 }
 
 .glass-subcard {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(12, 50, 50, 0.8);
+  border: 1px solid rgba(245, 196, 42, 0.12);
   border-radius: 16px;
   padding: 16px;
 }
+
+/* ===== Buttons ===== */
 
 .btn-primary {
   display: inline-flex;
@@ -45,18 +73,19 @@ body {
   justify-content: center;
   padding: 10px 18px;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.9), rgba(14, 165, 233, 0.9));
-  color: #0b1020;
-  font-weight: 600;
+  background: linear-gradient(135deg, #E85A1A, #c44510);
+  color: #fff;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   font-size: 0.72rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 16px rgba(232, 90, 26, 0.35);
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.25);
+  box-shadow: 0 8px 28px rgba(232, 90, 26, 0.5);
 }
 
 .btn-secondary {
@@ -65,37 +94,42 @@ body {
   justify-content: center;
   padding: 10px 18px;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  color: #e2e8f0;
+  border: 1px solid rgba(245, 196, 42, 0.4);
+  color: var(--text-base);
   text-transform: uppercase;
   letter-spacing: 0.15em;
   font-size: 0.72rem;
-  transition: border 0.2s ease, color 0.2s ease;
+  transition: border 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn-secondary:hover {
-  border-color: rgba(56, 189, 248, 0.6);
-  color: #f8fafc;
+  border-color: var(--accent-gd);
+  color: var(--accent-gd);
+  box-shadow: 0 0 14px rgba(245, 196, 42, 0.18);
 }
 
+/* ===== Inputs ===== */
+
 .input-field {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(10, 40, 40, 0.85);
+  border: 1px solid rgba(245, 196, 42, 0.22);
   border-radius: 12px;
   padding: 10px 12px;
-  color: #e2e8f0;
+  color: var(--text-base);
   min-width: 180px;
 }
 
 .input-field:focus {
   outline: none;
-  border-color: rgba(56, 189, 248, 0.6);
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+  border-color: rgba(31, 207, 177, 0.6);
+  box-shadow: 0 0 0 3px rgba(31, 207, 177, 0.15);
 }
 
+/* ===== Stat Cards ===== */
+
 .stat-card {
-  background: rgba(15, 23, 42, 0.75);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(12, 50, 50, 0.8);
+  border: 1px solid rgba(245, 196, 42, 0.2);
   border-radius: 18px;
   padding: 16px 18px;
 }
@@ -104,14 +138,17 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.24em;
   font-size: 0.68rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .stat-value {
   font-size: 1.8rem;
   font-weight: 600;
   margin-top: 8px;
+  color: var(--accent-gd);
 }
+
+/* ===== Queue ===== */
 
 .queue-title {
   font-size: 1.2rem;
@@ -120,7 +157,7 @@ body {
 
 .queue-meta {
   font-size: 0.85rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .queue-list {
@@ -135,22 +172,24 @@ body {
   justify-content: space-between;
   padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(10, 40, 40, 0.75);
+  border: 1px solid rgba(245, 196, 42, 0.15);
   transition: transform 0.2s ease, border 0.2s ease;
   flex-wrap: wrap;
 }
 
 .queue-item:hover {
   transform: translateY(-1px);
-  border-color: rgba(56, 189, 248, 0.4);
+  border-color: rgba(31, 207, 177, 0.45);
 }
 
 .queue-empty {
   padding: 12px;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 0.85rem;
 }
+
+/* ===== Skill Pills / Badges ===== */
 
 .skill-pill {
   padding: 6px 12px;
@@ -160,19 +199,22 @@ body {
   text-transform: uppercase;
 }
 
+/* Beginner = teal accent */
 .skill-beginner {
-  background: rgba(34, 211, 238, 0.15);
-  color: #67e8f9;
+  background: rgba(31, 207, 177, 0.15);
+  color: #1fcfb1;
 }
 
+/* Intermediate = gold accent */
 .skill-intermediate {
-  background: rgba(245, 158, 11, 0.15);
-  color: #facc15;
+  background: rgba(245, 196, 42, 0.15);
+  color: #F5C42A;
 }
 
+/* Advanced = orange accent */
 .skill-advanced {
-  background: rgba(244, 63, 94, 0.15);
-  color: #fda4af;
+  background: rgba(232, 90, 26, 0.18);
+  color: #f07840;
 }
 
 .badge {
@@ -184,19 +226,21 @@ body {
 }
 
 .badge-beginner {
-  background: rgba(34, 211, 238, 0.15);
-  color: #67e8f9;
+  background: rgba(31, 207, 177, 0.15);
+  color: #1fcfb1;
 }
 
 .badge-intermediate {
-  background: rgba(245, 158, 11, 0.15);
-  color: #facc15;
+  background: rgba(245, 196, 42, 0.15);
+  color: #F5C42A;
 }
 
 .badge-advanced {
-  background: rgba(244, 63, 94, 0.15);
-  color: #fda4af;
+  background: rgba(232, 90, 26, 0.18);
+  color: #f07840;
 }
+
+/* ===== Court ===== */
 
 .court-card {
   display: grid;
@@ -214,20 +258,23 @@ body {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  background: rgba(148, 163, 184, 0.12);
-  color: #e2e8f0;
+  background: rgba(168, 196, 190, 0.12);
+  color: var(--text-base);
 }
 
 .court-status.active {
-  background: rgba(34, 211, 238, 0.18);
-  color: #67e8f9;
+  background: rgba(31, 207, 177, 0.18);
+  color: #1fcfb1;
 }
 
 .court-timer {
   font-size: 1.4rem;
   font-weight: 600;
   letter-spacing: 0.1em;
+  color: var(--accent-gd);
 }
+
+/* ===== Team Grid ===== */
 
 .team-grid {
   display: grid;
@@ -236,8 +283,8 @@ body {
 }
 
 .team-card {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(10, 40, 40, 0.8);
+  border: 1px solid rgba(245, 196, 42, 0.15);
   border-radius: 14px;
   padding: 12px;
 }
@@ -246,14 +293,17 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.2em;
   font-size: 0.65rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .team-player {
   font-size: 1rem;
   font-weight: 600;
   margin-top: 4px;
+  color: var(--text-base);
 }
+
+/* ===== TV Queue ===== */
 
 .tv-queue {
   margin-top: 16px;
@@ -261,6 +311,8 @@ body {
   gap: 10px;
   font-size: 1.2rem;
 }
+
+/* ===== Toast ===== */
 
 #toast-container {
   position: fixed;
@@ -272,15 +324,17 @@ body {
 }
 
 .toast {
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  color: #e2e8f0;
+  background: rgba(12, 50, 50, 0.97);
+  border: 1px solid rgba(245, 196, 42, 0.25);
+  color: var(--text-base);
   border-radius: 12px;
   padding: 12px 14px;
   font-size: 0.85rem;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.3);
+  box-shadow: 0 12px 30px rgba(10, 20, 20, 0.4);
   animation: fadeUp 0.3s ease;
 }
+
+/* ===== Animation ===== */
 
 @keyframes fadeUp {
   from {
