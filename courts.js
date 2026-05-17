@@ -76,15 +76,27 @@ export async function assignMatchToCourt(courtId, skillKey) {
     
     const poolData = poolSnaps.map(snap => ({
       id: snap.id,
-      playedWith: snap.exists() && snap.data().playedWith ? snap.data().playedWith : {}
+      playedWith: snap.exists() && snap.data().playedWith ? snap.data().playedWith : {},
+      lastResult: snap.exists() ? (snap.data().lastResult || null) : null,
     }));
 
-    const getScore = (p1, p2) => (p1.playedWith[p2.id] || 0) + (p2.playedWith[p1.id] || 0);
+    const getScore = (p1, p2) => {
+      let s = (p1.playedWith[p2.id] || 0) + (p2.playedWith[p1.id] || 0);
+      // Strong penalty for mixing winners with losers
+      if (p1.lastResult && p2.lastResult && p1.lastResult !== p2.lastResult) s += 50;
+      return s;
+    };
 
-    const anchor = poolData[0];
+    // Prefer a pool of only winners or only losers if 4+ exist
+    const winners = poolData.filter(p => p.lastResult === "Win");
+    const losers  = poolData.filter(p => p.lastResult === "Loss");
+    const scoringPool = (winners.length >= 4 ? winners : (losers.length >= 4 ? losers : poolData));
+
+    const anchor = scoringPool[0];
     let bestCombo = null;
     let minScore = Infinity;
-    const others = poolData.slice(1);
+    const others = scoringPool.slice(1);
+
 
     if (others.length < 3) {
       bestCombo = others.map(p => p.id);
@@ -265,11 +277,12 @@ export async function finishMatch(courtId, winnerTeam = null) {
       const playerId = snap.id;
       let wins = currentWins;
       let losses = currentLosses;
+      let lastResult = null;
 
-      if (winnerTeam === "teamA" && teamA.includes(playerId)) wins++;
-      else if (winnerTeam === "teamB" && teamB.includes(playerId)) wins++;
-      else if (winnerTeam === "teamA" && teamB.includes(playerId)) losses++;
-      else if (winnerTeam === "teamB" && teamA.includes(playerId)) losses++;
+      if (winnerTeam === "teamA" && teamA.includes(playerId)) { wins++; lastResult = "Win"; }
+      else if (winnerTeam === "teamB" && teamB.includes(playerId)) { wins++; lastResult = "Win"; }
+      else if (winnerTeam === "teamA" && teamB.includes(playerId)) { losses++; lastResult = "Loss"; }
+      else if (winnerTeam === "teamB" && teamA.includes(playerId)) { losses++; lastResult = "Loss"; }
 
       tx.set(
         playerRefs[idx],
@@ -279,6 +292,7 @@ export async function finishMatch(courtId, winnerTeam = null) {
           playedWith: playedWith,
           wins,
           losses,
+          lastResult,
           lastMatchEndedAt: now,
           updatedAt: now,
         },

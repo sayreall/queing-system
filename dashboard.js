@@ -143,9 +143,15 @@ function renderQueues() {
 
         const name = document.createElement("div");
         name.className = "flex items-center gap-3";
+        const lastResult = player?.lastResult;
+        const resultBadge = lastResult === "Win"
+          ? `<span class="text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">W</span>`
+          : lastResult === "Loss"
+          ? `<span class="text-xs font-bold text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded">L</span>`
+          : "";
         name.innerHTML = `<span class="drag-handle text-slate-400">::</span>
           <div>
-            <p class="font-semibold">${player ? player.name : "Unknown"}</p>
+            <p class="font-semibold">${player ? player.name : "Unknown"} ${resultBadge}</p>
             <p class="text-xs text-slate-400">Waiting</p>
           </div>`;
 
