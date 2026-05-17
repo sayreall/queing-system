@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="shortcut icon" href="deuce-game-logo.png">
   <title>Pickleball Doubles Queuing System</title>
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap" />
@@ -17,13 +18,13 @@
             body: ["Manrope", "sans-serif"],
           },
           colors: {
-            beginner:     "#1fcfb1",
+            beginner: "#1fcfb1",
             intermediate: "#F5C42A",
-            advanced:     "#f07840",
-            ink:          "#0a2e2e",
-            panel:        "#0f3d3d",
-            orange:       "#E85A1A",
-            gold:         "#F5C42A",
+            advanced: "#f07840",
+            ink: "#0a2e2e",
+            panel: "#0f3d3d",
+            orange: "#E85A1A",
+            gold: "#F5C42A",
           },
           boxShadow: {
             glow: "0 0 24px rgba(31, 207, 177, 0.2)",
@@ -38,13 +39,19 @@
 <body class="min-h-screen bg-ink font-body" style="color:#F2E8D5;">
   <div class="page-bg"></div>
 
-  <header class="px-6 py-6 md:px-10 md:py-8">
-    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <div>
-        <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Open Play Doubles</p>
-        <h1 class="text-3xl md:text-4xl font-display font-semibold" style="color:#F5C42A;">Deuce Club Queuing System</h1>
+  <header class="px-6 py-4 md:px-10 md:py-6">
+    <div class="header-inner">
+      <!-- Brand: logo + title -->
+      <div class="header-brand">
+        <img src="deuce-game-logo.png" alt="The Deuce Game Logo" class="header-logo"
+          onerror="this.style.display='none'" />
+        <div class="header-title-block">
+          <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Open Play Doubles</p>
+          <h1 class="font-display font-semibold header-title" style="color:#F5C42A;">Deuce Club Queuing System</h1>
+        </div>
       </div>
-      <div class="flex flex-wrap gap-3">
+      <!-- Nav actions -->
+      <div class="header-actions">
         <a class="btn-primary" href="import.html">Import Players</a>
         <a class="btn-secondary" href="tv.html">TV Display Mode</a>
       </div>
@@ -199,7 +206,8 @@
             <option value="Archived">Archived Status</option>
           </select>
 
-          <div id="custom-match-panel" class="mt-6 p-4 border rounded-xl" style="border-color:rgba(232,90,26,0.35);background:rgba(232,90,26,0.1);">
+          <div id="custom-match-panel" class="mt-6 p-4 border rounded-xl"
+            style="border-color:rgba(232,90,26,0.35);background:rgba(232,90,26,0.1);">
             <h3 class="font-display font-semibold" style="color:#f07840;">Custom Match</h3>
             <p class="text-xs text-slate-300 mt-1">Select players from the table to stack a match.</p>
             <p class="text-sm font-semibold mt-2"><span id="custom-match-count">0</span>/4 selected</p>
@@ -243,7 +251,8 @@
         <div class="flex items-center gap-2 flex-wrap">
           <span id="match-log-count" class="text-sm text-slate-500"></span>
           <button id="match-log-toggle-archived" class="btn-secondary text-xs py-1.5 px-3">Show Archived</button>
-          <button id="match-log-archive-all" class="btn-secondary text-xs py-1.5 px-3" style="border-color:rgba(248,113,113,0.4);color:#fca5a5;">Archive All</button>
+          <button id="match-log-archive-all" class="btn-secondary text-xs py-1.5 px-3"
+            style="border-color:rgba(248,113,113,0.4);color:#fca5a5;">Archive All</button>
         </div>
       </div>
       <div class="overflow-x-auto">
@@ -268,10 +277,13 @@
         </table>
       </div>
       <!-- Pagination -->
-      <div id="match-log-pagination" class="flex items-center justify-between mt-4 pt-4 border-t border-slate-800/60 hidden">
-        <button id="match-log-prev" class="btn-secondary text-xs py-1.5 px-4 disabled:opacity-30 disabled:cursor-not-allowed">← Prev</button>
+      <div id="match-log-pagination"
+        class="flex items-center justify-between mt-4 pt-4 border-t border-slate-800/60 hidden">
+        <button id="match-log-prev"
+          class="btn-secondary text-xs py-1.5 px-4 disabled:opacity-30 disabled:cursor-not-allowed">← Prev</button>
         <span id="match-log-page-info" class="text-sm text-slate-400"></span>
-        <button id="match-log-next" class="btn-secondary text-xs py-1.5 px-4 disabled:opacity-30 disabled:cursor-not-allowed">Next →</button>
+        <button id="match-log-next"
+          class="btn-secondary text-xs py-1.5 px-4 disabled:opacity-30 disabled:cursor-not-allowed">Next →</button>
       </div>
     </div>
   </section>
@@ -314,12 +326,14 @@
 
       <div class="grid gap-4 sm:grid-cols-2 mb-4">
         <button id="winner-team-a-btn"
-          class="flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all cursor-pointer" style="border-color:rgba(31,207,177,0.4);background:rgba(31,207,177,0.1);">
+          class="flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all cursor-pointer"
+          style="border-color:rgba(31,207,177,0.4);background:rgba(31,207,177,0.1);">
           <span class="text-xs uppercase tracking-widest" style="color:#1fcfb1;">Team A Wins 🏆</span>
           <span id="winner-team-a-names" class="font-semibold text-white text-center">Team A</span>
         </button>
         <button id="winner-team-b-btn"
-          class="flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all cursor-pointer" style="border-color:rgba(232,90,26,0.4);background:rgba(232,90,26,0.1);">
+          class="flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all cursor-pointer"
+          style="border-color:rgba(232,90,26,0.4);background:rgba(232,90,26,0.1);">
           <span class="text-xs uppercase tracking-widest" style="color:#E85A1A;">Team B Wins 🏆</span>
           <span id="winner-team-b-names" class="font-semibold text-white text-center">Team B</span>
         </button>
