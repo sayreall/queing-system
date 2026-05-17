@@ -103,47 +103,27 @@ export async function addPlayer({ name, skill, gender }) {
   const skillKey = skillKeyFromLabel(normalizedSkill);
   const now = serverTimestamp();
 
-  await runTransaction(db, async (tx) => {
-    const queueRef = getQueueDocRef(skillKey);
-    const queueSnap = await tx.get(queueRef);
-
-    if (isRevive) {
-      tx.set(playerRef, {
-        skill: normalizedSkill,
-        gender: playerGender,
-        status: "Waiting",
-        playedWith: {},
-        updatedAt: now,
-      }, { merge: true });
-    } else {
-      tx.set(playerRef, {
-        name: trimmedName,
-        nameLower,
-        skill: normalizedSkill,
-        gender: playerGender,
-        status: "Waiting",
-        playedWith: {},
-        currentMatchId: null,
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-
-    const order = queueSnap.exists() ? queueSnap.data().order || [] : [];
-    if (!order.includes(playerRef.id)) {
-      order.push(playerRef.id);
-    }
-
-    tx.set(
-      queueRef,
-      {
-        skill: normalizedSkill,
-        order,
-        updatedAt: now,
-      },
-      { merge: true }
-    );
-  });
+  if (isRevive) {
+    await setDoc(playerRef, {
+      skill: normalizedSkill,
+      gender: playerGender,
+      status: "Standby",
+      playedWith: {},
+      updatedAt: now,
+    }, { merge: true });
+  } else {
+    await setDoc(playerRef, {
+      name: trimmedName,
+      nameLower,
+      skill: normalizedSkill,
+      gender: playerGender,
+      status: "Standby",
+      playedWith: {},
+      currentMatchId: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
 
   return playerRef.id;
 }
