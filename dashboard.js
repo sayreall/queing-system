@@ -970,7 +970,21 @@ function renderNextMatch() {
   });
 
   const chosen = queueOptions[0];
-  const nextIds = chosen.players.slice(0, 4);
+
+  // Exclude players who are currently playing on an active court
+  const activePlayers = new Set(
+    state.courts
+      .filter(c => c.status === "Active")
+      .flatMap(c => c.players || [])
+  );
+  const availablePlayers = chosen.players.filter(id => !activePlayers.has(id));
+
+  if (availablePlayers.length < 4) {
+    container.innerHTML = "";
+    return;
+  }
+
+  const nextIds = availablePlayers.slice(0, 4);
   // Team A = first 2, Team B = last 2 (preview — actual matchmaking may differ)
   const teamA = nextIds.slice(0, 2);
   const teamB = nextIds.slice(2, 4);
