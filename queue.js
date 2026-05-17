@@ -435,7 +435,7 @@ export function listenToQueues(callback) {
 
 export function listenToPlayers(callback) {
   return onSnapshot(
-    query(collection(db, "players"), orderBy("nameLower")),
+    query(collection(db, "players"), orderBy("createdAt")),
     (snapshot) => {
       const players = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,

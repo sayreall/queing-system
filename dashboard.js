@@ -311,10 +311,7 @@ function renderPlayers() {
     .sort((a, b) => {
       if (a.status === "Standby" && b.status !== "Standby") return -1;
       if (a.status !== "Standby" && b.status === "Standby") return 1;
-      // First-come-first-served: sort by createdAt ascending
-      const tA = a.createdAt?.seconds ?? 0;
-      const tB = b.createdAt?.seconds ?? 0;
-      return tA - tB;
+      return 0;
     });
 
   if (!rows.length) {
