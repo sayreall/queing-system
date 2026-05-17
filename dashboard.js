@@ -19,7 +19,7 @@ import {
   finishMatch,
   toggleCourtStatus,
 } from "./courts.js";
-import { db, collection, query, where, orderBy, onSnapshot } from "./firebase.js";
+import { db, collection, query, where, orderBy, limit, onSnapshot } from "./firebase.js";
 
 const AVG_MATCH_MINUTES = 15;
 
@@ -28,6 +28,9 @@ const state = {
   courts: [],
   players: new Map(),
   pendingMatches: [],
+  matchLog: [],
+  matchLogPage: 0,
+  matchLogShowArchived: false,
   search: "",
   filter: "All",
   automationLock: false,
@@ -169,50 +172,129 @@ function renderQueues() {
   });
 }
 
+
 function renderCourts() {
-  COURTS.forEach((courtInfo) => {
-    const court = state.courts.find((item) => item.id === courtInfo.id);
-    const statusEl = document.querySelector(`[data-court-status="${courtInfo.id}"]`);
-    const timerEl = document.querySelector(`[data-court-timer="${courtInfo.id}"]`);
+  const container = document.getElementById("courts-container");
+  if (!container) return;
 
-    if (!court || !statusEl || !timerEl) return;
+  // Compute total queued players and best next skill
+  const activeTally = {};
+  state.courts.forEach(c => {
+    if (c.status === "Active" && c.skill) {
+      activeTally[c.skill] = (activeTally[c.skill] || 0) + 1;
+    }
+  });
 
-    statusEl.textContent = court.status;
-    statusEl.classList.toggle("active", court.status === "Active");
-    statusEl.classList.toggle("bg-slate-700", court.status === "Inactive");
-    statusEl.classList.toggle("text-slate-400", court.status === "Inactive");
+  // Best queue option (for available courts with queue)
+  const hasPending = state.pendingMatches.length > 0;
+  const queueOptions = SKILLS.map(skill => ({
+    key: skill.key,
+    label: skill.label,
+    count: (state.queues[skill.key] || []).length,
+  })).filter(q => q.count >= 4);
+  queueOptions.sort((a, b) => {
+    const aA = activeTally[a.label] || 0, bA = activeTally[b.label] || 0;
+    if (aA !== bA) return aA - bA;
+    return b.count - a.count;
+  });
+  const bestQueue = hasPending ? { key: "custom", label: "Custom", count: state.pendingMatches.length * 4 } : (queueOptions[0] || null);
+  const totalQueued = SKILLS.reduce((s, sk) => s + (state.queues[sk.key] || []).length, 0);
 
-    const toggleBtn = document.querySelector(`[data-toggle-court="${courtInfo.id}"]`);
-    if (toggleBtn) {
-      if (court.status === "Active") {
-        toggleBtn.classList.add("hidden");
+  const nameFor = id => (id && state.players.get(id)?.name) || "--";
+
+  container.innerHTML = COURTS.map(courtInfo => {
+    const court = state.courts.find(c => c.id === courtInfo.id);
+    if (!court) return "";
+
+    const cid = court.id;
+
+    if (court.status === "Active") {
+      const players = court.players || [];
+      const teamAIds = players.slice(0, 2);
+      const teamBIds = players.slice(2, 4);
+      return `
+        <div class="glass-card court-card" data-court-id="${cid}" style="border-color:rgba(56,189,248,0.25);">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="court-title">${courtInfo.name}</h3>
+              <span class="court-status active">● LIVE</span>
+            </div>
+            <span class="court-timer font-mono text-xl font-bold text-cyan-300" data-court-timer="${cid}">00:00</span>
+          </div>
+          <div class="team-grid mt-2">
+            <div class="team-card" style="border-color:rgba(56,189,248,0.3);background:rgba(56,189,248,0.07);">
+              <p class="team-label text-cyan-400">Team A</p>
+              <p class="team-player mt-2">${nameFor(teamAIds[0])}</p>
+              <p class="team-player">${nameFor(teamAIds[1])}</p>
+            </div>
+            <div class="team-card" style="border-color:rgba(251,113,133,0.3);background:rgba(251,113,133,0.07);">
+              <p class="team-label text-rose-400">Team B</p>
+              <p class="team-player mt-2">${nameFor(teamBIds[0])}</p>
+              <p class="team-player">${nameFor(teamBIds[1])}</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <button class="btn-primary" style="background:linear-gradient(135deg,rgba(56,189,248,0.9),rgba(14,165,233,0.9));"
+              data-finish-court="${cid}" data-winner="teamA">Team A Wins 🏆</button>
+            <button class="btn-primary" style="background:linear-gradient(135deg,rgba(251,113,133,0.9),rgba(244,63,94,0.9));"
+              data-finish-court="${cid}" data-winner="teamB">Team B Wins 🏆</button>
+          </div>
+          <button class="btn-secondary w-full text-xs text-slate-500 mt-1" data-finish-court="${cid}" data-winner="">No Winner / End Match</button>
+        </div>`;
+    }
+
+    if (court.status === "Available") {
+      if (bestQueue) {
+        // Queue ready — show Start Next Match
+        const skillBadgeClass = { Beginner: "text-cyan-400", Intermediate: "text-amber-400", Advanced: "text-rose-400", Custom: "text-purple-400" }[bestQueue.label] || "text-slate-300";
+        return `
+          <div class="glass-card court-card" data-court-id="${cid}">
+            <div class="flex items-center justify-between">
+              <h3 class="court-title">${courtInfo.name}</h3>
+              <button class="text-slate-400 hover:text-white text-lg leading-none" data-toggle-court="${cid}" title="Mark Inactive">×</button>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-slate-400 mb-1">
+              <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block"></span>
+              <span class="${skillBadgeClass} font-semibold">${bestQueue.label}</span>
+              <span>${bestQueue.count} players queued</span>
+            </div>
+            <button class="btn-primary w-full py-3 text-sm" data-start-court="${cid}" data-skill-key="${bestQueue.key}">
+              ▶ Start Next Match
+            </button>
+          </div>`;
       } else {
-        toggleBtn.classList.remove("hidden");
-        toggleBtn.textContent = court.status === "Inactive" ? "Mark Available" : "Mark Inactive";
+        // No queue — waiting for players
+        const queued = Math.min(totalQueued, 3);
+        const pct = Math.round((queued / 4) * 100);
+        return `
+          <div class="glass-card court-card" data-court-id="${cid}" style="border-style:dashed;border-color:rgba(148,163,184,0.2);">
+            <div class="flex items-center justify-between">
+              <h3 class="court-title text-slate-400">${courtInfo.name}</h3>
+              <button class="text-slate-500 hover:text-white text-lg leading-none" data-toggle-court="${cid}" title="Mark Inactive">×</button>
+            </div>
+            <div class="flex flex-col items-center justify-center py-6 gap-3 text-center">
+              <p class="text-slate-400 text-sm">Waiting for players...</p>
+              <p class="text-slate-500 text-xs">(${totalQueued}/4 in queue)</p>
+              <div class="w-full bg-slate-800 rounded-full h-1.5">
+                <div class="bg-cyan-500/50 h-1.5 rounded-full transition-all" style="width:${pct}%"></div>
+              </div>
+            </div>
+          </div>`;
       }
     }
 
-    const players = court.players || [];
-    const teams = [players[0], players[1], players[2], players[3]];
-
-    const nameFor = (playerId) =>
-      state.players.get(playerId)?.name || "--";
-
-    const teamA = document.querySelector(`[data-team-a="${courtInfo.id}"]`);
-    const teamA2 = document.querySelector(`[data-team-a2="${courtInfo.id}"]`);
-    const teamB = document.querySelector(`[data-team-b="${courtInfo.id}"]`);
-    const teamB2 = document.querySelector(`[data-team-b2="${courtInfo.id}"]`);
-
-    if (teamA) teamA.textContent = nameFor(teams[0]);
-    if (teamA2) teamA2.textContent = nameFor(teams[1]);
-    if (teamB) teamB.textContent = nameFor(teams[2]);
-    if (teamB2) teamB2.textContent = nameFor(teams[3]);
-
-    if (!court.startedAt) {
-      timerEl.textContent = "00:00";
-    }
-  });
+    // Inactive
+    return `
+      <div class="glass-card court-card" data-court-id="${cid}" style="opacity:0.5;">
+        <div class="flex items-center justify-between">
+          <h3 class="court-title text-slate-500">${courtInfo.name}</h3>
+          <span class="text-xs text-slate-600 uppercase tracking-widest">Inactive</span>
+        </div>
+        <button class="btn-secondary w-full mt-2" data-toggle-court="${cid}">Mark Available</button>
+      </div>`;
+  }).join("");
 }
+
 
 function renderPlayers() {
   const rows = Array.from(state.players.values())
@@ -229,7 +311,10 @@ function renderPlayers() {
     .sort((a, b) => {
       if (a.status === "Standby" && b.status !== "Standby") return -1;
       if (a.status !== "Standby" && b.status === "Standby") return 1;
-      return a.name.localeCompare(b.name);
+      // First-come-first-served: sort by createdAt ascending
+      const tA = a.createdAt?.seconds ?? 0;
+      const tB = b.createdAt?.seconds ?? 0;
+      return tA - tB;
     });
 
   if (!rows.length) {
@@ -251,6 +336,8 @@ function renderPlayers() {
         <td class="font-semibold">${player.name}</td>
         <td class="text-slate-400">${player.gender || "—"}</td>
         <td>${player.status}</td>
+        <td class="text-green-400 font-semibold">${player.wins ?? 0}W</td>
+        <td class="text-red-400 font-semibold">${player.losses ?? 0}L</td>
         <td>
           <select class="input-field" data-player-skill="${player.id}">
             ${SKILLS.map(
@@ -404,6 +491,41 @@ function startTimerLoop() {
   }, 1000);
 }
 
+let _pendingFinishCourtId = null;
+
+function openWinnerModal(courtId) {
+  _pendingFinishCourtId = courtId;
+
+  // Look up the court from state to get team names
+  const court = state.courts.find(c => c.id === courtId);
+  const players = court?.players || [];
+
+  const nameFor = (id) => state.players.get(id)?.name || "Unknown";
+
+  // players[0], [1] = Team A   players[2], [3] = Team B
+  const teamANames = [nameFor(players[0]), nameFor(players[1])].filter(n => n !== "Unknown" && n !== "--");
+  const teamBNames = [nameFor(players[2]), nameFor(players[3])].filter(n => n !== "Unknown" && n !== "--");
+
+  const modal = document.getElementById("winner-modal");
+  document.getElementById("winner-team-a-names").textContent = teamANames.join(" & ") || "Team A";
+  document.getElementById("winner-team-b-names").textContent = teamBNames.join(" & ") || "Team B";
+  modal.classList.remove("hidden");
+}
+
+async function confirmFinishMatch(winnerTeam) {
+  const courtId = _pendingFinishCourtId;
+  _pendingFinishCourtId = null;
+  document.getElementById("winner-modal").classList.add("hidden");
+
+  try {
+    await finishMatch(courtId, winnerTeam);
+    showToast("Match finished" + (winnerTeam ? ` — ${winnerTeam === "teamA" ? "Team A" : "Team B"} wins!` : ""));
+  } catch (error) {
+    console.error("Finish match failed", error);
+    showToast(formatFirebaseError(error), "error");
+  }
+}
+
 function bindEvents() {
   elements.addForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -494,17 +616,51 @@ function bindEvents() {
 
     const finishButton = event.target.getAttribute("data-finish-match");
     if (finishButton) {
+      openWinnerModal(finishButton);
+      return;
+    }
+
+    // Direct win/end button on court card (no modal)
+    const finishCourtBtn = event.target.closest("[data-finish-court]");
+    if (finishCourtBtn) {
+      const courtId = finishCourtBtn.dataset.finishCourt;
+      const winner = finishCourtBtn.dataset.winner || null;
       try {
-        await finishMatch(finishButton);
-        showToast("Match finished");
+        await finishMatch(courtId, winner || null);
+        const msg = winner === "teamA" ? "Team A wins! 🏆" : winner === "teamB" ? "Team B wins! 🏆" : "Match ended.";
+        showToast(msg);
       } catch (error) {
-        console.error("Finish match failed", error);
+        console.error("Finish court failed", error);
         showToast(formatFirebaseError(error), "error");
       }
       return;
     }
 
-    const toggleButton = event.target.getAttribute("data-toggle-court");
+    // Start Next Match button on court card
+    const startCourtBtn = event.target.closest("[data-start-court]");
+    if (startCourtBtn) {
+      const courtId = startCourtBtn.dataset.startCourt;
+      const skillKey = startCourtBtn.dataset.skillKey;
+      try {
+        startCourtBtn.disabled = true;
+        startCourtBtn.textContent = "Starting...";
+        if (skillKey === "custom") {
+          const { activatePendingMatch } = await import("./courts.js");
+          await activatePendingMatch(state.pendingMatches[0].id, courtId);
+          showToast("Custom match started!");
+        } else {
+          await assignMatchToCourt(courtId, skillKey);
+          showToast("Match started!");
+        }
+      } catch (error) {
+        console.error("Start court failed", error);
+        showToast(formatFirebaseError(error), "error");
+      }
+      return;
+    }
+
+    const toggleButton = event.target.closest("[data-toggle-court]")?.dataset.toggleCourt
+      || event.target.getAttribute("data-toggle-court");
     if (toggleButton) {
       try {
         await toggleCourtStatus(toggleButton);
@@ -627,6 +783,15 @@ function bindEvents() {
       launchCustomBtn.textContent = "Queue Custom Match";
     }
   });
+
+  // Winner modal buttons
+  document.getElementById("winner-team-a-btn").addEventListener("click", () => confirmFinishMatch("teamA"));
+  document.getElementById("winner-team-b-btn").addEventListener("click", () => confirmFinishMatch("teamB"));
+  document.getElementById("winner-no-winner-btn").addEventListener("click", () => confirmFinishMatch(null));
+  document.getElementById("winner-modal-close").addEventListener("click", () => {
+    _pendingFinishCourtId = null;
+    document.getElementById("winner-modal").classList.add("hidden");
+  });
 }
 
 async function bootstrap() {
@@ -640,6 +805,7 @@ async function bootstrap() {
   });
 
   bindEvents();
+  bindMatchLogEvents();
   startTimerLoop();
 
   loadCachedState();
@@ -667,6 +833,7 @@ async function bootstrap() {
     state.ready.queues = true;
     renderQueues();
     renderStats();
+    renderNextMatch();
     setupSortable();
     cacheState();
     maybeAutoAssignMatches();
@@ -677,6 +844,7 @@ async function bootstrap() {
     state.ready.courts = true;
     renderCourts();
     renderStats();
+    renderNextMatch();
     cacheState();
     maybeAutoAssignMatches();
   });
@@ -689,6 +857,8 @@ async function bootstrap() {
     renderCourts();
     renderStats();
     renderPendingMatches();
+    renderNextMatch();
+    renderMatchLog();
     cacheState();
   });
 
@@ -703,10 +873,31 @@ async function bootstrap() {
     state.pendingMatches = docs;
     state.ready.pendingMatches = true;
     renderPendingMatches();
+    renderNextMatch();
     maybeAutoAssignMatches();
   }, (error) => {
     console.error("Pending matches listener error:", error);
   });
+
+  // Real-time listeners for match log (Completed + Archived)
+  // Two separate listeners merged client-side (Firestore doesn't support OR queries here)
+  const matchLogCache = { completed: [], archived: [] };
+  const mergeMatchLog = () => {
+    const all = [...matchLogCache.completed, ...matchLogCache.archived];
+    all.sort((a, b) => (b.endedAt?.seconds || 0) - (a.endedAt?.seconds || 0));
+    state.matchLog = all.slice(0, 200);
+    renderMatchLog();
+  };
+
+  onSnapshot(query(collection(db, "matches"), where("status", "==", "Completed")), (snap) => {
+    matchLogCache.completed = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    mergeMatchLog();
+  }, (err) => console.error("Match log (Completed) error:", err));
+
+  onSnapshot(query(collection(db, "matches"), where("status", "==", "Archived")), (snap) => {
+    matchLogCache.archived = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    mergeMatchLog();
+  }, (err) => console.error("Match log (Archived) error:", err));
 }
 
 function renderPendingMatches() {
@@ -738,7 +929,286 @@ function renderPendingMatches() {
   }).join("");
 }
 
+function renderNextMatch() {
+  const container = document.getElementById("next-match-card");
+  if (!container) return;
+
+  const availableCourts = state.courts.filter(c => c.status === "Available");
+  const courtReady = availableCourts.length > 0;
+
+  // Calculate how many active courts per skill
+  const activeTally = {};
+  state.courts.forEach(c => {
+    if (c.status === "Active" && c.skill) {
+      activeTally[c.skill] = (activeTally[c.skill] || 0) + 1;
+    }
+  });
+
+  // Check pending custom matches first
+  if (state.pendingMatches.length > 0) {
+    const match = state.pendingMatches[0];
+    const teamA = match.teamA || [];
+    const teamB = match.teamB || [];
+    container.innerHTML = buildNextMatchHTML(teamA, teamB, "Custom", "Stacked", courtReady);
+    return;
+  }
+
+  // Find which skill queue is "up next" using same priority logic as auto-assign
+  const queueOptions = SKILLS.map(skill => ({
+    key: skill.key,
+    label: skill.label,
+    players: state.queues[skill.key] || [],
+  })).filter(q => q.players.length >= 4);
+
+  if (!queueOptions.length) {
+    container.innerHTML = "";
+    return;
+  }
+
+  queueOptions.sort((a, b) => {
+    const aActive = activeTally[a.label] || 0;
+    const bActive = activeTally[b.label] || 0;
+    if (aActive !== bActive) return aActive - bActive;
+    return b.players.length - a.players.length;
+  });
+
+  const chosen = queueOptions[0];
+  const nextIds = chosen.players.slice(0, 4);
+  // Team A = first 2, Team B = last 2 (preview — actual matchmaking may differ)
+  const teamA = nextIds.slice(0, 2);
+  const teamB = nextIds.slice(2, 4);
+
+  container.innerHTML = buildNextMatchHTML(teamA, teamB, chosen.label, "Auto", courtReady);
+}
+
+function buildNextMatchHTML(teamAIds, teamBIds, skillLabel, type, courtReady) {
+  const nameFor = id => state.players.get(id)?.name || "Unknown";
+
+  const skillColorClass = {
+    Beginner: "text-cyan-400",
+    Intermediate: "text-amber-400",
+    Advanced: "text-rose-400",
+    Custom: "text-purple-400",
+  }[skillLabel] || "text-slate-300";
+
+  const typeTag = type === "Auto"
+    ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Auto</span>`
+    : `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">Custom</span>`;
+
+  const courtTag = courtReady
+    ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-green-500/20 text-green-300 border border-green-500/40 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block animate-pulse"></span>Court Ready</span>`
+    : `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-500/20 text-yellow-300 border border-yellow-500/40">Waiting for Court</span>`;
+
+  const playerRow = (id) => {
+    const p = state.players.get(id);
+    if (!p) return `<div class="flex items-center gap-2 py-1.5 text-slate-500 italic text-sm">Unknown player</div>`;
+    const wins = p.wins || 0;
+    const losses = p.losses || 0;
+    const wBadge = `<span class="text-xs font-bold text-green-400">${wins}W</span>`;
+    const lBadge = `<span class="text-xs font-bold text-red-400">${losses}L</span>`;
+    return `
+      <div class="flex items-center justify-between py-1.5 border-b border-slate-700/50 last:border-0">
+        <span class="font-semibold text-slate-100">${p.name}</span>
+        <div class="flex items-center gap-2">
+          ${wBadge} ${lBadge}
+        </div>
+      </div>`;
+  };
+
+  return `
+    <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs uppercase tracking-widest font-bold text-emerald-400">Next Match</span>
+        ${typeTag}
+        <span class="px-2 py-0.5 rounded-full text-xs font-bold border border-slate-600 ${skillColorClass}">${skillLabel}</span>
+        ${courtTag}
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="rounded-lg bg-cyan-500/10 border border-cyan-500/25 p-3">
+          <p class="text-xs uppercase tracking-widest text-cyan-400 font-bold mb-2">Team A</p>
+          ${teamAIds.map(playerRow).join("")}
+        </div>
+        <div class="rounded-lg bg-rose-500/10 border border-rose-500/25 p-3">
+          <p class="text-xs uppercase tracking-widest text-rose-400 font-bold mb-2">Team B</p>
+          ${teamBIds.map(playerRow).join("")}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Match Log helpers ──────────────────────────────────────────────────────
+const MATCH_LOG_PAGE_SIZE = 10;
+
+async function archiveMatch(matchId) {
+  const { doc, setDoc, serverTimestamp } = await import("./firebase.js");
+  const matchRef = doc(db, "matches", matchId);
+  await setDoc(matchRef, { status: "Archived", updatedAt: serverTimestamp() }, { merge: true });
+}
+
+async function archiveAllMatchLog() {
+  const logs = state.matchLog || [];
+  const visible = state.matchLogShowArchived ? logs : logs.filter(m => m.status !== "Archived");
+  if (!visible.length) return;
+  if (!confirm(`Archive all ${visible.length} visible matches? They will be hidden from the log.`)) return;
+  try {
+    await Promise.all(visible.map(m => archiveMatch(m.id)));
+    showToast("All visible matches archived.");
+  } catch (err) {
+    showToast(formatFirebaseError(err), "error");
+  }
+}
+
+function renderMatchLog() {
+  const tbody = document.getElementById("match-log-body");
+  const countEl = document.getElementById("match-log-count");
+  const paginationEl = document.getElementById("match-log-pagination");
+  const pageInfoEl = document.getElementById("match-log-page-info");
+  const prevBtn = document.getElementById("match-log-prev");
+  const nextBtn = document.getElementById("match-log-next");
+  if (!tbody) return;
+
+  const showArchived = state.matchLogShowArchived || false;
+  const allLogs = state.matchLog || [];
+  const logs = showArchived ? allLogs : allLogs.filter(m => m.status !== "Archived");
+
+  const totalPages = Math.max(1, Math.ceil(logs.length / MATCH_LOG_PAGE_SIZE));
+  // Clamp page
+  if (state.matchLogPage === undefined) state.matchLogPage = 0;
+  state.matchLogPage = Math.min(state.matchLogPage, totalPages - 1);
+
+  const page = state.matchLogPage;
+  const pageSlice = logs.slice(page * MATCH_LOG_PAGE_SIZE, (page + 1) * MATCH_LOG_PAGE_SIZE);
+
+  if (countEl) {
+    const archivedCount = allLogs.filter(m => m.status === "Archived").length;
+    countEl.textContent = `${logs.length} match${logs.length !== 1 ? "es" : ""}${archivedCount ? ` · ${archivedCount} archived` : ""}`;
+  }
+
+  // Pagination controls
+  if (logs.length > MATCH_LOG_PAGE_SIZE) {
+    paginationEl?.classList.remove("hidden");
+    if (pageInfoEl) pageInfoEl.textContent = `Page ${page + 1} of ${totalPages}`;
+    if (prevBtn) prevBtn.disabled = page === 0;
+    if (nextBtn) nextBtn.disabled = page >= totalPages - 1;
+  } else {
+    paginationEl?.classList.add("hidden");
+  }
+
+  if (!pageSlice.length) {
+    tbody.innerHTML = `<tr><td class="py-6 text-slate-500 text-center" colspan="8">${showArchived ? "No matches in archive." : "No completed matches yet."}</td></tr>`;
+    return;
+  }
+
+  const nameFor = (id) => (!id ? "—" : state.players.get(id)?.name || "Unknown");
+
+  const formatTime = (ts) => {
+    if (!ts) return "—";
+    let date;
+    if (typeof ts.toDate === "function") date = ts.toDate();
+    else if (ts.seconds !== undefined) date = new Date(ts.seconds * 1000);
+    else date = new Date(ts);
+    if (isNaN(date.getTime())) return "—";
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const formatDuration = (startTs, endTs) => {
+    if (!startTs || !endTs) return "—";
+    let start, end;
+    if (typeof startTs.toDate === "function") start = startTs.toDate();
+    else if (startTs.seconds !== undefined) start = new Date(startTs.seconds * 1000);
+    else start = new Date(startTs);
+    if (typeof endTs.toDate === "function") end = endTs.toDate();
+    else if (endTs.seconds !== undefined) end = new Date(endTs.seconds * 1000);
+    else end = new Date(endTs);
+    const diffMs = Math.max(0, end - start);
+    const mins = Math.floor(diffMs / 60000);
+    const secs = Math.floor((diffMs % 60000) / 1000);
+    return `${mins}m ${secs}s`;
+  };
+
+  const courtLabel = (courtId) => (!courtId ? "—" : courtId.replace("court-", "Court "));
+
+  tbody.innerHTML = pageSlice.map((match) => {
+    const teamA = (match.teamA || []).map(nameFor).join(" & ") || "—";
+    const teamB = (match.teamB || []).map(nameFor).join(" & ") || "—";
+    const winner = match.winner;
+    const isArchived = match.status === "Archived";
+
+    let winnerBadge;
+    if (winner === "teamA") {
+      winnerBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">🏆 Team A</span>`;
+    } else if (winner === "teamB") {
+      winnerBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40">🏆 Team B</span>`;
+    } else {
+      winnerBadge = `<span class="text-slate-500 text-xs">No result</span>`;
+    }
+
+    const skillColor = { Beginner: "text-cyan-400", Intermediate: "text-amber-400", Advanced: "text-rose-400" }[match.skill] || "text-slate-400";
+
+    const archiveBtn = isArchived
+      ? `<span class="text-xs text-slate-600 italic">Archived</span>`
+      : `<button class="text-xs text-slate-400 hover:text-rose-400 transition-colors border border-slate-700 hover:border-rose-500/50 rounded-lg px-2 py-1" data-archive-match="${match.id}">Archive</button>`;
+
+    return `
+      <tr class="border-t border-slate-800/60 hover:bg-slate-800/30 transition-colors ${isArchived ? "opacity-40" : ""}">
+        <td class="py-3 pr-4 text-slate-400">${formatTime(match.endedAt)}</td>
+        <td class="pr-4 font-semibold">${courtLabel(match.courtId)}</td>
+        <td class="pr-4 ${skillColor}">${match.skill || "—"}</td>
+        <td class="pr-4 ${winner === "teamA" ? "text-cyan-300 font-semibold" : "text-slate-300"}">${teamA}</td>
+        <td class="pr-4 ${winner === "teamB" ? "text-rose-300 font-semibold" : "text-slate-300"}">${teamB}</td>
+        <td class="pr-4">${winnerBadge}</td>
+        <td class="pr-4 text-slate-400">${formatDuration(match.startedAt, match.endedAt)}</td>
+        <td class="text-right">${archiveBtn}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function bindMatchLogEvents() {
+  // Pagination
+  document.getElementById("match-log-prev")?.addEventListener("click", () => {
+    if (state.matchLogPage > 0) { state.matchLogPage--; renderMatchLog(); }
+  });
+  document.getElementById("match-log-next")?.addEventListener("click", () => {
+    const totalPages = Math.ceil((state.matchLog || []).length / MATCH_LOG_PAGE_SIZE);
+    if (state.matchLogPage < totalPages - 1) { state.matchLogPage++; renderMatchLog(); }
+  });
+
+  // Toggle archived view
+  const toggleBtn = document.getElementById("match-log-toggle-archived");
+  toggleBtn?.addEventListener("click", () => {
+    state.matchLogShowArchived = !state.matchLogShowArchived;
+    state.matchLogPage = 0;
+    toggleBtn.textContent = state.matchLogShowArchived ? "Hide Archived" : "Show Archived";
+    toggleBtn.style.color = state.matchLogShowArchived ? "#fbbf24" : "";
+    toggleBtn.style.borderColor = state.matchLogShowArchived ? "rgba(251,191,36,0.4)" : "";
+    renderMatchLog();
+  });
+
+  // Archive all
+  document.getElementById("match-log-archive-all")?.addEventListener("click", archiveAllMatchLog);
+
+  // Per-row archive (delegated)
+  document.getElementById("match-log-body")?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-archive-match]");
+    if (!btn) return;
+    const matchId = btn.dataset.archiveMatch;
+    btn.disabled = true;
+    btn.textContent = "...";
+    try {
+      await archiveMatch(matchId);
+      showToast("Match archived.");
+    } catch (err) {
+      showToast(formatFirebaseError(err), "error");
+      btn.disabled = false;
+      btn.textContent = "Archive";
+    }
+  });
+}
+
+
 bootstrap();
+
 
 const PLAYERS_TO_IMPORT = ["Mitz", "Maxx", "Mitzel", "Dyan", "Howel", "Tobs", "Marcus", "nikka", "rui", "Mench", "Micah", "Chet + 1 hubby", "Dei", "Jeg", "Cris + 1 awasak", "Mak3n + 1 Hubby 🥰🥰", "tuni", "geng", "Fiorelli", "Henry", "Ellaine R.", "Agatha", "RR", "Onib", "Danniel", "Nicole R.", "zhyti", "Bryan", "Profy", "Ta Nhi", "Cy", "Chelle + 1 Hubby", "Judy Billan", "Jomar Billan", "Jenna Quierrez", "Axl Orcullo", "Mariz", "Gary +1 (Mabitac)", "Trisha", "Baisas", "Erica", "Rosemarie", "Paulo", "Jas", "claud", "Juliah", "Cheska", "Pojeg", "Kirt Bellido"];
 

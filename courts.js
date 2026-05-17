@@ -206,7 +206,7 @@ export async function toggleCourtStatus(courtId) {
   });
 }
 
-export async function finishMatch(courtId) {
+export async function finishMatch(courtId, winnerTeam = null) {
   const courtRef = doc(db, "courts", courtId);
 
   await runTransaction(db, async (tx) => {
@@ -221,6 +221,8 @@ export async function finishMatch(courtId) {
     const match = matchSnap.exists() ? matchSnap.data() : null;
 
     const players = match?.players || court.players || [];
+    const teamA = match?.teamA || court.players?.slice(0, 2) || [];
+    const teamB = match?.teamB || court.players?.slice(2, 4) || [];
     const now = serverTimestamp();
 
     const playerRefs = players.map(id => doc(db, "players", id));
@@ -229,7 +231,7 @@ export async function finishMatch(courtId) {
     if (matchSnap.exists()) {
       tx.set(
         matchRef,
-        { status: "Completed", endedAt: now, updatedAt: now },
+        { status: "Completed", endedAt: now, updatedAt: now, winner: winnerTeam },
         { merge: true }
       );
     }
@@ -251,6 +253,8 @@ export async function finishMatch(courtId) {
       if (!snap.exists()) return;
       const player = snap.data();
       const playedWith = player.playedWith || {};
+      const currentWins = player.wins || 0;
+      const currentLosses = player.losses || 0;
 
       players.forEach((otherId) => {
         if (otherId !== snap.id) {
@@ -258,12 +262,23 @@ export async function finishMatch(courtId) {
         }
       });
 
+      const playerId = snap.id;
+      let wins = currentWins;
+      let losses = currentLosses;
+
+      if (winnerTeam === "teamA" && teamA.includes(playerId)) wins++;
+      else if (winnerTeam === "teamB" && teamB.includes(playerId)) wins++;
+      else if (winnerTeam === "teamA" && teamB.includes(playerId)) losses++;
+      else if (winnerTeam === "teamB" && teamA.includes(playerId)) losses++;
+
       tx.set(
         playerRefs[idx],
         {
           status: "Standby",
           currentMatchId: null,
           playedWith: playedWith,
+          wins,
+          losses,
           lastMatchEndedAt: now,
           updatedAt: now,
         },
