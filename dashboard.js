@@ -457,8 +457,16 @@ function renderPlayers() {
         </td>
         <td class="text-right">
           <div class="flex flex-wrap justify-end gap-2">
-            <button class="btn-secondary" data-player-absent="${player.id}">
-              ${player.status === "Absent" || player.status === "Standby" ? "Return to Queue" : "Absent"}
+            <button
+              class="btn-secondary ${player.status === "Playing" || player.status === "Stacked" ? "opacity-50 cursor-not-allowed" : ""}"
+              data-player-absent="${player.id}"
+              ${player.status === "Playing" || player.status === "Stacked" ? "disabled" : ""}
+            >
+              ${player.status === "Playing" || player.status === "Stacked"
+                ? "In Match"
+                : player.status === "Absent" || player.status === "Standby"
+                ? "Return to Queue"
+                : "Absent"}
             </button>
             <button class="btn-secondary" data-player-remove="${player.id}">Remove</button>
           </div>
@@ -839,6 +847,10 @@ function bindEvents() {
     try {
       if (absent) {
         const player = state.players.get(absent);
+        if (player?.status === "Playing" || player?.status === "Stacked") {
+          showToast("Player is currently in a match.", "error");
+          return;
+        }
         // If already Absent or Standby → return them to queue (absent=false)
         // Otherwise → mark them absent (absent=true, removes from queue)
         const isOut = player?.status === "Absent" || player?.status === "Standby";
