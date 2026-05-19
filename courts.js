@@ -62,18 +62,42 @@ export async function assignMatchToCourt(courtId, skillKey) {
   // Read latest completed match so we can avoid repeating the same players immediately.
   const lastMatchPlayers = new Set();
   if (skillLabel) {
-    const lastMatchSnap = await getDocs(
-      query(
-        collection(db, "matches"),
-        where("status", "==", "Completed"),
-        where("skill", "==", skillLabel),
-        orderBy("endedAt", "desc"),
-        limit(1)
-      )
-    );
-    if (!lastMatchSnap.empty) {
-      const lastPlayers = lastMatchSnap.docs[0].data().players || [];
-      lastPlayers.forEach((id) => lastMatchPlayers.add(id));
+    try {
+      const lastMatchSnap = await getDocs(
+        query(
+          collection(db, "matches"),
+          where("status", "==", "Completed"),
+          where("skill", "==", skillLabel),
+          orderBy("endedAt", "desc"),
+          limit(1)
+        )
+      );
+      if (!lastMatchSnap.empty) {
+        const lastPlayers = lastMatchSnap.docs[0].data().players || [];
+        lastPlayers.forEach((id) => lastMatchPlayers.add(id));
+      }
+    } catch (error) {
+      // Fallback path while composite index is still building.
+      const fallbackSnap = await getDocs(
+        query(
+          collection(db, "matches"),
+          where("status", "==", "Completed"),
+          where("skill", "==", skillLabel),
+          limit(25)
+        )
+      );
+      if (!fallbackSnap.empty) {
+        const latest = fallbackSnap.docs
+          .map((docSnap) => docSnap.data())
+          .sort((a, b) => {
+            const aMs = a?.endedAt?.toMillis ? a.endedAt.toMillis() : 0;
+            const bMs = b?.endedAt?.toMillis ? b.endedAt.toMillis() : 0;
+            return bMs - aMs;
+          })[0];
+        const lastPlayers = latest?.players || [];
+        lastPlayers.forEach((id) => lastMatchPlayers.add(id));
+      }
+      console.warn("Using fallback last-match query; composite index is likely still building.", error);
     }
   }
 
