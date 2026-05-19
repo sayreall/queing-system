@@ -394,6 +394,7 @@ function renderPlayers() {
         </td>
         <td class="text-green-400 font-semibold">${player.wins ?? 0}W</td>
         <td class="text-red-400 font-semibold">${player.losses ?? 0}L</td>
+        <td class="text-blue-400 font-semibold">${((player.wins ?? 0) + (player.losses ?? 0)) > 0 ? Math.round(((player.wins ?? 0) / ((player.wins ?? 0) + (player.losses ?? 0))) * 100) + '%' : '—'}</td>
         <td>
           <select class="input-field" data-player-skill="${player.id}">
             ${SKILLS.map(
