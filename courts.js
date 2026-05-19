@@ -3,9 +3,12 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   query,
+  where,
   orderBy,
+  limit,
   onSnapshot,
   serverTimestamp,
   runTransaction,
@@ -54,6 +57,25 @@ export async function assignMatchToCourt(courtId, skillKey) {
   const queueRef = getQueueDocRef(skillKey);
   const matchRef = doc(collection(db, "matches"));
   const now = serverTimestamp();
+  const skillLabel = skillLabelFromKey(skillKey);
+
+  // Read latest completed match so we can avoid repeating the same players immediately.
+  const lastMatchPlayers = new Set();
+  if (skillLabel) {
+    const lastMatchSnap = await getDocs(
+      query(
+        collection(db, "matches"),
+        where("status", "==", "Completed"),
+        where("skill", "==", skillLabel),
+        orderBy("endedAt", "desc"),
+        limit(1)
+      )
+    );
+    if (!lastMatchSnap.empty) {
+      const lastPlayers = lastMatchSnap.docs[0].data().players || [];
+      lastPlayers.forEach((id) => lastMatchPlayers.add(id));
+    }
+  }
 
   await runTransaction(db, async (tx) => {
     const [courtSnap, queueSnap] = await Promise.all([
@@ -72,9 +94,13 @@ export async function assignMatchToCourt(courtId, skillKey) {
     const order = queueSnap.exists() ? queueSnap.data().order || [] : [];
     if (order.length < 4) return;
 
+    // Prefer players who did not play in the latest completed match (if enough are waiting).
+    const preferredIds = order.filter((id) => !lastMatchPlayers.has(id));
+    const candidateOrder = preferredIds.length >= 4 ? preferredIds : order;
+
     // Intelligent Matchmaking: Avoid playing with the same people
-    const poolSize = Math.min(order.length, 8);
-    const poolIds = order.slice(0, poolSize);
+    const poolSize = Math.min(candidateOrder.length, 8);
+    const poolIds = candidateOrder.slice(0, poolSize);
     
     const poolRefs = poolIds.map(id => doc(db, "players", id));
     const poolSnaps = await Promise.all(poolRefs.map(ref => tx.get(ref)));
@@ -156,7 +182,7 @@ export async function assignMatchToCourt(courtId, skillKey) {
 
     tx.set(matchRef, {
       courtId,
-      skill: skillLabelFromKey(skillKey),
+      skill: skillLabel,
       players: finalPlayers,
       teamA,
       teamB,
@@ -169,7 +195,7 @@ export async function assignMatchToCourt(courtId, skillKey) {
     tx.set(
       queueRef,
       {
-        skill: skillLabelFromKey(skillKey),
+        skill: skillLabel,
         order: remaining,
         updatedAt: now,
       },
@@ -182,7 +208,7 @@ export async function assignMatchToCourt(courtId, skillKey) {
         status: "Active",
         matchId: matchRef.id,
         players: finalPlayers,
-        skill: skillLabelFromKey(skillKey),
+        skill: skillLabel,
         startedAt: now,
         updatedAt: now,
       },
