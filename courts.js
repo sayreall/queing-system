@@ -122,6 +122,12 @@ export async function assignMatchToCourt(courtId, skillKey) {
     const court = courtSnap.data();
     if (court.status !== "Available") return;
 
+    // Court-local memory from the last finished game (works even if match query/index is delayed).
+    const courtLastPlayers = court.lastMatchPlayers || [];
+    const courtLastTeamPairs = court.lastTeamPairs || [];
+    courtLastPlayers.forEach((id) => lastMatchPlayers.add(id));
+    courtLastTeamPairs.forEach((key) => lastTeammatePairs.add(key));
+
     if (court.allowedSkill && court.allowedSkill !== skillKey && skillKey !== "custom") {
       throw new Error(`This court only accepts ${court.allowedSkill} matches.`);
     }
@@ -203,7 +209,13 @@ export async function assignMatchToCourt(courtId, skillKey) {
     
     let bestTeamCombo = combos[0];
     let minTeamScore = Infinity;
-    for (const c of combos) {
+    const nonRepeatedCombos = combos.filter((c) => {
+      const aPairBlocked = lastTeammatePairs.has(pairKey(c.a[0].id, c.a[1].id));
+      const bPairBlocked = lastTeammatePairs.has(pairKey(c.b[0].id, c.b[1].id));
+      return !aPairBlocked && !bPairBlocked;
+    });
+    const teamCandidates = nonRepeatedCombos.length ? nonRepeatedCombos : combos;
+    for (const c of teamCandidates) {
       const aPairBlocked = lastTeammatePairs.has(pairKey(c.a[0].id, c.a[1].id));
       const bPairBlocked = lastTeammatePairs.has(pairKey(c.b[0].id, c.b[1].id));
       const repeatPenalty = (aPairBlocked ? 1000 : 0) + (bPairBlocked ? 1000 : 0);
@@ -335,7 +347,21 @@ export async function finishMatch(courtId, winnerTeam = null) {
       tx.set(matchRef, { status: "Completed", endedAt: now, updatedAt: now, winner: winnerTeam }, { merge: true });
     }
 
-    tx.set(courtRef, { status: "Available", matchId: null, players: [], skill: null, startedAt: null, updatedAt: now }, { merge: true });
+    const lastTeamPairs = [];
+    if (teamA.length === 2) lastTeamPairs.push([teamA[0], teamA[1]].sort().join("__"));
+    if (teamB.length === 2) lastTeamPairs.push([teamB[0], teamB[1]].sort().join("__"));
+
+    tx.set(courtRef, {
+      status: "Available",
+      matchId: null,
+      players: [],
+      skill: null,
+      startedAt: null,
+      lastMatchPlayers: players,
+      lastTeamPairs,
+      lastCompletedAt: now,
+      updatedAt: now
+    }, { merge: true });
 
     const queueAdditions = new Map();
 
