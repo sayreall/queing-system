@@ -299,8 +299,8 @@ export async function updatePlayerSkill(playerId, newSkill) {
       );
     }
 
-    const nextOrder = nextSnap.exists() ? nextSnap.data().order || [] : [];
-    nextOrder.push(playerId);
+    const nextOrderRaw = nextSnap.exists() ? nextSnap.data().order || [] : [];
+    const nextOrder = nextOrderRaw.filter((id) => id !== playerId).concat(playerId);
     tx.set(
       nextQueueRef,
       { skill: normalizedSkill, order: nextOrder, updatedAt: serverTimestamp() },
@@ -322,7 +322,14 @@ export async function markPlayerAbsent(playerId, absent) {
     const skillKey = skillKeyFromLabel(player.skill);
     const queueRef = getQueueDocRef(skillKey);
     const queueSnap = await tx.get(queueRef);
-    const order = queueSnap.exists() ? queueSnap.data().order || [] : [];
+    const orderRaw = queueSnap.exists() ? queueSnap.data().order || [] : [];
+    // Always normalize duplicates first to keep queue count accurate.
+    const seen = new Set();
+    const order = orderRaw.filter((id) => {
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
     let updated = order;
 
     if (absent) {

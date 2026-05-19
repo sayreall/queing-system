@@ -341,6 +341,15 @@ function renderCourts() {
 
 function renderPlayers() {
   const allActive = Array.from(state.players.values()).filter(p => p.status !== "Archived");
+  const court1 = state.courts.find((c) => c.id === "court-1");
+  const court2 = state.courts.find((c) => c.id === "court-2");
+  const court3 = state.courts.find((c) => c.id === "court-3");
+  const court1ActivePlayers = new Set(court1?.players || []);
+  const court1LastPlayers = new Set(court1?.lastMatchPlayers || []);
+  const court2ActivePlayers = new Set(court2?.players || []);
+  const court2LastPlayers = new Set(court2?.lastMatchPlayers || []);
+  const court3ActivePlayers = new Set(court3?.players || []);
+  const court3LastPlayers = new Set(court3?.lastMatchPlayers || []);
 
   const rows = Array.from(state.players.values())
     .filter((player) => {
@@ -406,7 +415,24 @@ function renderPlayers() {
           <input type="checkbox" class="stack-checkbox w-4 h-4 cursor-pointer" data-player-id="${player.id}" />
         </td>
         <td class="py-3 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
-        <td class="font-semibold">${player.name}</td>
+        <td class="font-semibold">
+          ${player.name}
+          ${court1ActivePlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-cyan-400/40 text-cyan-300 bg-cyan-500/10 align-middle">C1 Now</span>'
+            : court1LastPlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C1 Last</span>'
+            : ''}
+          ${court2ActivePlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-cyan-400/40 text-cyan-300 bg-cyan-500/10 align-middle">C2 Now</span>'
+            : court2LastPlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C2 Last</span>'
+            : ''}
+          ${court3ActivePlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-cyan-400/40 text-cyan-300 bg-cyan-500/10 align-middle">C3 Now</span>'
+            : court3LastPlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C3 Last</span>'
+            : ''}
+        </td>
         <td class="text-slate-400">${player.gender || "—"}</td>
         <td class="text-slate-300 text-sm">${player.location || "—"}</td>
         <td>${player.status}</td>

@@ -132,12 +132,42 @@ export async function assignMatchToCourt(courtId, skillKey) {
       throw new Error(`This court only accepts ${court.allowedSkill} matches.`);
     }
 
-    const order = queueSnap.exists() ? queueSnap.data().order || [] : [];
-    if (order.length < 4) return;
+    const orderRaw = queueSnap.exists() ? queueSnap.data().order || [] : [];
+    const uniqueOrder = Array.from(new Set(orderRaw));
+
+    // Validate queue entries in-transaction so active/invalid players are not re-matched.
+    const orderRefs = uniqueOrder.map((id) => doc(db, "players", id));
+    const orderSnaps = await Promise.all(orderRefs.map((ref) => tx.get(ref)));
+    const cleanOrder = [];
+    for (const snap of orderSnaps) {
+      if (!snap.exists()) continue;
+      const player = snap.data();
+      if (player.status !== "Waiting") continue;
+      if (player.currentMatchId) continue;
+      cleanOrder.push(snap.id);
+    }
+
+    // Self-heal queue if duplicates/stale ids are present.
+    const orderChanged =
+      cleanOrder.length !== orderRaw.length ||
+      cleanOrder.some((id, idx) => id !== orderRaw[idx]);
+    if (orderChanged) {
+      tx.set(
+        queueRef,
+        {
+          skill: skillLabel,
+          order: cleanOrder,
+          updatedAt: now,
+        },
+        { merge: true }
+      );
+    }
+
+    if (cleanOrder.length < 4) return;
 
     // Prefer players who did not play in the latest completed match (if enough are waiting).
-    const preferredIds = order.filter((id) => !lastMatchPlayers.has(id));
-    const candidateOrder = preferredIds.length >= 4 ? preferredIds : order;
+    const preferredIds = cleanOrder.filter((id) => !lastMatchPlayers.has(id));
+    const candidateOrder = preferredIds.length >= 4 ? preferredIds : cleanOrder;
 
     // Intelligent Matchmaking: Avoid playing with the same people
     const poolSize = Math.min(candidateOrder.length, 8);
@@ -195,7 +225,7 @@ export async function assignMatchToCourt(courtId, skillKey) {
     }
 
     const selectedIds = [anchor.id, ...bestCombo];
-    const remaining = order.filter(id => !selectedIds.includes(id));
+    const remaining = cleanOrder.filter(id => !selectedIds.includes(id));
 
     // Intelligent Team Selection: Minimize teammate overlap
     const p = selectedIds.map(id => poolData.find(pd => pd.id === id));
