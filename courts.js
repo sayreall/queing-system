@@ -154,8 +154,6 @@ export async function assignMatchToCourt(courtId, skillKey) {
 
     const getScore = (p1, p2) => {
       let s = (p1.playedWith[p2.id] || 0) + (p2.playedWith[p1.id] || 0);
-      // Strong penalty for mixing winners with losers
-      if (p1.lastResult && p2.lastResult && p1.lastResult !== p2.lastResult) s += 50;
       return s;
     };
 
@@ -219,7 +217,19 @@ export async function assignMatchToCourt(courtId, skillKey) {
       const aPairBlocked = lastTeammatePairs.has(pairKey(c.a[0].id, c.a[1].id));
       const bPairBlocked = lastTeammatePairs.has(pairKey(c.b[0].id, c.b[1].id));
       const repeatPenalty = (aPairBlocked ? 1000 : 0) + (bPairBlocked ? 1000 : 0);
-      const score = getScore(c.a[0], c.a[1]) + getScore(c.b[0], c.b[1]) + repeatPenalty;
+      const sameResultPenalty = (pair) => {
+        const r1 = pair[0].lastResult || null;
+        const r2 = pair[1].lastResult || null;
+        if (!r1 || !r2) return 0;
+        // Encourage winner+loser partner rotation, discourage winner+winner / loser+loser.
+        return r1 === r2 ? 80 : -20;
+      };
+      const score =
+        getScore(c.a[0], c.a[1]) +
+        getScore(c.b[0], c.b[1]) +
+        sameResultPenalty(c.a) +
+        sameResultPenalty(c.b) +
+        repeatPenalty;
       if (score < minTeamScore) {
         minTeamScore = score;
         bestTeamCombo = c;
