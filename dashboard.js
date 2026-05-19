@@ -387,6 +387,11 @@ function renderPlayers() {
         <td class="text-slate-400">${player.gender || "—"}</td>
         <td class="text-slate-300 text-sm">${player.location || "—"}</td>
         <td>${player.status}</td>
+        <td>
+          ${player.lastResult === 'Win' ? '<span class="text-xs font-semibold px-2 py-1 bg-green-500/20 text-green-400 rounded-md border border-green-500/30">Won</span>' : ''}
+          ${player.lastResult === 'Loss' ? '<span class="text-xs font-semibold px-2 py-1 bg-red-500/20 text-red-400 rounded-md border border-red-500/30">Lost</span>' : ''}
+          ${!player.lastResult ? '<span class="text-xs text-slate-500">—</span>' : ''}
+        </td>
         <td class="text-green-400 font-semibold">${player.wins ?? 0}W</td>
         <td class="text-red-400 font-semibold">${player.losses ?? 0}L</td>
         <td>
