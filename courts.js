@@ -61,6 +61,8 @@ export async function assignMatchToCourt(courtId, skillKey) {
 
   // Read latest completed match so we can avoid repeating the same players immediately.
   const lastMatchPlayers = new Set();
+  const lastTeammatePairs = new Set();
+  const pairKey = (a, b) => [a, b].sort().join("__");
   if (skillLabel) {
     try {
       const lastMatchSnap = await getDocs(
@@ -73,8 +75,13 @@ export async function assignMatchToCourt(courtId, skillKey) {
         )
       );
       if (!lastMatchSnap.empty) {
-        const lastPlayers = lastMatchSnap.docs[0].data().players || [];
+        const latest = lastMatchSnap.docs[0].data();
+        const lastPlayers = latest.players || [];
         lastPlayers.forEach((id) => lastMatchPlayers.add(id));
+        const prevTeamA = latest.teamA || [];
+        const prevTeamB = latest.teamB || [];
+        if (prevTeamA.length === 2) lastTeammatePairs.add(pairKey(prevTeamA[0], prevTeamA[1]));
+        if (prevTeamB.length === 2) lastTeammatePairs.add(pairKey(prevTeamB[0], prevTeamB[1]));
       }
     } catch (error) {
       // Fallback path while composite index is still building.
@@ -96,6 +103,10 @@ export async function assignMatchToCourt(courtId, skillKey) {
           })[0];
         const lastPlayers = latest?.players || [];
         lastPlayers.forEach((id) => lastMatchPlayers.add(id));
+        const prevTeamA = latest?.teamA || [];
+        const prevTeamB = latest?.teamB || [];
+        if (prevTeamA.length === 2) lastTeammatePairs.add(pairKey(prevTeamA[0], prevTeamA[1]));
+        if (prevTeamB.length === 2) lastTeammatePairs.add(pairKey(prevTeamB[0], prevTeamB[1]));
       }
       console.warn("Using fallback last-match query; composite index is likely still building.", error);
     }
@@ -193,7 +204,10 @@ export async function assignMatchToCourt(courtId, skillKey) {
     let bestTeamCombo = combos[0];
     let minTeamScore = Infinity;
     for (const c of combos) {
-      const score = getScore(c.a[0], c.a[1]) + getScore(c.b[0], c.b[1]);
+      const aPairBlocked = lastTeammatePairs.has(pairKey(c.a[0].id, c.a[1].id));
+      const bPairBlocked = lastTeammatePairs.has(pairKey(c.b[0].id, c.b[1].id));
+      const repeatPenalty = (aPairBlocked ? 1000 : 0) + (bPairBlocked ? 1000 : 0);
+      const score = getScore(c.a[0], c.a[1]) + getScore(c.b[0], c.b[1]) + repeatPenalty;
       if (score < minTeamScore) {
         minTeamScore = score;
         bestTeamCombo = c;
