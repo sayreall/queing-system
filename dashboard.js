@@ -392,6 +392,7 @@ function renderPlayers() {
           ${player.lastResult === 'Loss' ? '<span class="text-xs font-semibold px-2 py-1 bg-red-500/20 text-red-400 rounded-md border border-red-500/30">Lost</span>' : ''}
           ${!player.lastResult ? '<span class="text-xs text-slate-500">—</span>' : ''}
         </td>
+        <td class="text-purple-400 font-semibold">${(player.wins ?? 0) + (player.losses ?? 0)}</td>
         <td class="text-green-400 font-semibold">${player.wins ?? 0}W</td>
         <td class="text-red-400 font-semibold">${player.losses ?? 0}L</td>
         <td class="text-blue-400 font-semibold">${((player.wins ?? 0) + (player.losses ?? 0)) > 0 ? Math.round(((player.wins ?? 0) / ((player.wins ?? 0) + (player.losses ?? 0))) * 100) + '%' : '—'}</td>
