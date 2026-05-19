@@ -168,7 +168,7 @@
     <div class="glass-card">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 class="text-xl font-display font-semibold">Player Management</h2>
+          <h2 class="text-xl font-display font-semibold">Player Management <span id="total-players-count" class="text-slate-400 text-base font-normal ml-2"></span></h2>
           <p class="text-sm text-slate-400">Add, edit, or manage player availability</p>
         </div>
         <form class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center w-full sm:w-auto"
@@ -220,6 +220,7 @@
             <thead class="text-left text-slate-400">
               <tr>
                 <th class="py-2 w-8 text-center">Stack</th>
+                <th class="w-8 text-center text-slate-500">#</th>
                 <th>Player</th>
                 <th>Gender</th>
                 <th>Status</th>

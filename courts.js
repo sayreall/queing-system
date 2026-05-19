@@ -49,6 +49,19 @@ export function listenToCourts(callback) {
 }
 
 export async function assignMatchToCourt(courtId, skillKey) {
+  // Enforce court skill restrictions
+  const COURT_SKILL_MAP = {
+    "court-1": "beginner",
+    "court-2": "intermediate",
+    "court-3": null, // any skill
+  };
+  if (COURT_SKILL_MAP.hasOwnProperty(courtId)) {
+    const allowed = COURT_SKILL_MAP[courtId];
+    if (allowed !== null && skillKey !== allowed) {
+      throw new Error(`Court ${courtId} only accepts ${allowed} matches.`);
+    }
+  }
+
   const courtRef = doc(db, "courts", courtId);
   const queueRef = getQueueDocRef(skillKey);
   const matchRef = doc(collection(db, "matches"));
@@ -287,7 +300,7 @@ export async function finishMatch(courtId, winnerTeam = null) {
       tx.set(
         playerRefs[idx],
         {
-          status: "Standby",
+          status: "Waiting",
           currentMatchId: null,
           playedWith: playedWith,
           wins,
@@ -299,6 +312,26 @@ export async function finishMatch(courtId, winnerTeam = null) {
         { merge: true }
       );
     });
+
+    // Re-add finished players back to the end of their respective queues
+    const queueUpdates = new Map();
+    playerSnaps.forEach((snap) => {
+      if (!snap.exists()) return;
+      const player = snap.data();
+      const skillKey = skillKeyFromLabel(player.skill);
+      if (!skillKey) return;
+      if (!queueUpdates.has(skillKey)) queueUpdates.set(skillKey, []);
+      queueUpdates.get(skillKey).push(snap.id);
+    });
+
+    for (const [skillKey, ids] of queueUpdates.entries()) {
+      const qRef = getQueueDocRef(skillKey);
+      const qSnap = await tx.get(qRef);
+      const existingOrder = qSnap.exists() ? (qSnap.data().order || []) : [];
+      // Only add players not already in the queue
+      const newOrder = existingOrder.concat(ids.filter(id => !existingOrder.includes(id)));
+      tx.set(qRef, { order: newOrder, updatedAt: now }, { merge: true });
+    }
   });
 }
 

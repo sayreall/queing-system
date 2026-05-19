@@ -250,37 +250,65 @@ function renderCourts() {
     }
 
     if (court.status === "Available") {
-      if (bestQueue) {
+      // Determine which queues are allowed for this court
+      const courtAllowedSkill = { "court-1": "beginner", "court-2": "intermediate", "court-3": null }[cid];
+      const skillLabel = { "court-1": "Beginner Only", "court-2": "Intermediate Only", "court-3": "Any Skill" }[cid] || "";
+      const skillLabelColor = { "court-1": "text-cyan-400", "court-2": "text-amber-400", "court-3": "text-slate-400" }[cid] || "text-slate-400";
+
+      // Find the best eligible queue for this court
+      let eligibleBestQueue = null;
+      if (hasPending && courtAllowedSkill === null) {
+        eligibleBestQueue = { key: "custom", label: "Custom", count: state.pendingMatches.length * 4 };
+      } else {
+        const eligibleOptions = SKILLS
+          .filter(skill => courtAllowedSkill === null || skill.key === courtAllowedSkill)
+          .map(skill => ({ key: skill.key, label: skill.label, count: (state.queues[skill.key] || []).length }))
+          .filter(q => q.count >= 4);
+        eligibleOptions.sort((a, b) => b.count - a.count);
+        eligibleBestQueue = eligibleOptions[0] || null;
+      }
+
+      const courtQueuedTotal = courtAllowedSkill === null
+        ? totalQueued
+        : (state.queues[courtAllowedSkill] || []).length;
+
+      if (eligibleBestQueue) {
         // Queue ready — show Start Next Match
-        const skillBadgeClass = { Beginner: "text-cyan-400", Intermediate: "text-amber-400", Advanced: "text-rose-400", Custom: "text-purple-400" }[bestQueue.label] || "text-slate-300";
+        const skillBadgeClass = { Beginner: "text-cyan-400", Intermediate: "text-amber-400", Advanced: "text-rose-400", Custom: "text-purple-400" }[eligibleBestQueue.label] || "text-slate-300";
         return `
           <div class="glass-card court-card" data-court-id="${cid}">
             <div class="flex items-center justify-between">
-              <h3 class="court-title">${courtInfo.name}</h3>
+              <div>
+                <h3 class="court-title">${courtInfo.name}</h3>
+                <p class="text-xs ${skillLabelColor} mt-0.5">${skillLabel}</p>
+              </div>
               <button class="text-slate-400 hover:text-white text-lg leading-none" data-toggle-court="${cid}" title="Mark Inactive">×</button>
             </div>
             <div class="flex items-center gap-2 text-xs text-slate-400 mb-1">
               <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block"></span>
-              <span class="${skillBadgeClass} font-semibold">${bestQueue.label}</span>
-              <span>${bestQueue.count} players queued</span>
+              <span class="${skillBadgeClass} font-semibold">${eligibleBestQueue.label}</span>
+              <span>${eligibleBestQueue.count} players queued</span>
             </div>
-            <button class="btn-primary w-full py-3 text-sm" data-start-court="${cid}" data-skill-key="${bestQueue.key}">
+            <button class="btn-primary w-full py-3 text-sm" data-start-court="${cid}" data-skill-key="${eligibleBestQueue.key}">
               ▶ Start Next Match
             </button>
           </div>`;
       } else {
-        // No queue — waiting for players
-        const queued = Math.min(totalQueued, 3);
+        // No eligible queue — waiting for players
+        const queued = Math.min(courtQueuedTotal, 3);
         const pct = Math.round((queued / 4) * 100);
         return `
           <div class="glass-card court-card" data-court-id="${cid}" style="border-style:dashed;border-color:rgba(148,163,184,0.2);">
             <div class="flex items-center justify-between">
-              <h3 class="court-title text-slate-400">${courtInfo.name}</h3>
+              <div>
+                <h3 class="court-title text-slate-400">${courtInfo.name}</h3>
+                <p class="text-xs ${skillLabelColor} mt-0.5">${skillLabel}</p>
+              </div>
               <button class="text-slate-500 hover:text-white text-lg leading-none" data-toggle-court="${cid}" title="Mark Inactive">×</button>
             </div>
             <div class="flex flex-col items-center justify-center py-6 gap-3 text-center">
               <p class="text-slate-400 text-sm">Waiting for players...</p>
-              <p class="text-slate-500 text-xs">(${totalQueued}/4 in queue)</p>
+              <p class="text-slate-500 text-xs">(${courtQueuedTotal}/4 in queue)</p>
               <div class="w-full bg-slate-800 rounded-full h-1.5">
                 <div class="bg-cyan-500/50 h-1.5 rounded-full transition-all" style="width:${pct}%"></div>
               </div>
@@ -303,6 +331,8 @@ function renderCourts() {
 
 
 function renderPlayers() {
+  const allActive = Array.from(state.players.values()).filter(p => p.status !== "Archived");
+
   const rows = Array.from(state.players.values())
     .filter((player) => {
       if (state.filter === "Archived") {
@@ -315,9 +345,11 @@ function renderPlayers() {
       return matchFilter && matchSearch;
     })
     .sort((a, b) => {
-      // Standby players first
-      if (a.status === "Standby" && b.status !== "Standby") return -1;
-      if (a.status !== "Standby" && b.status === "Standby") return 1;
+      // Playing first, then Waiting, then Absent
+      const statusOrder = { Playing: 0, Stacked: 1, Waiting: 2, Absent: 3 };
+      const aS = statusOrder[a.status] ?? 4;
+      const bS = statusOrder[b.status] ?? 4;
+      if (aS !== bS) return aS - bS;
 
       // Within same status: group by lastResult — Winners → Losers → No result
       const order = { Win: 0, Loss: 1, null: 2, undefined: 2 };
@@ -326,10 +358,17 @@ function renderPlayers() {
       return aOrder - bOrder;
     });
 
+  // Update total players count badge
+  const countEl = document.getElementById("total-players-count");
+  if (countEl) {
+    const archivedCount = Array.from(state.players.values()).filter(p => p.status === "Archived").length;
+    countEl.textContent = `(${allActive.length} active${archivedCount ? `, ${archivedCount} archived` : ""})`;
+  }
+
   if (!rows.length) {
     elements.playersBody.innerHTML = `
       <tr>
-        <td class="py-4 text-slate-500" colspan="4">No matching players.</td>
+        <td class="py-4 text-slate-500" colspan="9">No matching players.</td>
       </tr>
     `;
     return;
@@ -337,11 +376,12 @@ function renderPlayers() {
 
   elements.playersBody.innerHTML = rows
     .map(
-      (player) => `
+      (player, idx) => `
       <tr class="border-t border-slate-800/60">
         <td class="py-3 text-center">
           <input type="checkbox" class="stack-checkbox w-4 h-4 cursor-pointer" data-player-id="${player.id}" />
         </td>
+        <td class="py-3 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
         <td class="font-semibold">${player.name}</td>
         <td class="text-slate-400">${player.gender || "—"}</td>
         <td>${player.status}</td>
@@ -360,7 +400,7 @@ function renderPlayers() {
         <td class="text-right">
           <div class="flex flex-wrap justify-end gap-2">
             <button class="btn-secondary" data-player-absent="${player.id}">
-              ${player.status === "Waiting" || player.status === "Playing" ? "Absent" : "Return to Queue"}
+              ${player.status === "Absent" ? "Return to Queue" : "Absent"}
             </button>
             <button class="btn-secondary" data-player-remove="${player.id}">Remove</button>
           </div>
@@ -401,6 +441,23 @@ function setupSortable() {
   });
 }
 
+// Court skill restrictions:
+// Court 1 → Beginner only
+// Court 2 → Intermediate only
+// Court 3 → Any skill (random / overflow)
+const COURT_SKILL_RESTRICTION = {
+  "court-1": "beginner",
+  "court-2": "intermediate",
+  "court-3": null, // any
+};
+
+// Returns allowed skill keys for a given court
+function getAllowedSkillsForCourt(courtId) {
+  const restriction = COURT_SKILL_RESTRICTION[courtId];
+  if (restriction === null || restriction === undefined) return null; // null means any
+  return restriction; // single key string
+}
+
 async function maybeAutoAssignMatches() {
   if (state.automationLock) return;
   if (!state.ready.queues || !state.ready.courts || !state.ready.pendingMatches) return;
@@ -415,6 +472,8 @@ async function maybeAutoAssignMatches() {
     const localQueueDeductions = {};
     
     for (const court of availableCourts) {
+      const allowedSkill = getAllowedSkillsForCourt(court.id); // null = any, string = specific key
+
       const activeTally = {};
       state.courts.forEach(c => {
         if (c.status === "Active" && c.skill) {
@@ -426,17 +485,21 @@ async function maybeAutoAssignMatches() {
         activeTally[skill] = (activeTally[skill] || 0) + count;
       }
       
-      const queueOptions = SKILLS.map((skill) => {
-        const deducted = localQueueDeductions[skill.key] || 0;
-        return {
-          key: skill.key,
-          label: skill.label,
-          length: (state.queues[skill.key] || []).length - deducted,
-          isCustom: false
-        };
-      }).filter((queue) => queue.length >= 4);
+      // Filter skill queues by court restriction
+      const queueOptions = SKILLS
+        .filter(skill => allowedSkill === null || skill.key === allowedSkill)
+        .map((skill) => {
+          const deducted = localQueueDeductions[skill.key] || 0;
+          return {
+            key: skill.key,
+            label: skill.label,
+            length: (state.queues[skill.key] || []).length - deducted,
+            isCustom: false
+          };
+        }).filter((queue) => queue.length >= 4);
 
-      if (pendingIndex < state.pendingMatches.length) {
+      // Custom (stacked) matches go to any court
+      if (allowedSkill === null && pendingIndex < state.pendingMatches.length) {
         queueOptions.push({
           key: "custom",
           label: "Custom",
@@ -445,7 +508,7 @@ async function maybeAutoAssignMatches() {
         });
       }
 
-      if (!queueOptions.length) break;
+      if (!queueOptions.length) continue; // skip this court, no eligible queue
 
       queueOptions.sort((a, b) => {
         const aActive = activeTally[a.label] || 0;
@@ -702,8 +765,11 @@ function bindEvents() {
     try {
       if (absent) {
         const player = state.players.get(absent);
-        await markPlayerAbsent(absent, player?.status === "Waiting" || player?.status === "Playing");
-        showToast("Player status updated");
+        // If already Absent → return them to queue (absent=false)
+        // Otherwise → mark them absent (absent=true, removes from queue)
+        const isCurrentlyAbsent = player?.status === "Absent";
+        await markPlayerAbsent(absent, !isCurrentlyAbsent);
+        showToast(isCurrentlyAbsent ? "Player returned to queue" : "Player marked absent");
       }
       if (remove) {
         await removePlayer(remove);
