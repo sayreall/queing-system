@@ -344,8 +344,23 @@ function renderPlayers() {
 
   const rows = Array.from(state.players.values())
     .filter((player) => {
-      if (state.filter === "Archived") {
-        return player.status === "Archived" && player.name.toLowerCase().includes(state.search.toLowerCase());
+      if (state.filter.startsWith("Archived")) {
+        if (player.status !== "Archived") return false;
+        
+        if (state.filter !== "Archived") {
+          const targetDate = state.filter.split("Archived:")[1];
+          let pDate = "";
+          if (player.updatedAt) {
+            let d;
+            if (typeof player.updatedAt.toDate === 'function') d = player.updatedAt.toDate();
+            else if (player.updatedAt.seconds) d = new Date(player.updatedAt.seconds * 1000);
+            else d = new Date(player.updatedAt);
+            if (!isNaN(d.getTime())) pDate = d.toLocaleDateString();
+          }
+          if (pDate !== targetDate) return false;
+        }
+        
+        return player.name.toLowerCase().includes(state.search.toLowerCase());
       }
       if (player.status === "Archived") return false;
 
@@ -959,6 +974,44 @@ async function bootstrap() {
 
   listenToPlayers((players) => {
     state.players = new Map(players.map((player) => [player.id, player]));
+    
+    // Dynamically rebuild player filter with archive dates
+    const archiveDates = new Set();
+    players.forEach(p => {
+      if (p.status === "Archived" && p.updatedAt) {
+        let dateObj;
+        if (typeof p.updatedAt.toDate === 'function') dateObj = p.updatedAt.toDate();
+        else if (p.updatedAt.seconds) dateObj = new Date(p.updatedAt.seconds * 1000);
+        else dateObj = new Date(p.updatedAt);
+        if (!isNaN(dateObj.getTime())) {
+          archiveDates.add(dateObj.toLocaleDateString());
+        }
+      }
+    });
+
+    const filterEl = elements.playerFilter;
+    if (filterEl) {
+      const currentVal = filterEl.value;
+      const staticOptions = `
+        <option value="All">All skills</option>
+        <option value="Beginner">Beginner</option>
+        <option value="Intermediate">Intermediate</option>
+        <option value="Advanced">Advanced</option>
+      `;
+      let archiveOptions = `<option value="Archived">All Archived</option>`;
+      Array.from(archiveDates).sort((a, b) => new Date(b) - new Date(a)).forEach(dateStr => {
+        archiveOptions += `<option value="Archived:${dateStr}">Archived: ${dateStr}</option>`;
+      });
+      filterEl.innerHTML = staticOptions + archiveOptions;
+      
+      if (Array.from(filterEl.options).some(o => o.value === currentVal)) {
+        filterEl.value = currentVal;
+      } else {
+        filterEl.value = "All";
+        state.filter = "All";
+      }
+    }
+
     state.ready.players = true;
     renderPlayers();
     renderQueues();
