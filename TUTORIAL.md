@@ -16,13 +16,13 @@ You have two ways to add players: bulk import or individual walk-ins.
    - `Gender` (Optional: Male, Female)
    - `Location` (Optional: e.g., "Lobby", "Outside")
 3. Review the preview table to ensure the data is correct.
-4. Click **"Save to Queue"**. All valid players will be instantly added to the back of their respective skill queues.
+4. Click **"Save to Queue"**. All valid players will be instantly added to the system as **Standby**. You must click "Return to Queue" next to their names to officially queue them up to play!
 
 ### Walk-ins (Adding one at a time)
 1. On the main Dashboard, go to the **Player Management** section.
 2. Fill out the "Add Player" form (Name, Skill, Gender, Location).
 3. Click **"Add Player"**. 
-4. The player is automatically added to the *bottom* of the waitlist for their skill level.
+4. The player is automatically added as **Standby**. Click "Return to Queue" to add them to the waitlist.
 
 ---
 

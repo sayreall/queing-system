@@ -105,22 +105,14 @@ export async function addPlayer({ name, skill, gender, location }) {
   const queueRef = getQueueDocRef(skillKey);
   const now = serverTimestamp();
 
-  // Use a transaction so player doc + queue are updated atomically
+  // Use a transaction to ensure clean state
   await runTransaction(db, async (tx) => {
-    const queueSnap = await tx.get(queueRef);
-    const existingOrder = queueSnap.exists() ? (queueSnap.data().order || []) : [];
-
-    // Only append if not already in queue (guard for revive case)
-    const newOrder = existingOrder.includes(playerRef.id)
-      ? existingOrder
-      : [...existingOrder, playerRef.id];
-
     if (isRevive) {
       tx.set(playerRef, {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Waiting",
+        status: "Standby",
         playedWith: {},
         updatedAt: now,
       }, { merge: true });
@@ -131,19 +123,13 @@ export async function addPlayer({ name, skill, gender, location }) {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Waiting",
+        status: "Standby",
         playedWith: {},
         currentMatchId: null,
         createdAt: now,
         updatedAt: now,
       });
     }
-
-    tx.set(queueRef, {
-      skill: normalizedSkill,
-      order: newOrder,
-      updatedAt: now,
-    }, { merge: true });
   });
 
   return playerRef.id;
@@ -194,7 +180,7 @@ export async function addPlayersBulk(entries) {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Waiting",
+        status: "Standby",
         playedWith: {},
         updatedAt: now,
       }, { merge: true });
@@ -205,40 +191,16 @@ export async function addPlayersBulk(entries) {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Waiting",
+        status: "Standby",
         playedWith: {},
         currentMatchId: null,
         createdAt: now,
         updatedAt: now,
       });
     }
-
-    if (!queueAdditions.has(skillKey)) {
-      queueAdditions.set(skillKey, []);
-    }
-    queueAdditions.get(skillKey).push(playerRef.id);
   });
 
   await batch.commit();
-
-  for (const [skillKey, ids] of queueAdditions.entries()) {
-    await runTransaction(db, async (tx) => {
-      const queueRef = getQueueDocRef(skillKey);
-      const queueSnap = await tx.get(queueRef);
-      const order = queueSnap.exists() ? queueSnap.data().order || [] : [];
-      const updated = order.concat(ids);
-
-      tx.set(
-        queueRef,
-        {
-          skill: skillLabelFromKey(skillKey),
-          order: updated,
-          updatedAt: now,
-        },
-        { merge: true }
-      );
-    });
-  }
 }
 
 export async function removePlayer(playerId) {
