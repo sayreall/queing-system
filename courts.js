@@ -306,23 +306,8 @@ export async function finishMatch(courtId, winnerTeam = null) {
       else if (winnerTeam === "teamA" && teamB.includes(playerId)) { losses++; lastResult = "Loss"; }
       else if (winnerTeam === "teamB" && teamA.includes(playerId)) { losses++; lastResult = "Loss"; }
 
-      tx.set(playerRefs[idx], { status: "Waiting", currentMatchId: null, playedWith, wins, losses, lastResult, lastMatchEndedAt: now, updatedAt: now }, { merge: true });
-
-      const skillKey = skillKeyFromLabel(player.skill);
-      if (skillKey) {
-        if (!queueAdditions.has(skillKey)) queueAdditions.set(skillKey, []);
-        queueAdditions.get(skillKey).push(snap.id);
-      }
+      tx.set(playerRefs[idx], { status: "Standby", currentMatchId: null, playedWith, wins, losses, lastResult, lastMatchEndedAt: now, updatedAt: now }, { merge: true });
     });
-
-    // Write queue updates using already-read snapshots
-    for (const [skillKey, ids] of queueAdditions.entries()) {
-      const qRef = queueRefsMap.get(skillKey);
-      const qSnap = queueSnapsMap.get(skillKey);
-      const existingOrder = qSnap?.exists() ? (qSnap.data().order || []) : [];
-      const newOrder = existingOrder.concat(ids.filter(id => !existingOrder.includes(id)));
-      tx.set(qRef, { order: newOrder, updatedAt: now }, { merge: true });
-    }
   });
 }
 

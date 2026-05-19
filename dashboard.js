@@ -346,10 +346,10 @@ function renderPlayers() {
       return matchFilter && matchSearch;
     })
     .sort((a, b) => {
-      // Playing first, then Waiting, then Absent
-      const statusOrder = { Playing: 0, Stacked: 1, Waiting: 2, Absent: 3 };
-      const aS = statusOrder[a.status] ?? 4;
-      const bS = statusOrder[b.status] ?? 4;
+      // Playing first, then Stacked, then Standby, then Waiting, then Absent
+      const statusOrder = { Playing: 0, Stacked: 1, Standby: 2, Waiting: 3, Absent: 4 };
+      const aS = statusOrder[a.status] ?? 5;
+      const bS = statusOrder[b.status] ?? 5;
       if (aS !== bS) return aS - bS;
 
       // Within same status: group by lastResult — Winners → Losers → No result
@@ -402,7 +402,7 @@ function renderPlayers() {
         <td class="text-right">
           <div class="flex flex-wrap justify-end gap-2">
             <button class="btn-secondary" data-player-absent="${player.id}">
-              ${player.status === "Absent" ? "Return to Queue" : "Absent"}
+              ${player.status === "Absent" || player.status === "Standby" ? "Return to Queue" : "Absent"}
             </button>
             <button class="btn-secondary" data-player-remove="${player.id}">Remove</button>
           </div>
@@ -769,11 +769,11 @@ function bindEvents() {
     try {
       if (absent) {
         const player = state.players.get(absent);
-        // If already Absent → return them to queue (absent=false)
+        // If already Absent or Standby → return them to queue (absent=false)
         // Otherwise → mark them absent (absent=true, removes from queue)
-        const isCurrentlyAbsent = player?.status === "Absent";
-        await markPlayerAbsent(absent, !isCurrentlyAbsent);
-        showToast(isCurrentlyAbsent ? "Player returned to queue" : "Player marked absent");
+        const isOut = player?.status === "Absent" || player?.status === "Standby";
+        await markPlayerAbsent(absent, !isOut);
+        showToast(isOut ? "Player returned to queue" : "Player marked absent");
       }
       if (remove) {
         await removePlayer(remove);
