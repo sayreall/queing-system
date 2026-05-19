@@ -53,8 +53,18 @@ const elements = {
   searchInput: document.getElementById("player-search"),
   filterSelect: document.getElementById("player-filter"),
   playersBody: document.getElementById("players-body"),
+  donePlayersBody: document.getElementById("done-players-body"),
   toastContainer: document.getElementById("toast-container"),
 };
+
+function shuffleArray(input) {
+  const arr = input.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 function showToast(message, tone = "info") {
   const toast = document.createElement("div");
@@ -351,7 +361,7 @@ function renderPlayers() {
   const court3ActivePlayers = new Set(court3?.players || []);
   const court3LastPlayers = new Set(court3?.lastMatchPlayers || []);
 
-  const rows = Array.from(state.players.values())
+  const filteredRows = Array.from(state.players.values())
     .filter((player) => {
       if (state.filter.startsWith("Archived")) {
         if (player.status !== "Archived") return false;
@@ -378,18 +388,23 @@ function renderPlayers() {
       return matchFilter && matchSearch;
     })
     .sort((a, b) => {
-      // Playing first, then Stacked, then Standby, then Waiting, then Absent
       const statusOrder = { Playing: 0, Stacked: 1, Standby: 2, Waiting: 3, Absent: 4 };
       const aS = statusOrder[a.status] ?? 5;
       const bS = statusOrder[b.status] ?? 5;
       if (aS !== bS) return aS - bS;
-
-      // Within same status: group by lastResult — Winners → Losers → No result
       const order = { Win: 0, Loss: 1, null: 2, undefined: 2 };
       const aOrder = order[a.lastResult] ?? 2;
       const bOrder = order[b.lastResult] ?? 2;
       return aOrder - bOrder;
     });
+
+  const doneRows = state.filter.startsWith("Archived")
+    ? []
+    : filteredRows.filter((player) => player.status === "Standby");
+  const activeRowsRaw = state.filter.startsWith("Archived")
+    ? filteredRows
+    : filteredRows.filter((player) => player.status !== "Standby");
+  const activeRows = state.filter.startsWith("Archived") ? activeRowsRaw : shuffleArray(activeRowsRaw);
 
   // Update total players count badge
   const countEl = document.getElementById("total-players-count");
@@ -398,18 +413,16 @@ function renderPlayers() {
     countEl.textContent = `(${allActive.length} active${archivedCount ? `, ${archivedCount} archived` : ""})`;
   }
 
-  if (!rows.length) {
+  if (!activeRows.length) {
     elements.playersBody.innerHTML = `
       <tr>
-        <td class="py-4 text-slate-500" colspan="9">No matching players.</td>
+        <td class="py-4 text-slate-500" colspan="13">No remaining players to play.</td>
       </tr>
     `;
-    return;
-  }
-
-  elements.playersBody.innerHTML = rows
-    .map(
-      (player, idx) => `
+  } else {
+    elements.playersBody.innerHTML = activeRows
+      .map(
+        (player, idx) => `
       <tr class="border-t border-slate-800/60">
         <td class="py-3 text-center">
           <input type="checkbox" class="stack-checkbox w-4 h-4 cursor-pointer" data-player-id="${player.id}" />
@@ -473,8 +486,97 @@ function renderPlayers() {
         </td>
       </tr>
     `
+      )
+      .join("");
+  }
+
+  elements.donePlayersBody.innerHTML = doneRows.length
+    ? doneRows
+    .map(
+      (player, idx) => `
+      <tr class="border-t border-slate-800/60">
+        <td class="py-3 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
+        <td class="font-semibold">
+          ${player.name}
+          ${court1ActivePlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-cyan-400/40 text-cyan-300 bg-cyan-500/10 align-middle">C1 Now</span>'
+            : court1LastPlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C1 Last</span>'
+            : ''}
+          ${court2ActivePlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-cyan-400/40 text-cyan-300 bg-cyan-500/10 align-middle">C2 Now</span>'
+            : court2LastPlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C2 Last</span>'
+            : ''}
+          ${court3ActivePlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-cyan-400/40 text-cyan-300 bg-cyan-500/10 align-middle">C3 Now</span>'
+            : court3LastPlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C3 Last</span>'
+            : ''}
+        </td>
+        <td class="text-slate-400">${player.gender || "—"}</td>
+        <td class="text-slate-300 text-sm">${player.location || "—"}</td>
+        <td>${player.status}</td>
+        <td>
+          ${player.lastResult === 'Win' ? '<span class="text-xs font-semibold px-2 py-1 bg-green-500/20 text-green-400 rounded-md border border-green-500/30">Won</span>' : ''}
+          ${player.lastResult === 'Loss' ? '<span class="text-xs font-semibold px-2 py-1 bg-red-500/20 text-red-400 rounded-md border border-red-500/30">Lost</span>' : ''}
+          ${!player.lastResult ? '<span class="text-xs text-slate-500">—</span>' : ''}
+        </td>
+        <td class="text-purple-400 font-semibold">${(player.wins ?? 0) + (player.losses ?? 0)}</td>
+        <td class="text-green-400 font-semibold">${player.wins ?? 0}W</td>
+        <td class="text-red-400 font-semibold">${player.losses ?? 0}L</td>
+        <td class="text-blue-400 font-semibold">${((player.wins ?? 0) + (player.losses ?? 0)) > 0 ? Math.round(((player.wins ?? 0) / ((player.wins ?? 0) + (player.losses ?? 0))) * 100) + '%' : '—'}</td>
+        <td>
+          <select class="input-field" data-player-skill="${player.id}">
+            ${SKILLS.map(
+              (skill) =>
+                `<option value="${skill.label}" ${
+                  player.skill === skill.label ? "selected" : ""
+                }>${skill.label}</option>`
+            ).join("")}
+          </select>
+        </td>
+        <td class="text-right">
+          <div class="flex flex-wrap justify-end gap-2">
+            <button class="btn-secondary" data-player-absent="${player.id}">Return to Queue</button>
+            <button class="btn-secondary" data-player-remove="${player.id}">Remove</button>
+          </div>
+        </td>
+      </tr>
+    `
     )
-    .join("");
+    .join("")
+    : `
+      <tr>
+        <td class="py-4 text-slate-500" colspan="12">No done-playing players yet.</td>
+      </tr>
+    `;
+}
+
+async function handlePlayerActionClick(event) {
+  const absent = event.target.getAttribute("data-player-absent");
+  const remove = event.target.getAttribute("data-player-remove");
+  if (!absent && !remove) return;
+
+  try {
+    if (absent) {
+      const player = state.players.get(absent);
+      if (player?.status === "Playing" || player?.status === "Stacked") {
+        showToast("Player is currently in a match.", "error");
+        return;
+      }
+      const isOut = player?.status === "Absent" || player?.status === "Standby";
+      await markPlayerAbsent(absent, !isOut);
+      showToast(isOut ? "Player returned to queue" : "Player marked absent");
+    }
+    if (remove) {
+      await removePlayer(remove);
+      showToast("Player removed");
+    }
+  } catch (error) {
+    console.error("Player update failed", error);
+    showToast(formatFirebaseError(error), "error");
+  }
 }
 
 function setupSortable() {
@@ -840,32 +942,8 @@ function bindEvents() {
     }
   });
 
-  elements.playersBody.addEventListener("click", async (event) => {
-    const absent = event.target.getAttribute("data-player-absent");
-    const remove = event.target.getAttribute("data-player-remove");
-
-    try {
-      if (absent) {
-        const player = state.players.get(absent);
-        if (player?.status === "Playing" || player?.status === "Stacked") {
-          showToast("Player is currently in a match.", "error");
-          return;
-        }
-        // If already Absent or Standby → return them to queue (absent=false)
-        // Otherwise → mark them absent (absent=true, removes from queue)
-        const isOut = player?.status === "Absent" || player?.status === "Standby";
-        await markPlayerAbsent(absent, !isOut);
-        showToast(isOut ? "Player returned to queue" : "Player marked absent");
-      }
-      if (remove) {
-        await removePlayer(remove);
-        showToast("Player removed");
-      }
-    } catch (error) {
-      console.error("Player update failed", error);
-      showToast(formatFirebaseError(error), "error");
-    }
-  });
+  elements.playersBody.addEventListener("click", handlePlayerActionClick);
+  elements.donePlayersBody.addEventListener("click", handlePlayerActionClick);
   elements.playersBody.addEventListener("change", (event) => {
     if (event.target.classList.contains("stack-checkbox")) {
       const checkedBoxes = document.querySelectorAll(".stack-checkbox:checked");

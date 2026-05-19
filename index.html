@@ -237,10 +237,40 @@
             </thead>
             <tbody id="players-body">
               <tr>
-                <td class="py-4 text-slate-500" colspan="4">Loading players...</td>
+                <td class="py-4 text-slate-500" colspan="13">Loading players...</td>
               </tr>
             </tbody>
           </table>
+
+          <div class="mt-6 border-t border-slate-800/60 pt-4">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-base font-display font-semibold">Done Playing</h3>
+              <span class="text-xs text-slate-400">Players already finished their last match</span>
+            </div>
+            <table class="w-full text-sm whitespace-nowrap" id="done-players-table">
+              <thead class="text-left text-slate-400">
+                <tr>
+                  <th class="py-2 w-8 text-center">#</th>
+                  <th>Player</th>
+                  <th>Gender</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th>Last Match</th>
+                  <th class="text-purple-400" title="Games Played">GP</th>
+                  <th class="text-green-400">W</th>
+                  <th class="text-red-400">L</th>
+                  <th class="text-blue-400">Win %</th>
+                  <th>Skill</th>
+                  <th class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="done-players-body">
+                <tr>
+                  <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
