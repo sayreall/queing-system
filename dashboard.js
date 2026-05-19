@@ -18,6 +18,7 @@ import {
   assignMatchToCourt,
   finishMatch,
   toggleCourtStatus,
+  updateCourtAllowedSkill,
 } from "./courts.js";
 import { db, collection, query, where, orderBy, limit, onSnapshot } from "./firebase.js";
 
@@ -251,10 +252,17 @@ function renderCourts() {
     }
 
     if (court.status === "Available") {
-      // Determine which queues are allowed for this court
-      const courtAllowedSkill = { "court-1": "beginner", "court-2": "intermediate", "court-3": null }[cid];
-      const skillLabel = { "court-1": "Beginner Only", "court-2": "Intermediate Only", "court-3": "Any Skill" }[cid] || "";
-      const skillLabelColor = { "court-1": "text-cyan-400", "court-2": "text-amber-400", "court-3": "text-slate-400" }[cid] || "text-slate-400";
+      // Determine which queues are allowed for this court (fallback to default map if null/undefined)
+      const courtAllowedSkill = court.allowedSkill !== undefined ? court.allowedSkill : { "court-1": "beginner", "court-2": "intermediate", "court-3": null }[cid];
+
+      const skillDropdown = `
+        <select class="input-field text-xs py-1 px-2 h-auto mt-1 w-36 bg-slate-800 border-slate-700" data-court-skill-select="${cid}">
+          <option value="any" ${courtAllowedSkill === null || courtAllowedSkill === "any" ? "selected" : ""}>Any Skill</option>
+          <option value="beginner" ${courtAllowedSkill === "beginner" ? "selected" : ""}>Beginner Only</option>
+          <option value="intermediate" ${courtAllowedSkill === "intermediate" ? "selected" : ""}>Intermediate Only</option>
+          <option value="advanced" ${courtAllowedSkill === "advanced" ? "selected" : ""}>Advanced Only</option>
+        </select>
+      `;
 
       // Find the best eligible queue for this court
       let eligibleBestQueue = null;
@@ -281,7 +289,7 @@ function renderCourts() {
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="court-title">${courtInfo.name}</h3>
-                <p class="text-xs ${skillLabelColor} mt-0.5">${skillLabel}</p>
+                ${skillDropdown}
               </div>
               <button class="text-slate-400 hover:text-white text-lg leading-none" data-toggle-court="${cid}" title="Mark Inactive">×</button>
             </div>
@@ -303,7 +311,7 @@ function renderCourts() {
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="court-title text-slate-400">${courtInfo.name}</h3>
-                <p class="text-xs ${skillLabelColor} mt-0.5">${skillLabel}</p>
+                ${skillDropdown}
               </div>
               <button class="text-slate-500 hover:text-white text-lg leading-none" data-toggle-court="${cid}" title="Mark Inactive">×</button>
             </div>
@@ -757,15 +765,29 @@ function bindEvents() {
   });
 
   elements.playersBody.addEventListener("change", async (event) => {
-    const select = event.target.closest("select[data-player-skill]");
-    if (!select) return;
-    const playerId = select.dataset.playerSkill;
-    try {
-      await updatePlayerSkill(playerId, select.value);
-      showToast("Player skill updated");
-    } catch (error) {
-      console.error("Update skill failed", error);
-      showToast(formatFirebaseError(error), "error");
+    if (event.target.dataset.playerSkill) {
+      const playerId = event.target.dataset.playerSkill;
+      const newSkill = event.target.value;
+      try {
+        await updatePlayerSkill(playerId, newSkill);
+        showToast("Player skill updated");
+      } catch (err) {
+        showToast(err.message || "Error updating skill", "error");
+      }
+    }
+  });
+
+  document.body.addEventListener("change", async (event) => {
+    if (event.target.dataset.courtSkillSelect) {
+      const courtId = event.target.dataset.courtSkillSelect;
+      const val = event.target.value;
+      const newSkill = val === "any" ? null : val;
+      try {
+        await updateCourtAllowedSkill(courtId, newSkill);
+        showToast("Court restriction updated");
+      } catch (err) {
+        showToast("Error updating court", "error");
+      }
     }
   });
 

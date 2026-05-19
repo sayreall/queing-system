@@ -30,6 +30,7 @@ export async function ensureCourtsExist() {
           matchId: null,
           players: [],
           skill: null,
+          allowedSkill: null,
           startedAt: null,
           updatedAt: serverTimestamp(),
         });
@@ -49,19 +50,6 @@ export function listenToCourts(callback) {
 }
 
 export async function assignMatchToCourt(courtId, skillKey) {
-  // Enforce court skill restrictions
-  const COURT_SKILL_MAP = {
-    "court-1": "beginner",
-    "court-2": "intermediate",
-    "court-3": null, // any skill
-  };
-  if (COURT_SKILL_MAP.hasOwnProperty(courtId)) {
-    const allowed = COURT_SKILL_MAP[courtId];
-    if (allowed !== null && skillKey !== allowed) {
-      throw new Error(`Court ${courtId} only accepts ${allowed} matches.`);
-    }
-  }
-
   const courtRef = doc(db, "courts", courtId);
   const queueRef = getQueueDocRef(skillKey);
   const matchRef = doc(collection(db, "matches"));
@@ -76,6 +64,10 @@ export async function assignMatchToCourt(courtId, skillKey) {
     if (!courtSnap.exists()) return;
     const court = courtSnap.data();
     if (court.status !== "Available") return;
+
+    if (court.allowedSkill && court.allowedSkill !== skillKey && skillKey !== "custom") {
+      throw new Error(`This court only accepts ${court.allowedSkill} matches.`);
+    }
 
     const order = queueSnap.exists() ? queueSnap.data().order || [] : [];
     if (order.length < 4) return;
@@ -414,4 +406,9 @@ export async function activatePendingMatch(matchId, courtId) {
       }, { merge: true });
     });
   });
+}
+
+export async function updateCourtAllowedSkill(courtId, allowedSkill) {
+  const courtRef = doc(db, "courts", courtId);
+  await setDoc(courtRef, { allowedSkill, updatedAt: serverTimestamp() }, { merge: true });
 }
