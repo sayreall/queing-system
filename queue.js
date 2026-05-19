@@ -72,10 +72,11 @@ export async function ensureQueuesExist() {
   );
 }
 
-export async function addPlayer({ name, skill, gender }) {
+export async function addPlayer({ name, skill, gender, location }) {
   const trimmedName = normalizeName(name || "");
   const normalizedSkill = normalizeSkill(skill || "");
   const playerGender = gender || "Unspecified";
+  const playerLocation = (location || "").trim();
 
   if (!trimmedName) throw new Error("Player name is required.");
   if (!normalizedSkill) throw new Error("Skill level is invalid.");
@@ -101,29 +102,49 @@ export async function addPlayer({ name, skill, gender }) {
   }
 
   const skillKey = skillKeyFromLabel(normalizedSkill);
+  const queueRef = getQueueDocRef(skillKey);
   const now = serverTimestamp();
 
-  if (isRevive) {
-    await setDoc(playerRef, {
+  // Use a transaction so player doc + queue are updated atomically
+  await runTransaction(db, async (tx) => {
+    const queueSnap = await tx.get(queueRef);
+    const existingOrder = queueSnap.exists() ? (queueSnap.data().order || []) : [];
+
+    // Only append if not already in queue (guard for revive case)
+    const newOrder = existingOrder.includes(playerRef.id)
+      ? existingOrder
+      : [...existingOrder, playerRef.id];
+
+    if (isRevive) {
+      tx.set(playerRef, {
+        skill: normalizedSkill,
+        gender: playerGender,
+        location: playerLocation,
+        status: "Waiting",
+        playedWith: {},
+        updatedAt: now,
+      }, { merge: true });
+    } else {
+      tx.set(playerRef, {
+        name: trimmedName,
+        nameLower,
+        skill: normalizedSkill,
+        gender: playerGender,
+        location: playerLocation,
+        status: "Waiting",
+        playedWith: {},
+        currentMatchId: null,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    tx.set(queueRef, {
       skill: normalizedSkill,
-      gender: playerGender,
-      status: "Standby",
-      playedWith: {},
+      order: newOrder,
       updatedAt: now,
     }, { merge: true });
-  } else {
-    await setDoc(playerRef, {
-      name: trimmedName,
-      nameLower,
-      skill: normalizedSkill,
-      gender: playerGender,
-      status: "Standby",
-      playedWith: {},
-      currentMatchId: null,
-      createdAt: now,
-      updatedAt: now,
-    });
-  }
+  });
 
   return playerRef.id;
 }
@@ -143,6 +164,7 @@ export async function addPlayersBulk(entries) {
     const trimmedName = (entry.name || "").trim();
     const normalizedSkill = normalizeSkill(entry.skill || "");
     const playerGender = entry.gender || "Unspecified";
+    const playerLocation = (entry.location || entry.Location || "").trim();
     if (!trimmedName || !normalizedSkill) return;
 
     const nameLower = trimmedName.toLowerCase();
@@ -171,6 +193,7 @@ export async function addPlayersBulk(entries) {
       batch.set(playerRef, {
         skill: normalizedSkill,
         gender: playerGender,
+        location: playerLocation,
         status: "Waiting",
         playedWith: {},
         updatedAt: now,
@@ -181,6 +204,7 @@ export async function addPlayersBulk(entries) {
         nameLower,
         skill: normalizedSkill,
         gender: playerGender,
+        location: playerLocation,
         status: "Waiting",
         playedWith: {},
         currentMatchId: null,

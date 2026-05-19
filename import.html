@@ -48,7 +48,7 @@
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 class="text-xl font-display font-semibold">Upload Spreadsheet</h2>
-            <p class="text-sm text-slate-400">Upload .xlsx or .csv files with Name, Skill, and Gender columns.</p>
+            <p class="text-sm text-slate-400">Upload .xlsx or .csv files with Name, Skill, Gender, and Location columns.</p>
           </div>
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
             <input type="file" id="import-file" class="input-field" accept=".xlsx,.csv" />
@@ -69,12 +69,13 @@
                   <th class="py-2">Name</th>
                   <th>Skill</th>
                   <th>Gender</th>
+                  <th>Location</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody id="import-body">
                 <tr>
-                  <td class="py-4 text-slate-500" colspan="4">No file loaded.</td>
+                  <td class="py-4 text-slate-500" colspan="5">No file loaded.</td>
                 </tr>
               </tbody>
             </table>

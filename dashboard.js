@@ -46,6 +46,7 @@ const elements = {
   addForm: document.getElementById("add-player-form"),
   nameInput: document.getElementById("player-name"),
   skillSelect: document.getElementById("player-skill"),
+  locationInput: document.getElementById("player-location"),
   debugSave: document.getElementById("debug-save"),
   archiveAll: document.getElementById("archive-all"),
   searchInput: document.getElementById("player-search"),
@@ -384,6 +385,7 @@ function renderPlayers() {
         <td class="py-3 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
         <td class="font-semibold">${player.name}</td>
         <td class="text-slate-400">${player.gender || "—"}</td>
+        <td class="text-slate-300 text-sm">${player.location || "—"}</td>
         <td>${player.status}</td>
         <td class="text-green-400 font-semibold">${player.wins ?? 0}W</td>
         <td class="text-red-400 font-semibold">${player.losses ?? 0}L</td>
@@ -607,10 +609,12 @@ function bindEvents() {
         name: elements.nameInput.value,
         skill: elements.skillSelect.value,
         gender: genderSelect ? genderSelect.value : "",
+        location: elements.locationInput ? elements.locationInput.value.trim() : "",
       });
       elements.nameInput.value = "";
       elements.skillSelect.value = "";
       if (genderSelect) genderSelect.value = "";
+      if (elements.locationInput) elements.locationInput.value = "";
       showToast("Player added");
     } catch (error) {
       console.error("Add player failed", error);

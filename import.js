@@ -14,7 +14,7 @@ function renderRows() {
   if (!rows.length) {
     tableBody.innerHTML = `
       <tr>
-        <td class="py-4 text-slate-500" colspan="3">No file loaded.</td>
+        <td class="py-4 text-slate-500" colspan="5">No file loaded.</td>
       </tr>
     `;
     summary.textContent = "";
@@ -29,6 +29,7 @@ function renderRows() {
       <td class="py-3 font-semibold">${row.name || ""}</td>
       <td>${row.skill || ""}</td>
       <td>${row.gender || "Unspecified"}</td>
+      <td class="text-slate-400">${row.location || "—"}</td>
       <td>${row.valid ? (row.isRevive ? "Ready (Revive)" : "Ready") : row.reason}</td>
     `;
     tableBody.appendChild(tr);
@@ -46,6 +47,7 @@ function validateRows(rawRows) {
     const name = (row.Name || row.name || "").trim();
     const skill = (row.Skill || row.skill || "").trim();
     const gender = (row.Gender || row.gender || "Unspecified").trim();
+    const location = (row.Location || row.location || "").trim();
     const normalizedSkill = normalizeSkill(skill);
     const nameLower = name.toLowerCase();
 
@@ -78,6 +80,7 @@ function validateRows(rawRows) {
       name,
       skill: normalizedSkill || skill,
       gender,
+      location,
       valid,
       reason,
       isRevive,

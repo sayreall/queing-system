@@ -235,6 +235,7 @@ export async function finishMatch(courtId, winnerTeam = null) {
   const courtRef = doc(db, "courts", courtId);
 
   await runTransaction(db, async (tx) => {
+    // ── PHASE 1: ALL READS ─────────────────────────────────────────────────
     const courtSnap = await tx.get(courtRef);
     if (!courtSnap.exists()) return;
 
@@ -253,31 +254,39 @@ export async function finishMatch(courtId, winnerTeam = null) {
     const playerRefs = players.map(id => doc(db, "players", id));
     const playerSnaps = await Promise.all(playerRefs.map(ref => tx.get(ref)));
 
+    // Determine which skill queues we'll need, then read them ALL now
+    const skillKeysNeeded = new Set();
+    playerSnaps.forEach((snap) => {
+      if (!snap.exists()) return;
+      const skillKey = skillKeyFromLabel(snap.data().skill);
+      if (skillKey) skillKeysNeeded.add(skillKey);
+    });
+
+    const queueRefsMap = new Map();
+    const queueSnapsMap = new Map();
+    for (const key of skillKeysNeeded) {
+      queueRefsMap.set(key, getQueueDocRef(key));
+    }
+    await Promise.all(
+      Array.from(queueRefsMap.entries()).map(async ([key, ref]) => {
+        queueSnapsMap.set(key, await tx.get(ref));
+      })
+    );
+
+    // ── PHASE 2: ALL WRITES (no tx.get allowed below this line) ────────────
+
     if (matchSnap.exists()) {
-      tx.set(
-        matchRef,
-        { status: "Completed", endedAt: now, updatedAt: now, winner: winnerTeam },
-        { merge: true }
-      );
+      tx.set(matchRef, { status: "Completed", endedAt: now, updatedAt: now, winner: winnerTeam }, { merge: true });
     }
 
-    tx.set(
-      courtRef,
-      {
-        status: "Available",
-        matchId: null,
-        players: [],
-        skill: null,
-        startedAt: null,
-        updatedAt: now,
-      },
-      { merge: true }
-    );
+    tx.set(courtRef, { status: "Available", matchId: null, players: [], skill: null, startedAt: null, updatedAt: now }, { merge: true });
+
+    const queueAdditions = new Map();
 
     playerSnaps.forEach((snap, idx) => {
       if (!snap.exists()) return;
       const player = snap.data();
-      const playedWith = player.playedWith || {};
+      const playedWith = { ...(player.playedWith || {}) };
       const currentWins = player.wins || 0;
       const currentLosses = player.losses || 0;
 
@@ -297,38 +306,20 @@ export async function finishMatch(courtId, winnerTeam = null) {
       else if (winnerTeam === "teamA" && teamB.includes(playerId)) { losses++; lastResult = "Loss"; }
       else if (winnerTeam === "teamB" && teamA.includes(playerId)) { losses++; lastResult = "Loss"; }
 
-      tx.set(
-        playerRefs[idx],
-        {
-          status: "Waiting",
-          currentMatchId: null,
-          playedWith: playedWith,
-          wins,
-          losses,
-          lastResult,
-          lastMatchEndedAt: now,
-          updatedAt: now,
-        },
-        { merge: true }
-      );
-    });
+      tx.set(playerRefs[idx], { status: "Waiting", currentMatchId: null, playedWith, wins, losses, lastResult, lastMatchEndedAt: now, updatedAt: now }, { merge: true });
 
-    // Re-add finished players back to the end of their respective queues
-    const queueUpdates = new Map();
-    playerSnaps.forEach((snap) => {
-      if (!snap.exists()) return;
-      const player = snap.data();
       const skillKey = skillKeyFromLabel(player.skill);
-      if (!skillKey) return;
-      if (!queueUpdates.has(skillKey)) queueUpdates.set(skillKey, []);
-      queueUpdates.get(skillKey).push(snap.id);
+      if (skillKey) {
+        if (!queueAdditions.has(skillKey)) queueAdditions.set(skillKey, []);
+        queueAdditions.get(skillKey).push(snap.id);
+      }
     });
 
-    for (const [skillKey, ids] of queueUpdates.entries()) {
-      const qRef = getQueueDocRef(skillKey);
-      const qSnap = await tx.get(qRef);
-      const existingOrder = qSnap.exists() ? (qSnap.data().order || []) : [];
-      // Only add players not already in the queue
+    // Write queue updates using already-read snapshots
+    for (const [skillKey, ids] of queueAdditions.entries()) {
+      const qRef = queueRefsMap.get(skillKey);
+      const qSnap = queueSnapsMap.get(skillKey);
+      const existingOrder = qSnap?.exists() ? (qSnap.data().order || []) : [];
       const newOrder = existingOrder.concat(ids.filter(id => !existingOrder.includes(id)));
       tx.set(qRef, { order: newOrder, updatedAt: now }, { merge: true });
     }
