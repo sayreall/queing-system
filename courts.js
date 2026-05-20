@@ -192,10 +192,28 @@ export async function assignMatchToCourt(courtId, skillKey) {
       return s;
     };
 
-    // Prefer a pool of only winners or only losers if 4+ exist
+    // Strict Win vs Win / Loss vs Loss matchmaking
     const winners = poolData.filter(p => p.lastResult === "Win");
     const losers  = poolData.filter(p => p.lastResult === "Loss");
-    const scoringPool = (winners.length >= 4 ? winners : (losers.length >= 4 ? losers : poolData));
+    const neutral = poolData.filter(p => !p.lastResult);
+
+    let scoringPool;
+    if (winners.length >= 4) {
+      // Enough winners — winners play winners
+      scoringPool = winners;
+    } else if (losers.length >= 4) {
+      // Enough losers — losers play losers
+      scoringPool = losers;
+    } else if (winners.length + neutral.length >= 4) {
+      // Fill winner group with neutrals (new/unranked players)
+      scoringPool = [...winners, ...neutral];
+    } else if (losers.length + neutral.length >= 4) {
+      // Fill loser group with neutrals
+      scoringPool = [...losers, ...neutral];
+    } else {
+      // Not enough of one type — wait, don't mix winners and losers
+      return;
+    }
 
     let bestCombo = null;
     let minScore = Infinity;

@@ -391,9 +391,8 @@ function renderPlayers() {
       return (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5);
     });
 
-  // Group active rows by skill, then interleave Winners and Losers by GP
-  // so the first 4 in each skill group always form a balanced W,L,W,L set
-  function interleaveBySkillAndResult(rows) {
+  // Group by skill → within each skill: all Winners (GP asc) then all Losers (GP asc) then Neutrals
+  function groupBySkillAndResult(rows) {
     const skillOrder = ["Beginner", "Intermediate", "Advanced"];
     const groups = {};
     rows.forEach(p => {
@@ -405,7 +404,6 @@ function renderPlayers() {
     [...skillOrder, "Other"].forEach(skill => {
       const players = groups[skill] || [];
       if (!players.length) return;
-      // Sort each sub-group by GP ascending
       const byGP = [...players].sort((a, b) => {
         const aGP = (a.wins ?? 0) + (a.losses ?? 0);
         const bGP = (b.wins ?? 0) + (b.losses ?? 0);
@@ -414,26 +412,21 @@ function renderPlayers() {
       const winners = byGP.filter(p => p.lastResult === "Win");
       const losers  = byGP.filter(p => p.lastResult === "Loss");
       const neutral = byGP.filter(p => !p.lastResult);
-      // Interleave: W, L, W, L, ... then neutrals at end
-      const max = Math.max(winners.length, losers.length);
-      for (let i = 0; i < max; i++) {
-        if (i < winners.length) result.push(winners[i]);
-        if (i < losers.length)  result.push(losers[i]);
-      }
-      neutral.forEach(p => result.push(p));
+      // All winners first, then all losers, then neutrals
+      result.push(...winners, ...losers, ...neutral);
     });
     return result;
   }
 
   const doneRows = state.filter.startsWith("Archived")
     ? []
-    : interleaveBySkillAndResult(filteredRows.filter((player) => player.status === "Standby"));
+    : groupBySkillAndResult(filteredRows.filter((player) => player.status === "Standby"));
   const activeRowsRaw = state.filter.startsWith("Archived")
     ? filteredRows
     : filteredRows.filter((player) => player.status !== "Standby");
   const activeRows = state.filter.startsWith("Archived")
     ? activeRowsRaw
-    : interleaveBySkillAndResult(activeRowsRaw);
+    : groupBySkillAndResult(activeRowsRaw);
 
   // Update total players count badge
   const countEl = document.getElementById("total-players-count");
