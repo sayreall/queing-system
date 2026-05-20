@@ -1149,7 +1149,6 @@ async function bootstrap() {
     renderNextMatch();
     setupSortable();
     cacheState();
-    maybeAutoAssignMatches();
   });
 
   listenToCourts((courts) => {
@@ -1159,7 +1158,6 @@ async function bootstrap() {
     renderStats();
     renderNextMatch();
     cacheState();
-    maybeAutoAssignMatches();
   });
 
   listenToPlayers((players) => {
@@ -1240,7 +1238,6 @@ async function bootstrap() {
     state.ready.pendingMatches = true;
     renderPendingMatches();
     renderNextMatch();
-    maybeAutoAssignMatches();
   }, (error) => {
     console.error("Pending matches listener error:", error);
   });

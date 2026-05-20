@@ -247,8 +247,6 @@ export async function toggleCourtStatus(courtId) {
 
 export async function finishMatch(courtId, winnerTeam = null) {
   const courtRef = doc(db, "courts", courtId);
-  // Declared outside transaction so they are accessible in the re-queue step below.
-  let playersToRequeue = [];
 
   await runTransaction(db, async (tx) => {
     // ── PHASE 1: ALL READS ─────────────────────────────────────────────────
@@ -267,8 +265,6 @@ export async function finishMatch(courtId, winnerTeam = null) {
     const teamB = match?.teamB || court.players?.slice(2, 4) || [];
     const now = serverTimestamp();
 
-    // Capture player IDs for re-queue after the transaction completes.
-    playersToRequeue = [...players];
 
     const playerRefs = players.map(id => doc(db, "players", id));
     const playerSnaps = await Promise.all(playerRefs.map(ref => tx.get(ref)));
@@ -319,13 +315,6 @@ export async function finishMatch(courtId, winnerTeam = null) {
     });
   });
 
-  // Auto re-queue all 4 players back to their skill queues.
-  // Uses playersToRequeue captured before the transaction to avoid scope bug.
-  if (playersToRequeue.length) {
-    await Promise.allSettled(
-      playersToRequeue.map((playerId) => markPlayerAbsent(playerId, false))
-    );
-  }
 }
 
 export async function queueCustomMatch(playerIds, teamA, teamB) {
