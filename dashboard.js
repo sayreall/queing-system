@@ -391,43 +391,12 @@ function renderPlayers() {
       return (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5);
     });
 
-  // Group by skill → within each skill: Sort strictly by GP ascending so fairness is obvious
-  function sortFairly(rows) {
-    const skillOrder = ["Beginner", "Intermediate", "Advanced", "Other"];
-    const groups = {};
-    rows.forEach(p => {
-      const sk = p.skill || "Other";
-      if (!groups[sk]) groups[sk] = [];
-      groups[sk].push(p);
-    });
-    const result = [];
-    skillOrder.forEach(skill => {
-      const players = groups[skill] || [];
-      if (!players.length) return;
-      players.sort((a, b) => {
-        const aGP = (a.wins ?? 0) + (a.losses ?? 0);
-        const bGP = (b.wins ?? 0) + (b.losses ?? 0);
-        if (aGP !== bGP) return aGP - bGP; // Lowest GP always first
-        
-        // Tiebreaker: Winners first, then Losers, then Neutral
-        const resA = a.lastResult === "Win" ? 0 : (a.lastResult === "Loss" ? 1 : 2);
-        const resB = b.lastResult === "Win" ? 0 : (b.lastResult === "Loss" ? 1 : 2);
-        return resA - resB;
-      });
-      result.push(...players);
-    });
-    return result;
-  }
-
   const doneRows = state.filter.startsWith("Archived")
     ? []
-    : sortFairly(filteredRows.filter((player) => player.status === "Standby"));
-  const activeRowsRaw = state.filter.startsWith("Archived")
+    : filteredRows.filter((player) => player.status === "Standby");
+  const activeRows = state.filter.startsWith("Archived")
     ? filteredRows
     : filteredRows.filter((player) => player.status !== "Standby");
-  const activeRows = state.filter.startsWith("Archived")
-    ? activeRowsRaw
-    : sortFairly(activeRowsRaw);
 
   // Update total players count badge
   const countEl = document.getElementById("total-players-count");
