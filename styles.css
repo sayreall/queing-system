@@ -193,6 +193,18 @@ body {
   min-width: 180px;
 }
 
+/* Narrower selects for the Done Playing table on small screens */
+#done-players-table .input-field {
+  min-width: 140px;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  #done-players-table .input-field {
+    min-width: 110px;
+  }
+}
+
 .input-field:focus {
   outline: none;
   border-color: rgba(31, 207, 177, 0.6);
