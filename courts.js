@@ -159,7 +159,6 @@ export async function assignMatchToCourt(courtId, skillKey) {
     // ── Take exactly the top 4 most deserving players ───────────────────────
     const bestCombo = cleanOrder.slice(0, 4);
     const selectedIds = bestCombo;
-    const remaining = cleanOrder.filter(id => !selectedIds.includes(id));
 
     // ── Pick balanced teams from these 4 players ────────────────────────────
     const comboData = bestCombo.map(id => playerDataMap.get(id));
