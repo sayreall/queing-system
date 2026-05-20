@@ -13,7 +13,7 @@ import {
   serverTimestamp,
   runTransaction,
 } from "./firebase.js";
-import { skillLabelFromKey, getQueueDocRef, skillKeyFromLabel } from "./queue.js";
+import { skillLabelFromKey, getQueueDocRef, skillKeyFromLabel, markPlayerAbsent } from "./queue.js";
 
 export const COURTS = [
   { id: "court-1", name: "Court 1" },
@@ -443,6 +443,12 @@ export async function finishMatch(courtId, winnerTeam = null) {
       tx.set(playerRefs[idx], { status: "Standby", currentMatchId: null, playedWith, wins, losses, lastResult, lastMatchEndedAt: now, updatedAt: now }, { merge: true });
     });
   });
+
+  // Auto re-queue all 4 players back to their skill queues after the match.
+  // Run in parallel — each call is its own transaction so they don't block each other.
+  await Promise.allSettled(
+    players.map((playerId) => markPlayerAbsent(playerId, false))
+  );
 }
 
 export async function queueCustomMatch(playerIds, teamA, teamB) {
