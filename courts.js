@@ -196,8 +196,8 @@ export async function assignMatchToCourt(courtId, skillKey) {
       }
     }
 
-    const teamA = [bestTeam.a[0].id, bestTeam.a[1].id];
-    const teamB = [bestTeam.b[0].id, bestTeam.b[1].id];
+    const teamA = [bestTeamCombo.a[0].id, bestTeamCombo.a[1].id];
+    const teamB = [bestTeamCombo.b[0].id, bestTeamCombo.b[1].id];
     const finalPlayers = [...teamA, ...teamB];
     const remaining = cleanOrder.filter(id => !finalPlayers.includes(id));
 
