@@ -395,9 +395,8 @@ function renderPlayers() {
       const aGP = (a.wins ?? 0) + (a.losses ?? 0);
       const bGP = (b.wins ?? 0) + (b.losses ?? 0);
       if (aGP !== bGP) return aGP - bGP;
-      // Final tiebreaker: last result (Win first to show recent activity)
-      const resultOrder = { Win: 0, Loss: 1, null: 2, undefined: 2 };
-      return (resultOrder[a.lastResult] ?? 2) - (resultOrder[b.lastResult] ?? 2);
+      // Same GP: shuffle wins and losses randomly so they are mixed
+      return Math.random() - 0.5;
     });
 
   const doneRows = state.filter.startsWith("Archived")
