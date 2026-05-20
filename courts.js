@@ -137,73 +137,31 @@ export async function assignMatchToCourt(courtId, skillKey) {
 
     if (cleanOrder.length < 4) return;
 
-    // ── Win/Loss Preference (soft — never blocks the court) ─────────────────
-    // Prefer fresh faces over repeat players from last match.
-    const freshOrder = cleanOrder.filter(id => !lastMatchPlayers.has(id));
-    const candidateOrder = freshOrder.length >= 4 ? freshOrder : cleanOrder;
+    // ── Sort queue by fairness (GP and Freshness) ───────────────────────────
+    cleanOrder.sort((a, b) => {
+      const pA = playerDataMap.get(a);
+      const pB = playerDataMap.get(b);
+      
+      // 1. Lowest Games Played (GP) always goes first
+      if (pA.gp !== pB.gp) return pA.gp - pB.gp;
+      
+      // 2. Tiebreaker: Fresh players (didn't just play) go before repeat players
+      const aFresh = !lastMatchPlayers.has(a);
+      const bFresh = !lastMatchPlayers.has(b);
+      if (aFresh && !bFresh) return -1;
+      if (!aFresh && bFresh) return 1;
+      
+      return 0; // Maintain FIFO for exact ties
+    });
 
-    // Look at the top 10 candidates.
-    const pool = candidateOrder.slice(0, 10).map(id => playerDataMap.get(id)).filter(Boolean);
+    if (cleanOrder.length < 4) return;
 
-    const winners = pool.filter(p => p.lastResult === "Win");
-    const losers  = pool.filter(p => p.lastResult === "Loss");
-    const neutral = pool.filter(p => !p.lastResult);
+    // ── Take exactly the top 4 most deserving players ───────────────────────
+    const bestCombo = cleanOrder.slice(0, 4);
+    const selectedIds = bestCombo;
+    const remaining = cleanOrder.filter(id => !selectedIds.includes(id));
 
-    // Priority: W×W×W×W → L×L×L×L → W+neutral → L+neutral → any 4 (never block)
-    let scoringPool;
-    if (winners.length >= 4) {
-      scoringPool = winners;
-    } else if (losers.length >= 4) {
-      scoringPool = losers;
-    } else if (winners.length + neutral.length >= 4) {
-      scoringPool = [...winners, ...neutral];
-    } else if (losers.length + neutral.length >= 4) {
-      scoringPool = [...losers, ...neutral];
-    } else {
-      // Mixed W+L — pick any 4 by queue position (FIFO). Never leave court empty.
-      scoringPool = pool;
-    }
-
-    // ── Pick the best 4 from the scoring pool ───────────────────────────────
-    // Score = playedWith overlap (avoid repeat partners) + slight GP fairness bonus.
-    const getOverlap = (p1, p2) =>
-      (p1.playedWith[p2.id] || 0) + (p2.playedWith[p1.id] || 0);
-
-    let bestCombo = null;
-    let minScore = Infinity;
-
-    if (scoringPool.length <= 4) {
-      bestCombo = scoringPool.map(p => p.id);
-    } else {
-      for (let i = 0; i < scoringPool.length - 3; i++) {
-        for (let j = i + 1; j < scoringPool.length - 2; j++) {
-          for (let k = j + 1; k < scoringPool.length - 1; k++) {
-            for (let l = k + 1; l < scoringPool.length; l++) {
-              const [p1, p2, p3, p4] = [scoringPool[i], scoringPool[j], scoringPool[k], scoringPool[l]];
-              // Main signal: how many times have these people played together?
-              const overlap =
-                getOverlap(p1, p2) + getOverlap(p1, p3) + getOverlap(p1, p4) +
-                getOverlap(p2, p3) + getOverlap(p2, p4) + getOverlap(p3, p4);
-              // Fairness bonus: prefer players with fewer games played overall.
-              const gpFairness = (p1.gp + p2.gp + p3.gp + p4.gp) * 0.5;
-              // Queue priority: don't skip people too far up the queue.
-              const queuePos =
-                (candidateOrder.indexOf(p1.id) + candidateOrder.indexOf(p2.id) +
-                 candidateOrder.indexOf(p3.id) + candidateOrder.indexOf(p4.id)) * 0.3;
-              const score = overlap * 5 + gpFairness + queuePos;
-              if (score < minScore) {
-                minScore = score;
-                bestCombo = [p1.id, p2.id, p3.id, p4.id];
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (!bestCombo || bestCombo.length < 4) return;
-
-    // ── Pick balanced teams ─────────────────────────────────────────────────
+    // ── Pick balanced teams from these 4 players ────────────────────────────
     const comboData = bestCombo.map(id => playerDataMap.get(id));
     const teamCombos = [
       { a: [comboData[0], comboData[1]], b: [comboData[2], comboData[3]] },
@@ -211,17 +169,30 @@ export async function assignMatchToCourt(courtId, skillKey) {
       { a: [comboData[0], comboData[3]], b: [comboData[1], comboData[2]] },
     ];
 
-    let bestTeam = teamCombos[0];
+    const getOverlap = (p1, p2) => (p1.playedWith[p2.id] || 0) + (p2.playedWith[p1.id] || 0);
+
+    let bestTeamCombo = teamCombos[0];
     let minTeamScore = Infinity;
+    
     for (const combo of teamCombos) {
       const aPairBlocked = lastTeammatePairs.has(pairKey(combo.a[0].id, combo.a[1].id));
       const bPairBlocked = lastTeammatePairs.has(pairKey(combo.b[0].id, combo.b[1].id));
-      const score =
-        getOverlap(combo.a[0], combo.a[1]) + getOverlap(combo.b[0], combo.b[1]) +
-        (aPairBlocked ? 1000 : 0) + (bPairBlocked ? 1000 : 0);
+      
+      // Score = How many times they've played together + huge penalty if they just teamed up
+      let score = getOverlap(combo.a[0], combo.a[1]) + getOverlap(combo.b[0], combo.b[1]);
+      if (aPairBlocked) score += 1000;
+      if (bPairBlocked) score += 1000;
+      
+      // Balance W/L: Encourage a Winner and a Loser to team up, discourage W+W vs L+L
+      const sameResult = (pair) => {
+        if (!pair[0].lastResult || !pair[1].lastResult) return 0;
+        return pair[0].lastResult === pair[1].lastResult ? 50 : -50;
+      };
+      score += sameResult(combo.a) + sameResult(combo.b);
+
       if (score < minTeamScore) {
         minTeamScore = score;
-        bestTeam = combo;
+        bestTeamCombo = combo;
       }
     }
 
@@ -256,297 +227,6 @@ export async function assignMatchToCourt(courtId, skillKey) {
   return matchRef.id;
 }
 
-  // Read latest completed match so we can avoid repeating the same players immediately.
-  const lastMatchPlayers = new Set();
-  const lastTeammatePairs = new Set();
-  const pairKey = (a, b) => [a, b].sort().join("__");
-  if (skillLabel) {
-    try {
-      const lastMatchSnap = await getDocs(
-        query(
-          collection(db, "matches"),
-          where("status", "==", "Completed"),
-          where("skill", "==", skillLabel),
-          orderBy("endedAt", "desc"),
-          limit(1)
-        )
-      );
-      if (!lastMatchSnap.empty) {
-        const latest = lastMatchSnap.docs[0].data();
-        const lastPlayers = latest.players || [];
-        lastPlayers.forEach((id) => lastMatchPlayers.add(id));
-        const prevTeamA = latest.teamA || [];
-        const prevTeamB = latest.teamB || [];
-        if (prevTeamA.length === 2) lastTeammatePairs.add(pairKey(prevTeamA[0], prevTeamA[1]));
-        if (prevTeamB.length === 2) lastTeammatePairs.add(pairKey(prevTeamB[0], prevTeamB[1]));
-      }
-    } catch (error) {
-      // Fallback path while composite index is still building.
-      const fallbackSnap = await getDocs(
-        query(
-          collection(db, "matches"),
-          where("status", "==", "Completed"),
-          where("skill", "==", skillLabel),
-          limit(25)
-        )
-      );
-      if (!fallbackSnap.empty) {
-        const latest = fallbackSnap.docs
-          .map((docSnap) => docSnap.data())
-          .sort((a, b) => {
-            const aMs = a?.endedAt?.toMillis ? a.endedAt.toMillis() : 0;
-            const bMs = b?.endedAt?.toMillis ? b.endedAt.toMillis() : 0;
-            return bMs - aMs;
-          })[0];
-        const lastPlayers = latest?.players || [];
-        lastPlayers.forEach((id) => lastMatchPlayers.add(id));
-        const prevTeamA = latest?.teamA || [];
-        const prevTeamB = latest?.teamB || [];
-        if (prevTeamA.length === 2) lastTeammatePairs.add(pairKey(prevTeamA[0], prevTeamA[1]));
-        if (prevTeamB.length === 2) lastTeammatePairs.add(pairKey(prevTeamB[0], prevTeamB[1]));
-      }
-      console.warn("Using fallback last-match query; composite index is likely still building.", error);
-    }
-  }
-
-  await runTransaction(db, async (tx) => {
-    const [courtSnap, queueSnap] = await Promise.all([
-      tx.get(courtRef),
-      tx.get(queueRef),
-    ]);
-
-    if (!courtSnap.exists()) return;
-    const court = courtSnap.data();
-    if (court.status !== "Available") return;
-
-    // Court-local memory from the last finished game (works even if match query/index is delayed).
-    const courtLastPlayers = court.lastMatchPlayers || [];
-    const courtLastTeamPairs = court.lastTeamPairs || [];
-    courtLastPlayers.forEach((id) => lastMatchPlayers.add(id));
-    courtLastTeamPairs.forEach((key) => lastTeammatePairs.add(key));
-
-    if (court.allowedSkill && court.allowedSkill !== skillKey && skillKey !== "custom") {
-      throw new Error(`This court only accepts ${court.allowedSkill} matches.`);
-    }
-
-    const orderRaw = queueSnap.exists() ? queueSnap.data().order || [] : [];
-    const uniqueOrder = Array.from(new Set(orderRaw));
-
-    // Validate queue entries in-transaction so active/invalid players are not re-matched.
-    const orderRefs = uniqueOrder.map((id) => doc(db, "players", id));
-    const orderSnaps = await Promise.all(orderRefs.map((ref) => tx.get(ref)));
-    const cleanOrder = [];
-    for (const snap of orderSnaps) {
-      if (!snap.exists()) continue;
-      const player = snap.data();
-      if (player.status !== "Waiting") continue;
-      if (player.currentMatchId) continue;
-      cleanOrder.push(snap.id);
-    }
-
-    // Self-heal queue if duplicates/stale ids are present.
-    const orderChanged =
-      cleanOrder.length !== orderRaw.length ||
-      cleanOrder.some((id, idx) => id !== orderRaw[idx]);
-    if (orderChanged) {
-      tx.set(
-        queueRef,
-        {
-          skill: skillLabel,
-          order: cleanOrder,
-          updatedAt: now,
-        },
-        { merge: true }
-      );
-    }
-
-    if (cleanOrder.length < 4) return;
-
-    // Prefer players who did not play in the latest completed match (if enough are waiting).
-    const preferredIds = cleanOrder.filter((id) => !lastMatchPlayers.has(id));
-    const candidateOrder = preferredIds.length >= 4 ? preferredIds : cleanOrder;
-
-    // Intelligent Matchmaking: Avoid playing with the same people
-    const poolSize = Math.min(candidateOrder.length, 8);
-    const poolIds = candidateOrder.slice(0, poolSize);
-    
-    const poolRefs = poolIds.map(id => doc(db, "players", id));
-    const poolSnaps = await Promise.all(poolRefs.map(ref => tx.get(ref)));
-    
-    const poolData = poolSnaps.map(snap => {
-      const data = snap.exists() ? snap.data() : {};
-      return {
-        id: snap.id,
-        playedWith: data.playedWith || {},
-        lastResult: data.lastResult || null,
-        gp: (data.wins || 0) + (data.losses || 0),
-        queueIndex: candidateOrder.indexOf(snap.id)
-      };
-    });
-
-    const getScore = (p1, p2) => {
-      let s = (p1.playedWith[p2.id] || 0) + (p2.playedWith[p1.id] || 0);
-      return s;
-    };
-
-    // Strict Win vs Win / Loss vs Loss matchmaking
-    const winners = poolData.filter(p => p.lastResult === "Win");
-    const losers  = poolData.filter(p => p.lastResult === "Loss");
-    const neutral = poolData.filter(p => !p.lastResult);
-
-    let scoringPool;
-    if (winners.length >= 4) {
-      // Enough winners — winners play winners
-      scoringPool = winners;
-    } else if (losers.length >= 4) {
-      // Enough losers — losers play losers
-      scoringPool = losers;
-    } else if (winners.length + neutral.length >= 4) {
-      // Fill winner group with neutrals (new/unranked players)
-      scoringPool = [...winners, ...neutral];
-    } else if (losers.length + neutral.length >= 4) {
-      // Fill loser group with neutrals
-      scoringPool = [...losers, ...neutral];
-    } else {
-      // Not enough of one type — wait, don't mix winners and losers
-      return;
-    }
-
-    let bestCombo = null;
-    let minScore = Infinity;
-
-    if (scoringPool.length <= 4) {
-      bestCombo = scoringPool.map(p => p.id);
-    } else {
-      for (let i = 0; i < scoringPool.length - 3; i++) {
-        for (let j = i + 1; j < scoringPool.length - 2; j++) {
-          for (let k = j + 1; k < scoringPool.length - 1; k++) {
-            for (let l = k + 1; l < scoringPool.length; l++) {
-              const p1 = scoringPool[i];
-              const p2 = scoringPool[j];
-              const p3 = scoringPool[k];
-              const p4 = scoringPool[l];
-              
-              let score = 0;
-              // PlayedWith overlap (higher is worse, heavily penalized)
-              let overlap = getScore(p1, p2) + getScore(p1, p3) + getScore(p1, p4) +
-                            getScore(p2, p3) + getScore(p2, p4) + getScore(p3, p4);
-              score += overlap * 5;
-              
-              // Queue index penalty (lower index = waited longer = better)
-              let queuePenalty = p1.queueIndex + p2.queueIndex + p3.queueIndex + p4.queueIndex;
-              score += queuePenalty * 1.5;
-
-              // GP penalty (higher GP = played more = worse)
-              let gpPenalty = p1.gp + p2.gp + p3.gp + p4.gp;
-              score += gpPenalty * 3.0;
-              
-              if (score < minScore) {
-                minScore = score;
-                bestCombo = [p1.id, p2.id, p3.id, p4.id];
-              }
-            }
-          }
-        }
-      }
-    }
-
-    const selectedIds = bestCombo;
-    const remaining = cleanOrder.filter(id => !selectedIds.includes(id));
-
-    // Intelligent Team Selection: Minimize teammate overlap
-    const p = selectedIds.map(id => poolData.find(pd => pd.id === id));
-    const combos = [
-      { a: [p[0], p[1]], b: [p[2], p[3]] },
-      { a: [p[0], p[2]], b: [p[1], p[3]] },
-      { a: [p[0], p[3]], b: [p[1], p[2]] }
-    ];
-    
-    let bestTeamCombo = combos[0];
-    let minTeamScore = Infinity;
-    const nonRepeatedCombos = combos.filter((c) => {
-      const aPairBlocked = lastTeammatePairs.has(pairKey(c.a[0].id, c.a[1].id));
-      const bPairBlocked = lastTeammatePairs.has(pairKey(c.b[0].id, c.b[1].id));
-      return !aPairBlocked && !bPairBlocked;
-    });
-    const teamCandidates = nonRepeatedCombos.length ? nonRepeatedCombos : combos;
-    for (const c of teamCandidates) {
-      const aPairBlocked = lastTeammatePairs.has(pairKey(c.a[0].id, c.a[1].id));
-      const bPairBlocked = lastTeammatePairs.has(pairKey(c.b[0].id, c.b[1].id));
-      const repeatPenalty = (aPairBlocked ? 1000 : 0) + (bPairBlocked ? 1000 : 0);
-      const sameResultPenalty = (pair) => {
-        const r1 = pair[0].lastResult || null;
-        const r2 = pair[1].lastResult || null;
-        if (!r1 || !r2) return 0;
-        // Encourage winner+loser partner rotation, discourage winner+winner / loser+loser.
-        return r1 === r2 ? 80 : -20;
-      };
-      const score =
-        getScore(c.a[0], c.a[1]) +
-        getScore(c.b[0], c.b[1]) +
-        sameResultPenalty(c.a) +
-        sameResultPenalty(c.b) +
-        repeatPenalty;
-      if (score < minTeamScore) {
-        minTeamScore = score;
-        bestTeamCombo = c;
-      }
-    }
-
-    const teamA = [bestTeamCombo.a[0].id, bestTeamCombo.a[1].id].sort(() => Math.random() - 0.5);
-    const teamB = [bestTeamCombo.b[0].id, bestTeamCombo.b[1].id].sort(() => Math.random() - 0.5);
-    const finalPlayers = [...teamA, ...teamB];
-
-    tx.set(matchRef, {
-      courtId,
-      skill: skillLabel,
-      players: finalPlayers,
-      teamA,
-      teamB,
-      status: "Active",
-      startedAt: now,
-      endedAt: null,
-      updatedAt: now,
-    });
-
-    tx.set(
-      queueRef,
-      {
-        skill: skillLabel,
-        order: remaining,
-        updatedAt: now,
-      },
-      { merge: true }
-    );
-
-    tx.set(
-      courtRef,
-      {
-        status: "Active",
-        matchId: matchRef.id,
-        players: finalPlayers,
-        skill: skillLabel,
-        startedAt: now,
-        updatedAt: now,
-      },
-      { merge: true }
-    );
-
-    finalPlayers.forEach((playerId) => {
-      tx.set(
-        doc(db, "players", playerId),
-        {
-          status: "Playing",
-          currentMatchId: matchRef.id,
-          updatedAt: now,
-        },
-        { merge: true }
-      );
-    });
-  });
-
-  return matchRef.id;
-}
 
 export async function toggleCourtStatus(courtId) {
   const courtRef = doc(db, "courts", courtId);
@@ -568,6 +248,8 @@ export async function toggleCourtStatus(courtId) {
 
 export async function finishMatch(courtId, winnerTeam = null) {
   const courtRef = doc(db, "courts", courtId);
+  // Declared outside transaction so they are accessible in the re-queue step below.
+  let playersToRequeue = [];
 
   await runTransaction(db, async (tx) => {
     // ── PHASE 1: ALL READS ─────────────────────────────────────────────────
@@ -586,30 +268,13 @@ export async function finishMatch(courtId, winnerTeam = null) {
     const teamB = match?.teamB || court.players?.slice(2, 4) || [];
     const now = serverTimestamp();
 
+    // Capture player IDs for re-queue after the transaction completes.
+    playersToRequeue = [...players];
+
     const playerRefs = players.map(id => doc(db, "players", id));
     const playerSnaps = await Promise.all(playerRefs.map(ref => tx.get(ref)));
 
-    // Determine which skill queues we'll need, then read them ALL now
-    const skillKeysNeeded = new Set();
-    playerSnaps.forEach((snap) => {
-      if (!snap.exists()) return;
-      const skillKey = skillKeyFromLabel(snap.data().skill);
-      if (skillKey) skillKeysNeeded.add(skillKey);
-    });
-
-    const queueRefsMap = new Map();
-    const queueSnapsMap = new Map();
-    for (const key of skillKeysNeeded) {
-      queueRefsMap.set(key, getQueueDocRef(key));
-    }
-    await Promise.all(
-      Array.from(queueRefsMap.entries()).map(async ([key, ref]) => {
-        queueSnapsMap.set(key, await tx.get(ref));
-      })
-    );
-
-    // ── PHASE 2: ALL WRITES (no tx.get allowed below this line) ────────────
-
+    // ── PHASE 2: ALL WRITES ────────────────────────────────────────────────
     if (matchSnap.exists()) {
       tx.set(matchRef, { status: "Completed", endedAt: now, updatedAt: now, winner: winnerTeam }, { merge: true });
     }
@@ -630,14 +295,10 @@ export async function finishMatch(courtId, winnerTeam = null) {
       updatedAt: now
     }, { merge: true });
 
-    const queueAdditions = new Map();
-
     playerSnaps.forEach((snap, idx) => {
       if (!snap.exists()) return;
       const player = snap.data();
       const playedWith = { ...(player.playedWith || {}) };
-      const currentWins = player.wins || 0;
-      const currentLosses = player.losses || 0;
 
       players.forEach((otherId) => {
         if (otherId !== snap.id) {
@@ -646,8 +307,8 @@ export async function finishMatch(courtId, winnerTeam = null) {
       });
 
       const playerId = snap.id;
-      let wins = currentWins;
-      let losses = currentLosses;
+      let wins = player.wins || 0;
+      let losses = player.losses || 0;
       let lastResult = null;
 
       if (winnerTeam === "teamA" && teamA.includes(playerId)) { wins++; lastResult = "Win"; }
@@ -659,11 +320,13 @@ export async function finishMatch(courtId, winnerTeam = null) {
     });
   });
 
-  // Auto re-queue all 4 players back to their skill queues after the match.
-  // Run in parallel — each call is its own transaction so they don't block each other.
-  await Promise.allSettled(
-    players.map((playerId) => markPlayerAbsent(playerId, false))
-  );
+  // Auto re-queue all 4 players back to their skill queues.
+  // Uses playersToRequeue captured before the transaction to avoid scope bug.
+  if (playersToRequeue.length) {
+    await Promise.allSettled(
+      playersToRequeue.map((playerId) => markPlayerAbsent(playerId, false))
+    );
+  }
 }
 
 export async function queueCustomMatch(playerIds, teamA, teamB) {
