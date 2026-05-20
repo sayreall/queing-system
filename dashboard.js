@@ -910,6 +910,19 @@ function bindEvents() {
     }
   });
 
+  elements.donePlayersBody.addEventListener("change", async (event) => {
+    if (event.target.dataset.playerSkill) {
+      const playerId = event.target.dataset.playerSkill;
+      const newSkill = event.target.value;
+      try {
+        await updatePlayerSkill(playerId, newSkill);
+        showToast("Player skill updated");
+      } catch (err) {
+        showToast(err.message || "Error updating skill", "error");
+      }
+    }
+  });
+
   document.body.addEventListener("change", async (event) => {
     if (event.target.dataset.courtSkillSelect) {
       const courtId = event.target.dataset.courtSkillSelect;
