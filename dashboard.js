@@ -445,17 +445,19 @@ function renderPlayers() {
             ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C3 Last</span>'
             : ''}
         </td>
-        <td class="hidden md:table-cell text-slate-400">${player.gender || "—"}</td>
-        <td class="hidden md:table-cell text-slate-300 text-sm">${player.location || "—"}</td>
-        <td class="hidden lg:table-cell">${player.status}</td>
-        <td class="hidden lg:table-cell">
+        <td class="text-slate-400">${player.gender || "—"}</td>
+        <td class="text-slate-300 text-sm">${player.location || "—"}</td>
+        <td>${player.status}</td>
+        <td>
           ${player.lastResult === 'Win' ? '<span class="text-xs font-semibold px-2 py-1 bg-green-500/20 text-green-400 rounded-md border border-green-500/30">Won</span>' : ''}
           ${player.lastResult === 'Loss' ? '<span class="text-xs font-semibold px-2 py-1 bg-red-500/20 text-red-400 rounded-md border border-red-500/30">Lost</span>' : ''}
           ${!player.lastResult ? '<span class="text-xs text-slate-500">—</span>' : ''}
         </td>
         <td class="text-purple-400 font-semibold">${(player.wins ?? 0) + (player.losses ?? 0)}</td>
+        <td class="text-green-400 font-semibold">${player.wins ?? 0}W</td>
+        <td class="text-red-400 font-semibold">${player.losses ?? 0}L</td>
         <td class="text-blue-400 font-semibold">${((player.wins ?? 0) + (player.losses ?? 0)) > 0 ? Math.round(((player.wins ?? 0) / ((player.wins ?? 0) + (player.losses ?? 0))) * 100) + '%' : '—'}</td>
-        <td class="hidden md:table-cell">
+        <td>
           <select class="input-field" data-player-skill="${player.id}">
             ${SKILLS.map(
               (skill) =>
@@ -465,7 +467,7 @@ function renderPlayers() {
             ).join("")}
           </select>
         </td>
-        <td class="sticky right-0 bg-[#0a1f2e] py-3 pl-2 text-right">
+        <td class="sticky right-0 py-3 pl-4 text-right" style="background:rgba(12,50,50,0.98);">
           <div class="flex flex-nowrap justify-end gap-1">
             <button
               class="btn-secondary text-xs px-2 py-1 whitespace-nowrap ${player.status === "Playing" || player.status === "Stacked" ? "opacity-50 cursor-not-allowed" : ""}"
@@ -511,17 +513,19 @@ function renderPlayers() {
             ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C3 Last</span>'
             : ''}
         </td>
-        <td class="hidden md:table-cell text-slate-400">${player.gender || "—"}</td>
-        <td class="hidden md:table-cell text-slate-300 text-sm">${player.location || "—"}</td>
-        <td class="hidden lg:table-cell">${player.status}</td>
-        <td class="hidden lg:table-cell">
+        <td class="text-slate-400">${player.gender || "—"}</td>
+        <td class="text-slate-300 text-sm">${player.location || "—"}</td>
+        <td>${player.status}</td>
+        <td>
           ${player.lastResult === 'Win' ? '<span class="text-xs font-semibold px-2 py-1 bg-green-500/20 text-green-400 rounded-md border border-green-500/30">Won</span>' : ''}
           ${player.lastResult === 'Loss' ? '<span class="text-xs font-semibold px-2 py-1 bg-red-500/20 text-red-400 rounded-md border border-red-500/30">Lost</span>' : ''}
           ${!player.lastResult ? '<span class="text-xs text-slate-500">—</span>' : ''}
         </td>
         <td class="text-purple-400 font-semibold">${(player.wins ?? 0) + (player.losses ?? 0)}</td>
+        <td class="text-green-400 font-semibold">${player.wins ?? 0}W</td>
+        <td class="text-red-400 font-semibold">${player.losses ?? 0}L</td>
         <td class="text-blue-400 font-semibold">${((player.wins ?? 0) + (player.losses ?? 0)) > 0 ? Math.round(((player.wins ?? 0) / ((player.wins ?? 0) + (player.losses ?? 0))) * 100) + '%' : '—'}</td>
-        <td class="hidden md:table-cell">
+        <td>
           <select class="input-field" data-player-skill="${player.id}">
             ${SKILLS.map(
               (skill) =>
@@ -531,7 +535,7 @@ function renderPlayers() {
             ).join("")}
           </select>
         </td>
-        <td class="sticky right-0 bg-[#0a1f2e] py-3 pl-2 text-right">
+        <td class="sticky right-0 py-3 pl-4 text-right" style="background:rgba(12,50,50,0.98);">
           <div class="flex flex-nowrap justify-end gap-1">
             <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" data-player-absent="${player.id}">Return</button>
             <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" style="border-color: rgba(248,113,113,0.4); color:#fca5a5;" data-player-remove="${player.id}">✕</button>
