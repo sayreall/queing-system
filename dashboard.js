@@ -445,19 +445,17 @@ function renderPlayers() {
             ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C3 Last</span>'
             : ''}
         </td>
-        <td class="hidden sm:table-cell text-slate-400">${player.gender || "—"}</td>
-        <td class="hidden sm:table-cell text-slate-300 text-sm">${player.location || "—"}</td>
-        <td class="hidden sm:table-cell">${player.status}</td>
-        <td class="hidden sm:table-cell">
+        <td class="hidden md:table-cell text-slate-400">${player.gender || "—"}</td>
+        <td class="hidden md:table-cell text-slate-300 text-sm">${player.location || "—"}</td>
+        <td class="hidden lg:table-cell">${player.status}</td>
+        <td class="hidden lg:table-cell">
           ${player.lastResult === 'Win' ? '<span class="text-xs font-semibold px-2 py-1 bg-green-500/20 text-green-400 rounded-md border border-green-500/30">Won</span>' : ''}
           ${player.lastResult === 'Loss' ? '<span class="text-xs font-semibold px-2 py-1 bg-red-500/20 text-red-400 rounded-md border border-red-500/30">Lost</span>' : ''}
           ${!player.lastResult ? '<span class="text-xs text-slate-500">—</span>' : ''}
         </td>
         <td class="text-purple-400 font-semibold">${(player.wins ?? 0) + (player.losses ?? 0)}</td>
-        <td class="text-green-400 font-semibold hidden sm:table-cell">${player.wins ?? 0}W</td>
-        <td class="text-red-400 font-semibold hidden sm:table-cell">${player.losses ?? 0}L</td>
         <td class="text-blue-400 font-semibold">${((player.wins ?? 0) + (player.losses ?? 0)) > 0 ? Math.round(((player.wins ?? 0) / ((player.wins ?? 0) + (player.losses ?? 0))) * 100) + '%' : '—'}</td>
-        <td>
+        <td class="hidden md:table-cell">
           <select class="input-field" data-player-skill="${player.id}">
             ${SKILLS.map(
               (skill) =>
@@ -467,20 +465,20 @@ function renderPlayers() {
             ).join("")}
           </select>
         </td>
-        <td class="text-right">
-          <div class="flex flex-wrap justify-end gap-2">
+        <td class="sticky right-0 bg-[#0a1f2e] py-3 pl-2 text-right">
+          <div class="flex flex-nowrap justify-end gap-1">
             <button
-              class="btn-secondary ${player.status === "Playing" || player.status === "Stacked" ? "opacity-50 cursor-not-allowed" : ""}"
+              class="btn-secondary text-xs px-2 py-1 whitespace-nowrap ${player.status === "Playing" || player.status === "Stacked" ? "opacity-50 cursor-not-allowed" : ""}"
               data-player-absent="${player.id}"
               ${player.status === "Playing" || player.status === "Stacked" ? "disabled" : ""}
             >
               ${player.status === "Playing" || player.status === "Stacked"
                 ? "In Match"
                 : player.status === "Absent" || player.status === "Standby"
-                ? "Return to Queue"
+                ? "Return"
                 : "Absent"}
             </button>
-            <button class="btn-secondary" data-player-remove="${player.id}">Remove</button>
+            <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" style="border-color: rgba(248,113,113,0.4); color:#fca5a5;" data-player-remove="${player.id}">✕</button>
           </div>
         </td>
       </tr>
@@ -513,19 +511,17 @@ function renderPlayers() {
             ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C3 Last</span>'
             : ''}
         </td>
-        <td class="hidden sm:table-cell text-slate-400">${player.gender || "—"}</td>
-        <td class="hidden sm:table-cell text-slate-300 text-sm">${player.location || "—"}</td>
-        <td class="hidden sm:table-cell">${player.status}</td>
-        <td class="hidden sm:table-cell">
+        <td class="hidden md:table-cell text-slate-400">${player.gender || "—"}</td>
+        <td class="hidden md:table-cell text-slate-300 text-sm">${player.location || "—"}</td>
+        <td class="hidden lg:table-cell">${player.status}</td>
+        <td class="hidden lg:table-cell">
           ${player.lastResult === 'Win' ? '<span class="text-xs font-semibold px-2 py-1 bg-green-500/20 text-green-400 rounded-md border border-green-500/30">Won</span>' : ''}
           ${player.lastResult === 'Loss' ? '<span class="text-xs font-semibold px-2 py-1 bg-red-500/20 text-red-400 rounded-md border border-red-500/30">Lost</span>' : ''}
           ${!player.lastResult ? '<span class="text-xs text-slate-500">—</span>' : ''}
         </td>
         <td class="text-purple-400 font-semibold">${(player.wins ?? 0) + (player.losses ?? 0)}</td>
-        <td class="text-green-400 font-semibold hidden sm:table-cell">${player.wins ?? 0}W</td>
-        <td class="text-red-400 font-semibold hidden sm:table-cell">${player.losses ?? 0}L</td>
         <td class="text-blue-400 font-semibold">${((player.wins ?? 0) + (player.losses ?? 0)) > 0 ? Math.round(((player.wins ?? 0) / ((player.wins ?? 0) + (player.losses ?? 0))) * 100) + '%' : '—'}</td>
-        <td>
+        <td class="hidden md:table-cell">
           <select class="input-field" data-player-skill="${player.id}">
             ${SKILLS.map(
               (skill) =>
@@ -535,10 +531,10 @@ function renderPlayers() {
             ).join("")}
           </select>
         </td>
-        <td class="text-right">
-          <div class="flex flex-nowrap justify-end gap-2">
-            <button class="btn-secondary whitespace-nowrap" data-player-absent="${player.id}">Return to Queue</button>
-            <button class="btn-secondary whitespace-nowrap" style="border-color: rgba(248, 113, 113, 0.4); color: #fca5a5;" data-player-remove="${player.id}">Remove</button>
+        <td class="sticky right-0 bg-[#0a1f2e] py-3 pl-2 text-right">
+          <div class="flex flex-nowrap justify-end gap-1">
+            <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" data-player-absent="${player.id}">Return</button>
+            <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" style="border-color: rgba(248,113,113,0.4); color:#fca5a5;" data-player-remove="${player.id}">✕</button>
           </div>
         </td>
       </tr>
