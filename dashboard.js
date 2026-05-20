@@ -387,14 +387,17 @@ function renderPlayers() {
       return matchFilter && matchSearch;
     })
     .sort((a, b) => {
-      const statusOrder = { Playing: 0, Stacked: 1, Standby: 2, Waiting: 3, Absent: 4 };
+      const statusOrder = { Playing: 0, Stacked: 1, Waiting: 2, Standby: 3, Absent: 4 };
       const aS = statusOrder[a.status] ?? 5;
       const bS = statusOrder[b.status] ?? 5;
       if (aS !== bS) return aS - bS;
-      const order = { Win: 0, Loss: 1, null: 2, undefined: 2 };
-      const aOrder = order[a.lastResult] ?? 2;
-      const bOrder = order[b.lastResult] ?? 2;
-      return aOrder - bOrder;
+      // Within the same status, sort by GP ascending (fewest games played first)
+      const aGP = (a.wins ?? 0) + (a.losses ?? 0);
+      const bGP = (b.wins ?? 0) + (b.losses ?? 0);
+      if (aGP !== bGP) return aGP - bGP;
+      // Final tiebreaker: last result (Win first to show recent activity)
+      const resultOrder = { Win: 0, Loss: 1, null: 2, undefined: 2 };
+      return (resultOrder[a.lastResult] ?? 2) - (resultOrder[b.lastResult] ?? 2);
     });
 
   const doneRows = state.filter.startsWith("Archived")
@@ -403,7 +406,7 @@ function renderPlayers() {
   const activeRowsRaw = state.filter.startsWith("Archived")
     ? filteredRows
     : filteredRows.filter((player) => player.status !== "Standby");
-  const activeRows = state.filter.startsWith("Archived") ? activeRowsRaw : shuffleArray(activeRowsRaw);
+  const activeRows = state.filter.startsWith("Archived") ? activeRowsRaw : activeRowsRaw;
 
   // Update total players count badge
   const countEl = document.getElementById("total-players-count");
