@@ -1203,14 +1203,29 @@ async function bootstrap() {
     }
 
     state.ready.players = true;
-    renderPlayers();
-    renderQueues();
-    renderCourts();
-    renderStats();
-    renderPendingMatches();
-    renderNextMatch();
-    renderMatchLog();
-    cacheState();
+    try {
+      renderPlayers();
+      renderQueues();
+      renderCourts();
+      renderStats();
+      renderPendingMatches();
+      renderNextMatch();
+      renderMatchLog();
+      cacheState();
+      
+      const errDiv = document.getElementById("debug-error");
+      if (errDiv) errDiv.remove();
+    } catch (err) {
+      console.error("Render error:", err);
+      let errDiv = document.getElementById("debug-error");
+      if (!errDiv) {
+        errDiv = document.createElement("div");
+        errDiv.id = "debug-error";
+        errDiv.style = "position: fixed; top: 10px; left: 10px; right: 10px; z-index: 9999; background: red; color: white; padding: 20px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; overflow-y: auto; max-height: 50vh;";
+        document.body.appendChild(errDiv);
+      }
+      errDiv.textContent = "FATAL ERROR IN RENDER: " + err.message + "\n" + err.stack;
+    }
   });
 
   const q = query(collection(db, "matches"), where("status", "==", "Pending"));
