@@ -48,7 +48,6 @@ const elements = {
   nameInput: document.getElementById("player-name"),
   skillSelect: document.getElementById("player-skill"),
   locationInput: document.getElementById("player-location"),
-  debugSave: document.getElementById("debug-save"),
   archiveAll: document.getElementById("archive-all"),
   searchInput: document.getElementById("player-search"),
   filterSelect: document.getElementById("player-filter"),
@@ -788,24 +787,7 @@ function bindEvents() {
     }
   });
 
-  if (elements.debugSave) {
-    elements.debugSave.addEventListener("click", async () => {
-      const rawName = elements.nameInput.value.trim();
-      const name = rawName || `Debug-${Date.now().toString().slice(-6)}`;
-      const skill = elements.skillSelect.value || "Beginner";
 
-      try {
-        await addPlayer({ name, skill });
-        if (!rawName) {
-          elements.nameInput.value = "";
-        }
-        showToast("Debug player saved");
-      } catch (error) {
-        console.error("Debug save failed", error);
-        showToast(formatFirebaseError(error), "error");
-      }
-    });
-  }
 
   if (elements.archiveAll) {
     elements.archiveAll.addEventListener("click", async () => {
@@ -982,7 +964,62 @@ function bindEvents() {
       select.innerHTML = selected.map((p, i) => `<option value="${p.id}" ${i === idx ? 'selected' : ''}>${p.name}</option>`).join("");
     });
     
+    checkRepeatMatchup();
     customModal.classList.remove("hidden");
+  });
+
+  const checkRepeatMatchup = () => {
+    const a1 = document.getElementById("custom-team-a1").value;
+    const a2 = document.getElementById("custom-team-a2").value;
+    const b1 = document.getElementById("custom-team-b1").value;
+    const b2 = document.getElementById("custom-team-b2").value;
+    
+    const currentSet = [a1, a2, b1, b2].sort().join(",");
+    const hasRepeat = state.matchLog.some(m => {
+      if (!m.players || m.players.length !== 4) return false;
+      return [...m.players].sort().join(",") === currentSet;
+    });
+    
+    const warningEl = document.getElementById("repeat-matchup-warning");
+    if (hasRepeat && new Set([a1, a2, b1, b2]).size === 4) {
+      warningEl.classList.remove("hidden");
+    } else {
+      warningEl.classList.add("hidden");
+    }
+  };
+
+  ["custom-team-a1", "custom-team-a2", "custom-team-b1", "custom-team-b2"].forEach(selId => {
+    document.getElementById(selId).addEventListener("change", checkRepeatMatchup);
+  });
+
+  document.getElementById("auto-balance-match")?.addEventListener("click", () => {
+    const selected = Array.from(document.querySelectorAll(".stack-checkbox:checked")).map(cb => {
+      const id = cb.getAttribute("data-player-id");
+      return state.players.get(id);
+    });
+    if (selected.length !== 4) return;
+
+    // Calculate power: Skill (1,2,3) * 100 + Win% (0-100)
+    const getPower = (p) => {
+      let skillVal = p.skill === "Advanced" ? 3 : p.skill === "Intermediate" ? 2 : 1;
+      let winPct = 0;
+      let totalGames = (p.wins || 0) + (p.losses || 0);
+      if (totalGames > 0) winPct = (p.wins || 0) / totalGames * 100;
+      return (skillVal * 100) + winPct;
+    };
+
+    const sorted = [...selected].sort((a, b) => getPower(b) - getPower(a));
+    // Strongest (0) + Weakest (3) vs Mid (1) + Mid (2)
+    const teamA = [sorted[0], sorted[3]];
+    const teamB = [sorted[1], sorted[2]];
+    
+    document.getElementById("custom-team-a1").value = teamA[0].id;
+    document.getElementById("custom-team-a2").value = teamA[1].id;
+    document.getElementById("custom-team-b1").value = teamB[0].id;
+    document.getElementById("custom-team-b2").value = teamB[1].id;
+    
+    checkRepeatMatchup();
+    showToast("Match auto-balanced based on skill and win %!");
   });
 
   closeCustomModal.addEventListener("click", () => {

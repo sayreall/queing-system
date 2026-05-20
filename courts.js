@@ -176,11 +176,16 @@ export async function assignMatchToCourt(courtId, skillKey) {
     const poolRefs = poolIds.map(id => doc(db, "players", id));
     const poolSnaps = await Promise.all(poolRefs.map(ref => tx.get(ref)));
     
-    const poolData = poolSnaps.map(snap => ({
-      id: snap.id,
-      playedWith: snap.exists() && snap.data().playedWith ? snap.data().playedWith : {},
-      lastResult: snap.exists() ? (snap.data().lastResult || null) : null,
-    }));
+    const poolData = poolSnaps.map(snap => {
+      const data = snap.exists() ? snap.data() : {};
+      return {
+        id: snap.id,
+        playedWith: data.playedWith || {},
+        lastResult: data.lastResult || null,
+        gp: (data.wins || 0) + (data.losses || 0),
+        queueIndex: candidateOrder.indexOf(snap.id)
+      };
+    });
 
     const getScore = (p1, p2) => {
       let s = (p1.playedWith[p2.id] || 0) + (p2.playedWith[p1.id] || 0);
@@ -192,39 +197,46 @@ export async function assignMatchToCourt(courtId, skillKey) {
     const losers  = poolData.filter(p => p.lastResult === "Loss");
     const scoringPool = (winners.length >= 4 ? winners : (losers.length >= 4 ? losers : poolData));
 
-    const anchor = scoringPool[0];
     let bestCombo = null;
     let minScore = Infinity;
-    const others = scoringPool.slice(1);
 
-
-    if (others.length < 3) {
-      bestCombo = others.map(p => p.id);
+    if (scoringPool.length <= 4) {
+      bestCombo = scoringPool.map(p => p.id);
     } else {
-      for (let i = 0; i < others.length - 2; i++) {
-        for (let j = i + 1; j < others.length - 1; j++) {
-          for (let k = j + 1; k < others.length; k++) {
-            const p1 = others[i];
-            const p2 = others[j];
-            const p3 = others[k];
-            
-            let score = 0;
-            score += getScore(anchor, p1) + getScore(anchor, p2) + getScore(anchor, p3);
-            score += getScore(p1, p2) + getScore(p1, p3) + getScore(p2, p3);
-            
-            // Add a small penalty for skipping people higher in the queue (lower index)
-            score += (i + j + k) * 0.1;
-            
-            if (score < minScore) {
-              minScore = score;
-              bestCombo = [p1.id, p2.id, p3.id];
+      for (let i = 0; i < scoringPool.length - 3; i++) {
+        for (let j = i + 1; j < scoringPool.length - 2; j++) {
+          for (let k = j + 1; k < scoringPool.length - 1; k++) {
+            for (let l = k + 1; l < scoringPool.length; l++) {
+              const p1 = scoringPool[i];
+              const p2 = scoringPool[j];
+              const p3 = scoringPool[k];
+              const p4 = scoringPool[l];
+              
+              let score = 0;
+              // PlayedWith overlap (higher is worse, heavily penalized)
+              let overlap = getScore(p1, p2) + getScore(p1, p3) + getScore(p1, p4) +
+                            getScore(p2, p3) + getScore(p2, p4) + getScore(p3, p4);
+              score += overlap * 5;
+              
+              // Queue index penalty (lower index = waited longer = better)
+              let queuePenalty = p1.queueIndex + p2.queueIndex + p3.queueIndex + p4.queueIndex;
+              score += queuePenalty * 1.5;
+
+              // GP penalty (higher GP = played more = worse)
+              let gpPenalty = p1.gp + p2.gp + p3.gp + p4.gp;
+              score += gpPenalty * 3.0;
+              
+              if (score < minScore) {
+                minScore = score;
+                bestCombo = [p1.id, p2.id, p3.id, p4.id];
+              }
             }
           }
         }
       }
     }
 
-    const selectedIds = [anchor.id, ...bestCombo];
+    const selectedIds = bestCombo;
     const remaining = cleanOrder.filter(id => !selectedIds.includes(id));
 
     // Intelligent Team Selection: Minimize teammate overlap
