@@ -121,6 +121,23 @@
         <ol class="tv-queue" data-tv-queue="advanced"></ol>
       </div>
     </section>
+    <section class="mt-6 sm:mt-10 grid gap-4 sm:gap-6 md:grid-cols-3" id="tv-leaderboards">
+      <div class="glass-card" style="border-color: rgba(31,207,177,0.3); background: rgba(31,207,177,0.05);">
+        <h3 class="text-xs uppercase tracking-[0.2em] text-beginner mb-1">🦾 Ironman</h3>
+        <p class="text-3xl font-display font-semibold text-white" id="stat-ironman-name">--</p>
+        <p class="text-sm text-slate-400 mt-1"><span id="stat-ironman-val" class="font-bold text-beginner">0</span> Games Played</p>
+      </div>
+      <div class="glass-card" style="border-color: rgba(245,196,42,0.3); background: rgba(245,196,42,0.05);">
+        <h3 class="text-xs uppercase tracking-[0.2em] text-gold mb-1">👑 Top Performer</h3>
+        <p class="text-3xl font-display font-semibold text-white" id="stat-topperformer-name">--</p>
+        <p class="text-sm text-slate-400 mt-1"><span id="stat-topperformer-val" class="font-bold text-gold">0%</span> Win Rate</p>
+      </div>
+      <div class="glass-card" style="border-color: rgba(232,90,26,0.3); background: rgba(232,90,26,0.05);">
+        <h3 class="text-xs uppercase tracking-[0.2em] text-orange mb-1">🔥 Longest Match</h3>
+        <p class="text-3xl font-display font-semibold text-white" id="stat-longestmatch-time">00:00</p>
+        <p class="text-sm text-slate-400 mt-1 truncate" id="stat-longestmatch-players">--</p>
+      </div>
+    </section>
   </main>
 
   <script type="module" src="tv-display.js"></script>
