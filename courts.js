@@ -58,6 +58,203 @@ export async function assignMatchToCourt(courtId, skillKey) {
   const matchRef = doc(collection(db, "matches"));
   const now = serverTimestamp();
   const skillLabel = skillLabelFromKey(skillKey);
+  const pairKey = (a, b) => [a, b].sort().join("__");
+
+  // Read last completed match to avoid repeating exact same 4 players or teams.
+  const lastMatchPlayers = new Set();
+  const lastTeammatePairs = new Set();
+  try {
+    const lastMatchSnap = await getDocs(
+      query(
+        collection(db, "matches"),
+        where("status", "==", "Completed"),
+        where("skill", "==", skillLabel),
+        orderBy("endedAt", "desc"),
+        limit(1)
+      )
+    );
+    if (!lastMatchSnap.empty) {
+      const latest = lastMatchSnap.docs[0].data();
+      (latest.players || []).forEach(id => lastMatchPlayers.add(id));
+      const prevA = latest.teamA || [];
+      const prevB = latest.teamB || [];
+      if (prevA.length === 2) lastTeammatePairs.add(pairKey(prevA[0], prevA[1]));
+      if (prevB.length === 2) lastTeammatePairs.add(pairKey(prevB[0], prevB[1]));
+    }
+  } catch (_) {
+    // Index may still be building — proceed without last-match data.
+  }
+
+  await runTransaction(db, async (tx) => {
+    const [courtSnap, queueSnap] = await Promise.all([
+      tx.get(courtRef),
+      tx.get(queueRef),
+    ]);
+
+    if (!courtSnap.exists()) return;
+    const court = courtSnap.data();
+    if (court.status !== "Available") return;
+
+    if (court.allowedSkill && court.allowedSkill !== skillKey && skillKey !== "custom") {
+      throw new Error(`This court only accepts ${court.allowedSkill} matches.`);
+    }
+
+    // Merge court-local last-match memory (works even if Firestore index is delayed).
+    (court.lastMatchPlayers || []).forEach(id => lastMatchPlayers.add(id));
+    (court.lastTeamPairs || []).forEach(key => lastTeammatePairs.add(key));
+
+    // ── Build a clean, validated queue ──────────────────────────────────────
+    const orderRaw = queueSnap.exists() ? queueSnap.data().order || [] : [];
+    const uniqueOrder = Array.from(new Set(orderRaw));
+
+    const playerRefs = uniqueOrder.map(id => doc(db, "players", id));
+    const playerSnaps = await Promise.all(playerRefs.map(ref => tx.get(ref)));
+
+    const cleanOrder = [];   // valid player IDs in queue order
+    const playerDataMap = new Map(); // id → player data
+
+    for (const snap of playerSnaps) {
+      if (!snap.exists()) continue;
+      const data = snap.data();
+      if (data.status !== "Waiting") continue;
+      if (data.currentMatchId) continue;
+      cleanOrder.push(snap.id);
+      playerDataMap.set(snap.id, {
+        id: snap.id,
+        lastResult: data.lastResult || null,
+        gp: (data.wins || 0) + (data.losses || 0),
+        playedWith: data.playedWith || {},
+      });
+    }
+
+    // Self-heal the queue document if it drifted.
+    if (
+      cleanOrder.length !== orderRaw.length ||
+      cleanOrder.some((id, i) => id !== orderRaw[i])
+    ) {
+      tx.set(queueRef, { skill: skillLabel, order: cleanOrder, updatedAt: now }, { merge: true });
+    }
+
+    if (cleanOrder.length < 4) return;
+
+    // ── Win/Loss Preference (soft — never blocks the court) ─────────────────
+    // Prefer fresh faces over repeat players from last match.
+    const freshOrder = cleanOrder.filter(id => !lastMatchPlayers.has(id));
+    const candidateOrder = freshOrder.length >= 4 ? freshOrder : cleanOrder;
+
+    // Look at the top 10 candidates.
+    const pool = candidateOrder.slice(0, 10).map(id => playerDataMap.get(id)).filter(Boolean);
+
+    const winners = pool.filter(p => p.lastResult === "Win");
+    const losers  = pool.filter(p => p.lastResult === "Loss");
+    const neutral = pool.filter(p => !p.lastResult);
+
+    // Priority: W×W×W×W → L×L×L×L → W+neutral → L+neutral → any 4 (never block)
+    let scoringPool;
+    if (winners.length >= 4) {
+      scoringPool = winners;
+    } else if (losers.length >= 4) {
+      scoringPool = losers;
+    } else if (winners.length + neutral.length >= 4) {
+      scoringPool = [...winners, ...neutral];
+    } else if (losers.length + neutral.length >= 4) {
+      scoringPool = [...losers, ...neutral];
+    } else {
+      // Mixed W+L — pick any 4 by queue position (FIFO). Never leave court empty.
+      scoringPool = pool;
+    }
+
+    // ── Pick the best 4 from the scoring pool ───────────────────────────────
+    // Score = playedWith overlap (avoid repeat partners) + slight GP fairness bonus.
+    const getOverlap = (p1, p2) =>
+      (p1.playedWith[p2.id] || 0) + (p2.playedWith[p1.id] || 0);
+
+    let bestCombo = null;
+    let minScore = Infinity;
+
+    if (scoringPool.length <= 4) {
+      bestCombo = scoringPool.map(p => p.id);
+    } else {
+      for (let i = 0; i < scoringPool.length - 3; i++) {
+        for (let j = i + 1; j < scoringPool.length - 2; j++) {
+          for (let k = j + 1; k < scoringPool.length - 1; k++) {
+            for (let l = k + 1; l < scoringPool.length; l++) {
+              const [p1, p2, p3, p4] = [scoringPool[i], scoringPool[j], scoringPool[k], scoringPool[l]];
+              // Main signal: how many times have these people played together?
+              const overlap =
+                getOverlap(p1, p2) + getOverlap(p1, p3) + getOverlap(p1, p4) +
+                getOverlap(p2, p3) + getOverlap(p2, p4) + getOverlap(p3, p4);
+              // Fairness bonus: prefer players with fewer games played overall.
+              const gpFairness = (p1.gp + p2.gp + p3.gp + p4.gp) * 0.5;
+              // Queue priority: don't skip people too far up the queue.
+              const queuePos =
+                (candidateOrder.indexOf(p1.id) + candidateOrder.indexOf(p2.id) +
+                 candidateOrder.indexOf(p3.id) + candidateOrder.indexOf(p4.id)) * 0.3;
+              const score = overlap * 5 + gpFairness + queuePos;
+              if (score < minScore) {
+                minScore = score;
+                bestCombo = [p1.id, p2.id, p3.id, p4.id];
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (!bestCombo || bestCombo.length < 4) return;
+
+    // ── Pick balanced teams ─────────────────────────────────────────────────
+    const comboData = bestCombo.map(id => playerDataMap.get(id));
+    const teamCombos = [
+      { a: [comboData[0], comboData[1]], b: [comboData[2], comboData[3]] },
+      { a: [comboData[0], comboData[2]], b: [comboData[1], comboData[3]] },
+      { a: [comboData[0], comboData[3]], b: [comboData[1], comboData[2]] },
+    ];
+
+    let bestTeam = teamCombos[0];
+    let minTeamScore = Infinity;
+    for (const combo of teamCombos) {
+      const aPairBlocked = lastTeammatePairs.has(pairKey(combo.a[0].id, combo.a[1].id));
+      const bPairBlocked = lastTeammatePairs.has(pairKey(combo.b[0].id, combo.b[1].id));
+      const score =
+        getOverlap(combo.a[0], combo.a[1]) + getOverlap(combo.b[0], combo.b[1]) +
+        (aPairBlocked ? 1000 : 0) + (bPairBlocked ? 1000 : 0);
+      if (score < minTeamScore) {
+        minTeamScore = score;
+        bestTeam = combo;
+      }
+    }
+
+    const teamA = [bestTeam.a[0].id, bestTeam.a[1].id];
+    const teamB = [bestTeam.b[0].id, bestTeam.b[1].id];
+    const finalPlayers = [...teamA, ...teamB];
+    const remaining = cleanOrder.filter(id => !finalPlayers.includes(id));
+
+    // ── Write everything atomically ─────────────────────────────────────────
+    tx.set(matchRef, {
+      courtId, skill: skillLabel,
+      players: finalPlayers, teamA, teamB,
+      status: "Active",
+      startedAt: now, endedAt: null, updatedAt: now,
+    });
+
+    tx.set(queueRef, { skill: skillLabel, order: remaining, updatedAt: now }, { merge: true });
+
+    tx.set(courtRef, {
+      status: "Active", matchId: matchRef.id,
+      players: finalPlayers, skill: skillLabel,
+      startedAt: now, updatedAt: now,
+    }, { merge: true });
+
+    finalPlayers.forEach(playerId => {
+      tx.set(doc(db, "players", playerId), {
+        status: "Playing", currentMatchId: matchRef.id, updatedAt: now,
+      }, { merge: true });
+    });
+  });
+
+  return matchRef.id;
+}
 
   // Read latest completed match so we can avoid repeating the same players immediately.
   const lastMatchPlayers = new Set();
