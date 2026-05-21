@@ -1334,18 +1334,75 @@ function renderNextMatch() {
       .flatMap(c => c.players || [])
   );
   const availablePlayers = chosen.players.filter(id => !activePlayers.has(id));
+  const nextIds = (availablePlayers.length >= 4
+    ? availablePlayers
+    : chosen.players
+  ).slice(0, 4);
 
-  if (availablePlayers.length < 4) {
+  if (nextIds.length < 4) {
     container.innerHTML = "";
     return;
   }
-
-  const nextIds = availablePlayers.slice(0, 4);
-  // Team A = first 2, Team B = last 2 (preview — actual matchmaking may differ)
-  const teamA = nextIds.slice(0, 2);
-  const teamB = nextIds.slice(2, 4);
+  const { teamA, teamB } = buildPreviewTeams(nextIds);
 
   container.innerHTML = buildNextMatchHTML(teamA, teamB, chosen.label, "Auto", courtReady);
+}
+
+function buildPreviewTeams(playerIds) {
+  if (!Array.isArray(playerIds) || playerIds.length < 4) {
+    return { teamA: [], teamB: [] };
+  }
+
+  const pairKey = (a, b) => [a, b].sort().join("|");
+  const p = playerIds.slice(0, 4).map((id) => {
+    const info = state.players.get(id) || {};
+    return {
+      id,
+      lastResult: info.lastResult || null,
+      playedWith: info.playedWith || {},
+    };
+  });
+
+  const referenceCourts = state.courts.filter((c) => c.status === "Available");
+  const courtsToRead = referenceCourts.length ? referenceCourts : state.courts;
+  const lastTeammatePairs = new Set();
+  courtsToRead.forEach((court) => {
+    (court.lastTeamPairs || []).forEach((key) => lastTeammatePairs.add(key));
+  });
+
+  const combos = [
+    { a: [p[0], p[1]], b: [p[2], p[3]] },
+    { a: [p[0], p[2]], b: [p[1], p[3]] },
+    { a: [p[0], p[3]], b: [p[1], p[2]] },
+  ];
+
+  const getOverlap = (x, y) => (x.playedWith[y.id] || 0) + (y.playedWith[x.id] || 0);
+  const sameResultScore = (pair) => {
+    if (!pair[0].lastResult || !pair[1].lastResult) return 0;
+    return pair[0].lastResult === pair[1].lastResult ? 50 : -50;
+  };
+
+  let best = combos[0];
+  let minScore = Infinity;
+  for (const combo of combos) {
+    const aBlocked = lastTeammatePairs.has(pairKey(combo.a[0].id, combo.a[1].id));
+    const bBlocked = lastTeammatePairs.has(pairKey(combo.b[0].id, combo.b[1].id));
+
+    let score = getOverlap(combo.a[0], combo.a[1]) + getOverlap(combo.b[0], combo.b[1]);
+    if (aBlocked) score += 1000;
+    if (bBlocked) score += 1000;
+    score += sameResultScore(combo.a) + sameResultScore(combo.b);
+
+    if (score < minScore) {
+      minScore = score;
+      best = combo;
+    }
+  }
+
+  return {
+    teamA: [best.a[0].id, best.a[1].id],
+    teamB: [best.b[0].id, best.b[1].id],
+  };
 }
 
 function buildNextMatchHTML(teamAIds, teamBIds, skillLabel, type, courtReady) {
