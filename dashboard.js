@@ -273,41 +273,53 @@ function renderCourts() {
         </select>
       `;
 
-      // Find the best eligible queue for this court
-      let eligibleBestQueue = null;
-      if (hasPending && courtAllowedSkill === null) {
-        eligibleBestQueue = { key: "custom", label: "Custom", count: state.pendingMatches.length * 4 };
-      } else {
-        const eligibleOptions = SKILLS
-          .filter(skill => courtAllowedSkill === null || skill.key === courtAllowedSkill)
-          .map(skill => ({ key: skill.key, label: skill.label, count: (state.queues[skill.key] || []).length }))
-          .filter(q => q.count >= 4);
-        eligibleOptions.sort((a, b) => b.count - a.count);
-        eligibleBestQueue = eligibleOptions[0] || null;
+      const selectableQueues = [];
+      if (courtAllowedSkill === null && hasPending) {
+        selectableQueues.push({
+          key: "custom",
+          label: `Custom (${state.pendingMatches.length} pending)`,
+          count: state.pendingMatches.length * 4
+        });
       }
+      SKILLS
+        .filter(skill => courtAllowedSkill === null || skill.key === courtAllowedSkill)
+        .forEach((skill) => {
+          const count = (state.queues[skill.key] || []).length;
+          if (count >= 4) {
+            selectableQueues.push({
+              key: skill.key,
+              label: `${skill.label} (${count} queued)`,
+              count
+            });
+          }
+        });
 
       const courtQueuedTotal = courtAllowedSkill === null
         ? totalQueued
         : (state.queues[courtAllowedSkill] || []).length;
 
-      if (eligibleBestQueue) {
-        // Queue ready — show Start Next Match
-        const skillBadgeClass = { Beginner: "text-cyan-400", Intermediate: "text-amber-400", Advanced: "text-rose-400", Custom: "text-purple-400" }[eligibleBestQueue.label] || "text-slate-300";
+      if (selectableQueues.length) {
+        const queueSelect = `
+          <select class="input-field text-xs py-1 px-2 h-auto mt-2 w-full bg-slate-800 border-slate-700" data-start-queue-select="${cid}">
+            ${selectableQueues.map((q) => `<option value="${q.key}">${q.label}</option>`).join("")}
+          </select>
+        `;
         return `
           <div class="glass-card court-card" data-court-id="${cid}">
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="court-title">${courtInfo.name}</h3>
                 ${skillDropdown}
+                ${queueSelect}
               </div>
               <button class="text-slate-400 hover:text-white text-lg leading-none" data-toggle-court="${cid}" title="Mark Inactive">×</button>
             </div>
             <div class="flex items-center gap-2 text-xs text-slate-400 mb-1">
               <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block"></span>
-              <span class="${skillBadgeClass} font-semibold">${eligibleBestQueue.label}</span>
-              <span>${eligibleBestQueue.count} players queued</span>
+              <span class="text-cyan-300 font-semibold">Manual Queue Selection</span>
+              <span>${selectableQueues.length} options ready</span>
             </div>
-            <button class="btn-primary w-full py-3 text-sm" data-start-court="${cid}" data-skill-key="${eligibleBestQueue.key}">
+            <button class="btn-primary w-full py-3 text-sm" data-start-court="${cid}">
               ▶ Start Next Match
             </button>
           </div>`;
@@ -857,11 +869,20 @@ function bindEvents() {
     const startCourtBtn = event.target.closest("[data-start-court]");
     if (startCourtBtn) {
       const courtId = startCourtBtn.dataset.startCourt;
-      const skillKey = startCourtBtn.dataset.skillKey;
+      const queueSelect = document.querySelector(`[data-start-queue-select="${courtId}"]`);
+      const skillKey = queueSelect?.value;
       try {
+        if (!skillKey) {
+          showToast("Select a queue first", "error");
+          return;
+        }
         startCourtBtn.disabled = true;
         startCourtBtn.textContent = "Starting...";
         if (skillKey === "custom") {
+          if (!state.pendingMatches.length) {
+            showToast("No pending custom match available", "error");
+            return;
+          }
           const { activatePendingMatch } = await import("./courts.js");
           await activatePendingMatch(state.pendingMatches[0].id, courtId);
           showToast("Custom match started!");
