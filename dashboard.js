@@ -163,7 +163,7 @@ function renderQueues() {
       container.innerHTML = `<p class="queue-empty text-slate-500 py-4 text-center text-sm border border-dashed border-slate-700/50 rounded-xl mt-4">No players waiting.</p>`;
     } else {
       const wrapper = document.createElement("div");
-      wrapper.className = "flex flex-col gap-4 mt-4";
+      wrapper.className = "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4 items-start";
       
       const chunks = [];
       for (let i = 0; i < order.length; i += 4) {
