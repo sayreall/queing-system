@@ -110,6 +110,32 @@ function renderLeaderboards() {
   fillCard(1, top3[0]);
   fillCard(2, top3[1]);
   fillCard(3, top3[2]);
+
+  // Full Rankings
+  const fullContainer = document.getElementById("full-rankings-container");
+  if (fullContainer) {
+    if (ranked.length === 0) {
+      fullContainer.innerHTML = `<div class="col-span-full text-slate-500 text-center py-4">No active players</div>`;
+    } else {
+      fullContainer.innerHTML = ranked.map((player, index) => {
+        const rank = index + 1;
+        const rankColor = rank === 1 ? "text-gold" : rank === 2 ? "text-slate-300" : rank === 3 ? "text-amber-600" : "text-slate-500";
+        
+        return `
+          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-800/40 border border-slate-700/50">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <span class="font-display font-bold text-lg w-6 text-center ${rankColor}">#${rank}</span>
+              <span class="font-semibold text-slate-200 truncate" style="max-width: 140px;" title="${player.name}">${player.name}</span>
+            </div>
+            <div class="flex flex-col items-end text-[10px] leading-tight">
+              <span class="font-bold text-emerald-400">${player.wins}W - ${player.losses}L</span>
+              <span class="text-slate-400">${Math.round(player.winPct * 100)}% WR</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+  }
 }
 
 function startTimerLoop() {
