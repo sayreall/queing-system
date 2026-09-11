@@ -54,7 +54,9 @@ const elements = {
   archiveAll: document.getElementById("archive-all"),
   searchInput: document.getElementById("player-search"),
   filterSelect: document.getElementById("player-filter"),
-  playersBody: document.getElementById("players-body"),
+  playersBodyBeginner: document.getElementById("players-body-beginner"),
+  playersBodyIntermediate: document.getElementById("players-body-intermediate"),
+  playersBodyAdvanced: document.getElementById("players-body-advanced"),
   donePlayersBody: document.getElementById("done-players-body"),
   toastContainer: document.getElementById("toast-container"),
 };
@@ -420,16 +422,7 @@ function renderPlayers() {
     countEl.textContent = `(${allActive.length} active${archivedCount ? `, ${archivedCount} archived` : ""})`;
   }
 
-  if (!activeRows.length) {
-    elements.playersBody.innerHTML = `
-      <tr>
-        <td class="py-4 text-slate-500" colspan="13">No remaining players to play.</td>
-      </tr>
-    `;
-  } else {
-    elements.playersBody.innerHTML = activeRows
-      .map(
-        (player, idx) => `
+  const generateRowHTML = (player, idx) => `
       <tr class="border-t border-slate-800/60">
         <td class="py-3 text-center">
           <input type="checkbox" class="stack-checkbox w-4 h-4 cursor-pointer" data-player-id="${player.id}" />
@@ -492,10 +485,29 @@ function renderPlayers() {
           </div>
         </td>
       </tr>
-    `
-      )
-      .join("");
-  }
+    `;
+
+  const renderTable = (tbodyElement, countElementId, skillFilterLabel) => {
+    if (!tbodyElement) return;
+    
+    // For archived filter we don't separate by skill if we still show the table, 
+    // but the user only wanted to separate by skill.
+    // If the overall filter is set to a specific skill or Archived, the activeRows is already filtered.
+    const rows = activeRows.filter(p => p.skill === skillFilterLabel);
+    
+    const countEl = document.getElementById(countElementId);
+    if (countEl) countEl.textContent = rows.length;
+
+    if (!rows.length) {
+      tbodyElement.innerHTML = `<tr><td class="py-4 text-slate-500 text-center" colspan="13">No ${skillFilterLabel} players.</td></tr>`;
+    } else {
+      tbodyElement.innerHTML = rows.map(generateRowHTML).join("");
+    }
+  };
+
+  renderTable(elements.playersBodyBeginner, "count-beginner", "Beginner");
+  renderTable(elements.playersBodyIntermediate, "count-intermediate", "Intermediate");
+  renderTable(elements.playersBodyAdvanced, "count-advanced", "Advanced");
 
   elements.donePlayersBody.innerHTML = doneRows.length
     ? doneRows
@@ -789,11 +801,40 @@ function bindEvents() {
       if (genderSelect) genderSelect.value = "";
       if (elements.locationInput) elements.locationInput.value = "";
       showToast("Player added");
+      
+      const modal = document.getElementById("add-player-modal");
+      if (modal) modal.classList.add("hidden");
     } catch (error) {
       console.error("Add player failed", error);
       showToast(formatFirebaseError(error), "error");
     }
   });
+
+  const openAddPlayerBtn = document.getElementById("open-add-player-modal");
+  const closeAddPlayerBtn = document.getElementById("close-add-player-modal");
+  const addPlayerModal = document.getElementById("add-player-modal");
+
+  if (openAddPlayerBtn && addPlayerModal) {
+    openAddPlayerBtn.addEventListener("click", () => {
+      addPlayerModal.classList.remove("hidden");
+      elements.nameInput?.focus();
+    });
+  }
+
+  if (closeAddPlayerBtn && addPlayerModal) {
+    closeAddPlayerBtn.addEventListener("click", () => {
+      addPlayerModal.classList.add("hidden");
+    });
+  }
+
+  // Close modal when clicking outside
+  if (addPlayerModal) {
+    addPlayerModal.addEventListener("click", (e) => {
+      if (e.target === addPlayerModal) {
+        addPlayerModal.classList.add("hidden");
+      }
+    });
+  }
 
 
 

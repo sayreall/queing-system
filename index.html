@@ -181,26 +181,10 @@
           <h2 class="text-xl font-display font-semibold">Player Management <span id="total-players-count" class="text-slate-400 text-base font-normal ml-2"></span></h2>
           <p class="text-sm text-slate-400">Add, edit, or manage player availability</p>
         </div>
-        <form class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center w-full sm:w-auto"
-          id="add-player-form">
-          <input type="text" id="player-name" placeholder="Player name" class="input-field" required />
-          <select id="player-skill" class="input-field" required>
-            <option value="">Skill level</option>
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-          </select>
-          <select id="player-gender" class="input-field" required>
-            <option value="">Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Unspecified">Unspecified</option>
-          </select>
-          <input type="text" id="player-location" placeholder="Location (optional)" class="input-field" />
-          <button class="btn-primary" type="submit">Add Player</button>
-          <button class="btn-secondary" style="border-color: rgba(248, 113, 113, 0.4); color: #fca5a5;" type="button"
-            id="archive-all">End Day (Archive All)</button>
-        </form>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center w-full sm:w-auto">
+          <button id="open-add-player-modal" class="btn-primary">Add Player</button>
+          <button id="archive-all" class="btn-secondary" style="border-color: rgba(248, 113, 113, 0.4); color: #fca5a5;">End Day (Archive All)</button>
+        </div>
       </div>
 
       <div class="mt-6 grid gap-4 lg:grid-cols-[0.35fr_0.65fr]">
@@ -226,31 +210,106 @@
           </div>
         </div>
         <div class="glass-subcard min-w-0">
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm whitespace-nowrap" id="players-table">
-            <thead class="text-left text-slate-400">
-              <tr>
-                <th class="py-2 w-8 text-center">Stack</th>
-                <th class="w-8 text-center text-slate-500">#</th>
-                <th>Player</th>
-                <th>Gender</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th>Last Match</th>
-                <th class="text-purple-400" title="Games Played">GP</th>
-                <th class="text-green-400">W</th>
-                <th class="text-red-400">L</th>
-                <th class="text-blue-400">Win %</th>
-                <th>Skill</th>
-                <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="players-body">
-              <tr>
-                <td class="py-4 text-slate-500" colspan="13">Loading players...</td>
-              </tr>
-            </tbody>
-          </table>
+          <!-- Beginner Players -->
+          <div class="mb-6">
+            <div class="flex items-center gap-2 mb-3">
+              <h3 class="text-base font-display font-semibold text-beginner">Beginner Players</h3>
+              <span class="text-xs text-slate-500" id="count-beginner">0</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm whitespace-nowrap">
+                <thead class="text-left text-slate-400">
+                  <tr>
+                    <th class="py-2 w-8 text-center">Stack</th>
+                    <th class="w-8 text-center text-slate-500">#</th>
+                    <th>Player</th>
+                    <th>Gender</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Last Match</th>
+                    <th class="text-purple-400" title="Games Played">GP</th>
+                    <th class="text-green-400">W</th>
+                    <th class="text-red-400">L</th>
+                    <th class="text-blue-400">Win %</th>
+                    <th>Skill</th>
+                    <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="players-body-beginner">
+                  <tr>
+                    <td class="py-4 text-slate-500" colspan="13">Loading players...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Intermediate Players -->
+          <div class="mb-6">
+            <div class="flex items-center gap-2 mb-3">
+              <h3 class="text-base font-display font-semibold text-intermediate">Intermediate Players</h3>
+              <span class="text-xs text-slate-500" id="count-intermediate">0</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm whitespace-nowrap">
+                <thead class="text-left text-slate-400">
+                  <tr>
+                    <th class="py-2 w-8 text-center">Stack</th>
+                    <th class="w-8 text-center text-slate-500">#</th>
+                    <th>Player</th>
+                    <th>Gender</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Last Match</th>
+                    <th class="text-purple-400" title="Games Played">GP</th>
+                    <th class="text-green-400">W</th>
+                    <th class="text-red-400">L</th>
+                    <th class="text-blue-400">Win %</th>
+                    <th>Skill</th>
+                    <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="players-body-intermediate">
+                  <tr>
+                    <td class="py-4 text-slate-500" colspan="13">Loading players...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Advanced Players -->
+          <div class="mb-4">
+            <div class="flex items-center gap-2 mb-3">
+              <h3 class="text-base font-display font-semibold text-advanced">Advanced Players</h3>
+              <span class="text-xs text-slate-500" id="count-advanced">0</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm whitespace-nowrap">
+                <thead class="text-left text-slate-400">
+                  <tr>
+                    <th class="py-2 w-8 text-center">Stack</th>
+                    <th class="w-8 text-center text-slate-500">#</th>
+                    <th>Player</th>
+                    <th>Gender</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Last Match</th>
+                    <th class="text-purple-400" title="Games Played">GP</th>
+                    <th class="text-green-400">W</th>
+                    <th class="text-red-400">L</th>
+                    <th class="text-blue-400">Win %</th>
+                    <th>Skill</th>
+                    <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="players-body-advanced">
+                  <tr>
+                    <td class="py-4 text-slate-500" colspan="13">Loading players...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div class="mt-6 border-t border-slate-800/60 pt-4">
@@ -337,6 +396,46 @@
     </div>
   </section>
 
+
+  <!-- Add Player Modal -->
+  <div id="add-player-modal"
+    class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="glass-card w-full max-w-sm relative">
+      <button id="close-add-player-modal"
+        class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+      <h2 class="text-2xl font-display font-semibold mb-2">Add Player</h2>
+      <p class="text-sm text-slate-400 mb-6">Enter the player's details below.</p>
+      <form id="add-player-form" class="space-y-4">
+        <div>
+          <label class="block text-sm text-slate-400 mb-1">Player Name</label>
+          <input type="text" id="player-name" placeholder="John Doe" class="input-field w-full" required />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-400 mb-1">Skill Level</label>
+          <select id="player-skill" class="input-field w-full" required>
+            <option value="">Select skill level</option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm text-slate-400 mb-1">Gender</label>
+          <select id="player-gender" class="input-field w-full" required>
+            <option value="">Select gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Unspecified">Unspecified</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm text-slate-400 mb-1">Location (optional)</label>
+          <input type="text" id="player-location" placeholder="e.g. Court 1" class="input-field w-full" />
+        </div>
+        <button type="submit" class="btn-primary w-full py-3 mt-4 text-sm">Add Player</button>
+      </form>
+    </div>
+  </div>
 
   <div id="custom-match-modal"
     class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
