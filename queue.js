@@ -107,6 +107,10 @@ export async function addPlayer({ name, skill, gender, location }) {
 
   // Use a transaction to ensure clean state
   await runTransaction(db, async (tx) => {
+    // Firestore requires all reads to happen BEFORE any writes
+    const queueSnap = await tx.get(queueRef);
+    const orderRaw = queueSnap.exists() ? queueSnap.data().order || [] : [];
+
     if (isRevive) {
       tx.set(playerRef, {
         skill: normalizedSkill,
@@ -132,8 +136,6 @@ export async function addPlayer({ name, skill, gender, location }) {
     }
     
     // Also push to the queue
-    const queueSnap = await tx.get(queueRef);
-    const orderRaw = queueSnap.exists() ? queueSnap.data().order || [] : [];
     if (!orderRaw.includes(playerRef.id)) {
       tx.set(
         queueRef,
