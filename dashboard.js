@@ -49,6 +49,9 @@ const state = {
 
 const style = document.createElement('style');
 style.textContent = `
+  .match-card.is-editing .queue-item {
+    cursor: grab !important;
+  }
   .match-card.is-editing .drag-handle,
   .match-card.is-editing .queue-actions {
     display: flex !important;
@@ -675,17 +678,19 @@ function setupSortable() {
     return;
   }
 
-  // We group Sortable instances by skill so players can be dragged between match cards of the SAME skill
   document.querySelectorAll(".queue-matches-container").forEach((container) => {
     const skillKey = container.dataset.queue;
     
     container.querySelectorAll(".team-list").forEach((list) => {
       if (list.dataset.sortableAttached) return;
 
-      new Sortable(list, {
+      const matchCard = list.closest(".match-card");
+      const isEditing = matchCard && matchCard.classList.contains("is-editing");
+
+      list._sortable = new Sortable(list, {
         group: `queue-${skillKey}`, // Allows dragging between match cards in this skill queue
         animation: 150,
-        handle: ".drag-handle",
+        disabled: !isEditing,
         onEnd: async (e) => {
           // Rebuild the entire order array from ALL match cards in this skill's container
           const order = [];
@@ -955,13 +960,22 @@ function bindEvents() {
       const matchCard = editBtn.closest(".match-card");
       if (matchCard) {
         const id = matchCard.dataset.matchId;
-        if (state.editingMatches.has(id)) {
-          state.editingMatches.delete(id);
-          matchCard.classList.remove("is-editing");
-        } else {
+        const willBeEditing = !state.editingMatches.has(id);
+        
+        if (willBeEditing) {
           state.editingMatches.add(id);
           matchCard.classList.add("is-editing");
+        } else {
+          state.editingMatches.delete(id);
+          matchCard.classList.remove("is-editing");
         }
+        
+        // Dynamically enable/disable Sortable on this match card's lists
+        matchCard.querySelectorAll(".team-list").forEach(list => {
+          if (list._sortable) {
+            list._sortable.option("disabled", !willBeEditing);
+          }
+        });
       }
       return;
     }
