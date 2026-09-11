@@ -70,73 +70,46 @@ function renderQueues() {
 function renderLeaderboards() {
   const players = Array.from(state.players.values()).filter(p => p.status !== "Archived");
 
-  // Ironman
-  let ironman = null;
-  let maxGP = -1;
-  players.forEach(p => {
-    const gp = (p.wins || 0) + (p.losses || 0);
-    if (gp > maxGP && gp > 0) {
-      maxGP = gp;
-      ironman = p;
-    }
+  // Calculate stats for all players
+  const ranked = players.map(p => {
+    const wins = p.wins || 0;
+    const losses = p.losses || 0;
+    const gp = wins + losses;
+    const winPct = gp > 0 ? wins / gp : 0;
+    return { ...p, wins, gp, winPct };
   });
 
-  const elIronmanName = document.getElementById("stat-ironman-name");
-  const elIronmanVal = document.getElementById("stat-ironman-val");
-  if (ironman) {
-    elIronmanName.textContent = ironman.name;
-    elIronmanVal.textContent = maxGP;
-  }
-
-  // Top Performer
-  let topPerformer = null;
-  let maxWinPct = -1;
-  players.forEach(p => {
-    const gp = (p.wins || 0) + (p.losses || 0);
-    if (gp >= 3) {
-      const pct = (p.wins || 0) / gp;
-      if (pct > maxWinPct) {
-        maxWinPct = pct;
-        topPerformer = p;
-      }
-    }
+  // Sort by Wins (descending), then Win% (descending), then least games played
+  ranked.sort((a, b) => {
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+    return a.gp - b.gp;
   });
 
-  const elTopPerformerName = document.getElementById("stat-topperformer-name");
-  const elTopPerformerVal = document.getElementById("stat-topperformer-val");
-  if (topPerformer) {
-    elTopPerformerName.textContent = topPerformer.name;
-    elTopPerformerVal.textContent = Math.round(maxWinPct * 100) + "%";
-  }
+  // Top 3
+  const top3 = ranked.slice(0, 3);
 
-  // Longest Match
-  let longestMatch = null;
-  let maxDuration = -1;
-  state.completedMatches.forEach(m => {
-    if (m.startedAt && m.endedAt) {
-      let start = m.startedAt.toMillis ? m.startedAt.toMillis() : (m.startedAt.seconds * 1000 || new Date(m.startedAt).getTime());
-      let end = m.endedAt.toMillis ? m.endedAt.toMillis() : (m.endedAt.seconds * 1000 || new Date(m.endedAt).getTime());
-      if (!isNaN(start) && !isNaN(end)) {
-        const duration = end - start;
-        if (duration > maxDuration) {
-          maxDuration = duration;
-          longestMatch = m;
-        }
-      }
-    }
-  });
-
-  const elLongestTime = document.getElementById("stat-longestmatch-time");
-  const elLongestPlayers = document.getElementById("stat-longestmatch-players");
-  if (longestMatch && maxDuration > 0) {
-    const mins = Math.floor(maxDuration / 60000);
-    const secs = Math.floor((maxDuration % 60000) / 1000);
-    elLongestTime.textContent = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  // Helper to render
+  const fillCard = (rank, player) => {
+    const elName = document.getElementById(`leaderboard-${rank}-name`);
+    const elWins = document.getElementById(`leaderboard-${rank}-wins`);
+    const elWinPct = document.getElementById(`leaderboard-${rank}-winpct`);
+    if (!elName || !elWins || !elWinPct) return;
     
-    const nameFor = (id) => state.players.get(id)?.name || "Unknown";
-    const playersArr = longestMatch.players || [];
-    elLongestPlayers.textContent = playersArr.map(nameFor).join(", ");
-  }
+    if (player && player.wins > 0) { // Only show if they have at least 1 win
+      elName.textContent = player.name;
+      elWins.textContent = player.wins;
+      elWinPct.textContent = Math.round(player.winPct * 100) + "%";
+    } else {
+      elName.textContent = "--";
+      elWins.textContent = "0";
+      elWinPct.textContent = "0%";
+    }
+  };
+
+  fillCard(1, top3[0]);
+  fillCard(2, top3[1]);
+  fillCard(3, top3[2]);
 }
 
 function startTimerLoop() {

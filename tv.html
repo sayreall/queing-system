@@ -121,21 +121,41 @@
         <ol class="tv-queue" data-tv-queue="advanced"></ol>
       </div>
     </section>
-    <section class="mt-6 sm:mt-10 grid gap-4 sm:gap-6 md:grid-cols-3" id="tv-leaderboards">
-      <div class="glass-card" style="border-color: rgba(31,207,177,0.3); background: rgba(31,207,177,0.05);">
-        <h3 class="text-xs uppercase tracking-[0.2em] text-beginner mb-1">🦾 Ironman</h3>
-        <p class="text-3xl font-display font-semibold text-white" id="stat-ironman-name">--</p>
-        <p class="text-sm text-slate-400 mt-1"><span id="stat-ironman-val" class="font-bold text-beginner">0</span> Games Played</p>
-      </div>
-      <div class="glass-card" style="border-color: rgba(245,196,42,0.3); background: rgba(245,196,42,0.05);">
-        <h3 class="text-xs uppercase tracking-[0.2em] text-gold mb-1">👑 Top Performer</h3>
-        <p class="text-3xl font-display font-semibold text-white" id="stat-topperformer-name">--</p>
-        <p class="text-sm text-slate-400 mt-1"><span id="stat-topperformer-val" class="font-bold text-gold">0%</span> Win Rate</p>
-      </div>
-      <div class="glass-card" style="border-color: rgba(232,90,26,0.3); background: rgba(232,90,26,0.05);">
-        <h3 class="text-xs uppercase tracking-[0.2em] text-orange mb-1">🔥 Longest Match</h3>
-        <p class="text-3xl font-display font-semibold text-white" id="stat-longestmatch-time">00:00</p>
-        <p class="text-sm text-slate-400 mt-1 truncate" id="stat-longestmatch-players">--</p>
+    <section class="mt-6 sm:mt-10 mb-8" id="tv-leaderboards">
+      <h2 class="text-xl sm:text-2xl font-display font-semibold mb-4 text-slate-300">Daily Leaderboard</h2>
+      <div class="grid gap-4 sm:gap-6 md:grid-cols-3">
+        <!-- 2nd Place -->
+        <div class="glass-card flex flex-col items-center text-center mt-4 sm:mt-8" style="border-color: rgba(148, 163, 184, 0.4); background: rgba(148, 163, 184, 0.05);">
+          <div class="w-12 h-12 rounded-full bg-slate-400 text-slate-900 flex items-center justify-center font-bold text-xl mb-3 shadow-[0_0_15px_rgba(148,163,184,0.5)]">2</div>
+          <p class="text-2xl font-display font-semibold text-white truncate w-full" id="leaderboard-2-name">--</p>
+          <div class="flex items-center gap-3 mt-2 text-sm">
+            <span class="text-slate-300"><span id="leaderboard-2-wins" class="font-bold text-slate-100">0</span> Wins</span>
+            <span class="text-slate-500">|</span>
+            <span class="text-slate-300"><span id="leaderboard-2-winpct" class="font-bold text-slate-100">0%</span></span>
+          </div>
+        </div>
+
+        <!-- 1st Place -->
+        <div class="glass-card flex flex-col items-center text-center transform scale-105 shadow-xl" style="border-color: rgba(245, 196, 42, 0.6); background: rgba(245, 196, 42, 0.1);">
+          <div class="w-16 h-16 rounded-full bg-gold text-slate-900 flex items-center justify-center font-bold text-3xl mb-3 shadow-[0_0_20px_rgba(245,196,42,0.6)]">👑</div>
+          <p class="text-3xl font-display font-semibold text-white truncate w-full" id="leaderboard-1-name">--</p>
+          <div class="flex items-center gap-4 mt-2">
+            <span class="text-gold text-base"><span id="leaderboard-1-wins" class="font-bold text-white">0</span> Wins</span>
+            <span class="text-slate-500">|</span>
+            <span class="text-gold text-base"><span id="leaderboard-1-winpct" class="font-bold text-white">0%</span> WR</span>
+          </div>
+        </div>
+
+        <!-- 3rd Place -->
+        <div class="glass-card flex flex-col items-center text-center mt-4 sm:mt-8" style="border-color: rgba(180, 83, 9, 0.4); background: rgba(180, 83, 9, 0.05);">
+          <div class="w-12 h-12 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-xl mb-3 shadow-[0_0_15px_rgba(180,83,9,0.5)]">3</div>
+          <p class="text-2xl font-display font-semibold text-white truncate w-full" id="leaderboard-3-name">--</p>
+          <div class="flex items-center gap-3 mt-2 text-sm">
+            <span class="text-slate-300"><span id="leaderboard-3-wins" class="font-bold text-slate-100">0</span> Wins</span>
+            <span class="text-slate-500">|</span>
+            <span class="text-slate-300"><span id="leaderboard-3-winpct" class="font-bold text-slate-100">0%</span></span>
+          </div>
+        </div>
       </div>
     </section>
   </main>
