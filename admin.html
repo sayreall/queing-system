@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="shortcut icon" href="deuce-game-logo.png">
+  <title>Admin Dashboard - Deuce Club Queuing System</title>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ["Rajdhani", "sans-serif"],
+            body: ["Manrope", "sans-serif"],
+          },
+          colors: {
+            beginner: "#1fcfb1",
+            intermediate: "#F5C42A",
+            advanced: "#f07840",
+            ink: "#0a2e2e",
+            panel: "#0f3d3d",
+            orange: "#E85A1A",
+            gold: "#F5C42A",
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body class="min-h-screen bg-ink font-body" style="color:#F2E8D5;">
+  <div class="page-bg"></div>
+
+  <header class="px-6 py-4 md:px-10 md:py-6">
+    <div class="header-inner">
+      <div class="header-brand">
+        <img src="deuce-game-logo.png" alt="Logo" class="header-logo" onerror="this.style.display='none'" />
+        <div class="header-title-block">
+          <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Administration</p>
+          <h1 class="font-display font-semibold header-title text-beginner">User Management</h1>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a class="btn-secondary" href="index.html">Go to Queuing System</a>
+        <button id="logout-btn" class="btn-primary" style="background: rgba(248, 113, 113, 0.2); border-color: rgba(248, 113, 113, 0.4); color: #fca5a5;">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="px-6 py-8 md:px-10">
+    <section class="max-w-6xl mx-auto space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-display font-semibold">Registered Users</h2>
+          <p class="text-sm text-slate-400">Manage who has access to the Queuing System</p>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm whitespace-nowrap">
+            <thead class="text-left text-slate-400 border-b border-slate-700">
+              <tr>
+                <th class="py-3 px-4">Name</th>
+                <th class="py-3 px-4">Email</th>
+                <th class="py-3 px-4">Role</th>
+                <th class="py-3 px-4">Joined Date</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <tr>
+                <td colspan="5" class="py-4 px-4 text-center text-slate-500">Loading users...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast-container"></div>
+  <script type="module" src="admin.js"></script>
+</body>
+</html>

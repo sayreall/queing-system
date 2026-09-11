@@ -20,6 +20,13 @@ import {
   runTransaction,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAsQtk03ejsFovbeh3mW3bnBFeKt6PdAWo",
@@ -35,8 +42,10 @@ const app = initializeApp(firebaseConfig);
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
 });
+const auth = getAuth(app);
 
 export {
+  auth,
   db,
   collection,
   doc,
@@ -54,4 +63,8 @@ export {
   serverTimestamp,
   runTransaction,
   writeBatch,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
 };

@@ -20,7 +20,10 @@ import {
   toggleCourtStatus,
   updateCourtAllowedSkill,
 } from "./courts.js";
-import { db, collection, query, where, orderBy, limit, onSnapshot } from "./firebase.js";
+import { 
+  db, collection, query, where, orderBy, limit, onSnapshot,
+  auth, onAuthStateChanged, signOut, doc, getDoc
+} from "./firebase.js";
 
 const AVG_MATCH_MINUTES = 15;
 
@@ -817,6 +820,15 @@ function bindEvents() {
     renderPlayers();
   });
 
+  const autoAssignToggle = document.getElementById("auto-assign-toggle");
+  if (autoAssignToggle) {
+    autoAssignToggle.addEventListener("change", (event) => {
+      if (event.target.checked) {
+        maybeAutoAssignMatches();
+      }
+    });
+  }
+
   document.body.addEventListener("click", async (event) => {
     const action = event.target.getAttribute("data-action");
     const playerRow = event.target.closest(".queue-item");
@@ -1131,6 +1143,13 @@ async function bootstrap() {
     showToast(formatFirebaseError(error), "error");
   }
 
+  function checkAutoAssign() {
+    const toggle = document.getElementById("auto-assign-toggle");
+    if (toggle && toggle.checked) {
+      maybeAutoAssignMatches();
+    }
+  }
+
   listenToQueues((queues) => {
     state.queues = queues;
     state.ready.queues = true;
@@ -1139,6 +1158,7 @@ async function bootstrap() {
     renderNextMatch();
     setupSortable();
     cacheState();
+    checkAutoAssign();
   });
 
   listenToCourts((courts) => {
@@ -1148,6 +1168,7 @@ async function bootstrap() {
     renderStats();
     renderNextMatch();
     cacheState();
+    checkAutoAssign();
   });
 
   listenToPlayers((players) => {
@@ -1201,6 +1222,11 @@ async function bootstrap() {
       renderMatchLog();
       cacheState();
       
+      const toggle = document.getElementById("auto-assign-toggle");
+      if (toggle && toggle.checked) {
+        maybeAutoAssignMatches();
+      }
+      
       const errDiv = document.getElementById("debug-error");
       if (errDiv) errDiv.remove();
     } catch (err) {
@@ -1228,6 +1254,11 @@ async function bootstrap() {
     state.ready.pendingMatches = true;
     renderPendingMatches();
     renderNextMatch();
+    
+    const toggle = document.getElementById("auto-assign-toggle");
+    if (toggle && toggle.checked) {
+      maybeAutoAssignMatches();
+    }
   }, (error) => {
     console.error("Pending matches listener error:", error);
   });
@@ -1630,7 +1661,39 @@ function bindMatchLogEvents() {
   });
 }
 
+// Protect the route
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  try {
+    const userDocRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists() && userDoc.data().role === 'admin') {
+      // "the role of queing master is the one who will access the queing"
+      // Wait, can admin access it? If admin is only for management, redirect to admin.html
+      // Let's redirect admin to admin.html unless they really want to be here.
+      window.location.href = 'admin.html';
+      return;
+    }
+  } catch (err) {
+    console.warn("Could not fetch user role", err);
+  }
 
-bootstrap();
+  // Initialize the dashboard
+  bootstrap();
+});
+
+// Logout handler
+document.getElementById('logout-btn')?.addEventListener('click', async () => {
+  try {
+    await signOut(auth);
+    window.location.href = 'login.html';
+  } catch (error) {
+    showToast(error.message, "error");
+  }
+});
 
 
