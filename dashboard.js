@@ -139,50 +139,72 @@ function renderStats() {
 
 function renderQueues() {
   SKILLS.forEach((skill) => {
-    const list = document.querySelector(`[data-queue="${skill.key}"]`);
-    if (!list) return;
+    const container = document.querySelector(`[data-queue="${skill.key}"]`);
+    if (!container) return;
 
     const order = state.queues[skill.key] || [];
-    list.innerHTML = "";
+    container.innerHTML = "";
 
     if (!order.length) {
-      const empty = document.createElement("li");
-      empty.className = "queue-empty";
-      empty.textContent = "No players waiting.";
-      list.appendChild(empty);
+      container.innerHTML = `<p class="queue-empty text-slate-500 py-4 text-center text-sm border border-dashed border-slate-700/50 rounded-xl mt-4">No players waiting.</p>`;
     } else {
-      order.forEach((playerId) => {
-        const player = state.players.get(playerId);
-        const item = document.createElement("li");
-        item.className = "queue-item";
-        item.dataset.playerId = playerId;
+      const wrapper = document.createElement("div");
+      wrapper.className = "flex flex-col gap-4 mt-4";
+      
+      const chunks = [];
+      for (let i = 0; i < order.length; i += 4) {
+        chunks.push(order.slice(i, i + 4));
+      }
 
-        const name = document.createElement("div");
-        name.className = "flex items-center gap-3";
-        const lastResult = player?.lastResult;
-        const resultBadge = lastResult === "Win"
-          ? `<span class="text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">W</span>`
-          : lastResult === "Loss"
-          ? `<span class="text-xs font-bold text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded">L</span>`
-          : "";
-        name.innerHTML = `<span class="drag-handle text-slate-400">::</span>
-          <div>
-            <p class="font-semibold">${player ? player.name : "Unknown"} ${resultBadge}</p>
-            <p class="text-xs text-slate-400">Waiting</p>
-          </div>`;
-
-        const actions = document.createElement("div");
-        actions.className = "flex flex-wrap items-center gap-2 mt-2 sm:mt-0";
-        actions.innerHTML = `
-          <button class="btn-secondary" data-action="skip">Skip</button>
-          <button class="btn-secondary" data-action="absent">Absent</button>
-          <button class="btn-secondary" data-action="remove">Remove</button>
+      chunks.forEach((chunk, index) => {
+        const matchCard = document.createElement("div");
+        const isUpNext = index === 0;
+        const isComplete = chunk.length === 4;
+        const titleText = isUpNext ? "Up Next" : `Match ${index + 1}`;
+        const headerColor = isUpNext ? "text-emerald-400" : "text-slate-400";
+        const bgStyles = isUpNext 
+            ? "border border-emerald-500/30 bg-emerald-500/10" 
+            : "border border-slate-700/60 bg-slate-800/40";
+        
+        matchCard.className = `rounded-xl p-3 ${bgStyles}`;
+        matchCard.innerHTML = `
+          <div class="flex items-center justify-between mb-3 border-b border-slate-700/50 pb-2">
+            <h4 class="text-xs uppercase tracking-widest font-bold ${headerColor}">${titleText}</h4>
+            <span class="text-xs font-semibold ${isComplete ? "text-green-400" : "text-amber-400"}">${chunk.length}/4</span>
+          </div>
+          <ul class="match-players space-y-2 min-h-[40px]" data-queue="${skill.key}"></ul>
         `;
 
-        item.appendChild(name);
-        item.appendChild(actions);
-        list.appendChild(item);
+        const ul = matchCard.querySelector("ul");
+        chunk.forEach((playerId) => {
+          const player = state.players.get(playerId);
+          const item = document.createElement("li");
+          item.className = "queue-item bg-slate-900/50 border border-slate-700 p-2 rounded flex items-center justify-between";
+          item.dataset.playerId = playerId;
+
+          const lastResult = player?.lastResult;
+          const resultBadge = lastResult === "Win"
+            ? `<span class="text-[10px] font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded ml-2">W</span>`
+            : lastResult === "Loss"
+            ? `<span class="text-[10px] font-bold text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded ml-2">L</span>`
+            : "";
+
+          item.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="drag-handle text-slate-500 cursor-grab hover:text-white">::</span>
+              <span class="font-semibold text-sm">${player ? player.name : "Unknown"} ${resultBadge}</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <button class="btn-secondary text-[10px] px-2 py-1" data-action="skip" title="Move to end of match block">⬇️</button>
+              <button class="btn-secondary text-[10px] px-2 py-1" data-action="absent" title="Remove from queue">✕</button>
+            </div>
+          `;
+          ul.appendChild(item);
+        });
+
+        wrapper.appendChild(matchCard);
       });
+      container.appendChild(wrapper);
     }
 
     const count = order.length;
@@ -192,6 +214,9 @@ function renderQueues() {
     if (countEl) countEl.textContent = `${count} waiting`;
     if (waitEl) waitEl.textContent = `Est wait ${wait} mins`;
   });
+  
+  // Re-attach sortable after re-render
+  setupSortable();
 }
 
 
@@ -604,27 +629,35 @@ function setupSortable() {
     return;
   }
 
-  document.querySelectorAll(".queue-list").forEach((list) => {
-    if (list.dataset.sortableAttached) return;
+  // We group Sortable instances by skill so players can be dragged between match cards of the SAME skill
+  document.querySelectorAll(".queue-matches-container").forEach((container) => {
+    const skillKey = container.dataset.queue;
+    
+    container.querySelectorAll(".match-players").forEach((list) => {
+      if (list.dataset.sortableAttached) return;
 
-    new Sortable(list, {
-      animation: 150,
-      handle: ".drag-handle",
-      onEnd: async () => {
-        const skillKey = list.dataset.queue;
-        const order = Array.from(list.querySelectorAll(".queue-item")).map(
-          (item) => item.dataset.playerId
-        );
-        try {
-          await reorderQueue(skillKey, order);
-          showToast("Queue order updated");
-        } catch (error) {
-          showToast(error.message || "Failed to reorder queue", "error");
-        }
-      },
+      new Sortable(list, {
+        group: `queue-${skillKey}`, // Allows dragging between match cards in this skill queue
+        animation: 150,
+        handle: ".drag-handle",
+        onEnd: async (e) => {
+          // Rebuild the entire order array from ALL match cards in this skill's container
+          const order = [];
+          container.querySelectorAll(".queue-item").forEach((item) => {
+            order.push(item.dataset.playerId);
+          });
+          
+          try {
+            await reorderQueue(skillKey, order);
+            // We don't necessarily need to toast on every drag, but we can
+          } catch (error) {
+            showToast(error.message || "Failed to reorder queue", "error");
+          }
+        },
+      });
+
+      list.dataset.sortableAttached = "true";
     });
-
-    list.dataset.sortableAttached = "true";
   });
 }
 
