@@ -10,6 +10,7 @@ import {
   updatePlayerSkill,
   removePlayer,
   archiveAllPlayers,
+  generateNextRound,
 } from "./queue.js";
 import {
   COURTS,
@@ -950,6 +951,30 @@ function bindEvents() {
     autoAssignToggle.addEventListener("change", (event) => {
       if (event.target.checked) {
         maybeAutoAssignMatches();
+      }
+    });
+  }
+
+  const generateRoundBtn = document.getElementById("generate-round-btn");
+  if (generateRoundBtn) {
+    generateRoundBtn.addEventListener("click", async () => {
+      const activeCourts = state.courts.filter(c => c.matchId);
+      if (activeCourts.length > 0) {
+        if (!confirm(`There are ${activeCourts.length} matches still playing on the courts. Generating a new round now will place all currently waiting players into the next round, but the players currently on court won't be included until they finish. Proceed anyway?`)) {
+          return;
+        }
+      }
+      
+      try {
+        generateRoundBtn.disabled = true;
+        generateRoundBtn.innerHTML = "GENERATING...";
+        await generateNextRound(Array.from(state.players.values()));
+        showToast("Next round generated successfully!");
+      } catch (error) {
+        showToast(error.message || "Failed to generate round.", "error");
+      } finally {
+        generateRoundBtn.disabled = false;
+        generateRoundBtn.innerHTML = "Generate Round";
       }
     });
   }
