@@ -1,6 +1,6 @@
 import { SKILLS, listenToQueues, listenToPlayers } from "./queue.js";
 import { COURTS, listenToCourts, ensureCourtsExist } from "./courts.js";
-import { db, collection, query, where, onSnapshot , getTenantCollection, getTenantDoc} from "./firebase.js";
+import { db, collection, query, where, onSnapshot, getTenantCollection, getTenantDoc, auth, onAuthStateChanged } from "./firebase.js";
 
 const state = {
   queues: {},
@@ -191,4 +191,10 @@ async function bootstrap() {
   startTimerLoop();
 }
 
-bootstrap();
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    bootstrap();
+  } else {
+    window.location.href = 'login.html';
+  }
+});
