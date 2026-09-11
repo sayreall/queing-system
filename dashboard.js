@@ -1474,24 +1474,65 @@ function renderPendingMatches() {
     return;
   }
 
-  container.innerHTML = state.pendingMatches.map(match => {
-    const p1 = state.players.get(match.teamA[0])?.name || "Player 1";
-    const p2 = state.players.get(match.teamA[1])?.name || "Player 2";
-    const p3 = state.players.get(match.teamB[0])?.name || "Player 3";
-    const p4 = state.players.get(match.teamB[1])?.name || "Player 4";
+  const cardsHtml = state.pendingMatches.map((match, index) => {
+    const buildTeamHtml = (teamIds) => {
+      return teamIds.map(id => {
+        const p = state.players.get(id);
+        const name = p ? p.name : "Unknown";
+        const lastResult = p?.lastResult;
+        const resultBadge = lastResult === "Win"
+          ? `<span class="text-[9px] font-bold text-green-400 bg-green-400/10 px-1 rounded">W</span>`
+          : lastResult === "Loss"
+          ? `<span class="text-[9px] font-bold text-red-400 bg-red-400/10 px-1 rounded">L</span>`
+          : "";
+          
+        return `
+          <li class="bg-slate-800 border border-slate-600/50 p-1 rounded flex items-center gap-1 overflow-hidden">
+            <span class="font-semibold text-[11px] truncate max-w-[70px] sm:max-w-[90px]" title="${name}">${name}</span>
+            ${resultBadge}
+          </li>
+        `;
+      }).join("");
+    };
+
     return `
-      <div class="glass-subcard mb-4 border-amber-500/30 bg-amber-500/10">
-        <div class="flex items-center justify-between">
-          <h3 class="font-display font-semibold text-amber-300">Pending Stacked Match</h3>
-          <span class="text-xs uppercase tracking-wider text-amber-500/80">Next Available Court</span>
+      <div class="match-card rounded-xl p-2 sm:p-3 border border-amber-500/50 bg-amber-500/10 shadow-lg shadow-amber-500/5">
+        <div class="flex items-center justify-between mb-2 border-b border-amber-500/30 pb-1.5">
+          <h4 class="text-[10px] uppercase tracking-wider font-bold text-amber-400">Custom Match ${index + 1}</h4>
+          <span class="text-[10px] font-semibold text-amber-500">Priority</span>
         </div>
-        <div class="mt-2 text-sm text-slate-300">
-          <p><strong>Team A:</strong> ${p1} & ${p2}</p>
-          <p><strong>Team B:</strong> ${p3} & ${p4}</p>
+        
+        <div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-stretch">
+          <div class="bg-slate-900/60 rounded-lg border border-slate-700/50 p-1.5">
+             <div class="text-[9px] text-slate-500 font-bold uppercase mb-1 text-center">Team A</div>
+             <ul class="space-y-1 min-h-[32px]">
+               ${buildTeamHtml(match.teamA || [])}
+             </ul>
+          </div>
+          
+          <div class="flex items-center justify-center px-1">
+            <span class="text-[9px] font-bold text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">VS</span>
+          </div>
+          
+          <div class="bg-slate-900/60 rounded-lg border border-slate-700/50 p-1.5">
+             <div class="text-[9px] text-slate-500 font-bold uppercase mb-1 text-center">Team B</div>
+             <ul class="space-y-1 min-h-[32px]">
+               ${buildTeamHtml(match.teamB || [])}
+             </ul>
+          </div>
         </div>
       </div>
     `;
   }).join("");
+
+  container.innerHTML = `
+    <div class="mb-6">
+      <h3 class="text-xs uppercase tracking-widest font-bold text-amber-500 mb-3">Pending Custom Matches</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+        ${cardsHtml}
+      </div>
+    </div>
+  `;
 }
 
 function renderNextMatch() {

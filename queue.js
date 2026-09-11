@@ -265,6 +265,19 @@ export async function archiveAllPlayers(playersList) {
       batch.update(getTenantDoc("players", player.id), {
         status: "Archived",
         currentMatchId: null,
+        wins: 0,
+        losses: 0,
+        lastResult: null,
+        playedWith: {},
+        updatedAt: now,
+      });
+    } else {
+      // Even if they are already archived, ensure their stats are zeroed out for the next day
+      batch.update(getTenantDoc("players", player.id), {
+        wins: 0,
+        losses: 0,
+        lastResult: null,
+        playedWith: {},
         updatedAt: now,
       });
     }
