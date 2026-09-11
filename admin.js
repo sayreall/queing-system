@@ -9,7 +9,7 @@ import {
   doc,
   updateDoc,
   getDoc
-} from "./firebase.js";
+, getTenantCollection, getTenantDoc} from "./firebase.js";
 
 const logoutBtn = document.getElementById('logout-btn');
 const usersTableBody = document.getElementById('users-table-body');
@@ -34,7 +34,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   try {
-    const userDocRef = doc(db, 'users', user.uid);
+    const userDocRef = getTenantDoc('users', user.uid);
     const userDoc = await getDoc(userDocRef);
     if (!userDoc.exists() || userDoc.data().role !== 'admin') {
       window.location.href = 'index.html'; // Redirect non-admins
@@ -59,7 +59,7 @@ logoutBtn.addEventListener('click', async () => {
 });
 
 function loadUsers() {
-  const usersQuery = query(collection(db, 'users'));
+  const usersQuery = query(getTenantCollection('users'));
   
   onSnapshot(usersQuery, (snapshot) => {
     usersTableBody.innerHTML = '';
@@ -119,7 +119,7 @@ function loadUsers() {
         btn.textContent = "Saving...";
         
         try {
-          await updateDoc(doc(db, 'users', uid), { role: newRole });
+          await updateDoc(getTenantDoc('users', uid), { role: newRole });
           showToast(`User role updated to ${newRole}`);
           btn.disabled = true;
           btn.textContent = "Saved";

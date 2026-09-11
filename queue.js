@@ -16,7 +16,7 @@ import {
   serverTimestamp,
   runTransaction,
   writeBatch,
-} from "./firebase.js";
+, getTenantCollection, getTenantDoc} from "./firebase.js";
 
 export const SKILLS = [
   { label: "Beginner", key: "beginner" },
@@ -53,7 +53,7 @@ export function normalizeName(name) {
 }
 
 export function getQueueDocRef(skillKey) {
-  return doc(db, "queues", skillKey);
+  return getTenantDoc("queues", skillKey);
 }
 
 export async function ensureQueuesExist() {
@@ -83,7 +83,7 @@ export async function addPlayer({ name, skill, gender, location }) {
 
   const nameLower = trimmedName.toLowerCase();
   const existing = await getDocs(
-    query(collection(db, "players"), where("nameLower", "==", nameLower), limit(1))
+    query(getTenantCollection("players"), where("nameLower", "==", nameLower), limit(1))
   );
 
   let playerRef;
@@ -98,7 +98,7 @@ export async function addPlayer({ name, skill, gender, location }) {
       throw new Error("Player already exists.");
     }
   } else {
-    playerRef = doc(collection(db, "players"));
+    playerRef = getTenantDoc("players");
   }
 
   const skillKey = skillKeyFromLabel(normalizedSkill);
@@ -153,7 +153,7 @@ export async function addPlayersBulk(entries) {
   const batch = writeBatch(db);
   const queueAdditions = new Map();
 
-  const allPlayersSnap = await getDocs(collection(db, "players"));
+  const allPlayersSnap = await getDocs(getTenantCollection("players"));
   const existingMap = new Map();
   allPlayersSnap.forEach(snap => {
     existingMap.set(snap.data().nameLower, snap);
@@ -181,7 +181,7 @@ export async function addPlayersBulk(entries) {
         return;
       }
     } else {
-      playerRef = doc(collection(db, "players"));
+      playerRef = getTenantDoc("players");
       // Add to existingMap so duplicates in the same bulk import don't crash
       existingMap.set(nameLower, { ref: playerRef, data: () => ({ status: "Waiting" }) });
     }
@@ -232,7 +232,7 @@ export async function addPlayersBulk(entries) {
 }
 
 export async function removePlayer(playerId) {
-  const playerRef = doc(db, "players", playerId);
+  const playerRef = getTenantDoc("players", playerId);
 
   await runTransaction(db, async (tx) => {
     const playerSnap = await tx.get(playerRef);
@@ -263,7 +263,7 @@ export async function archiveAllPlayers(playersList) {
 
   playersList.forEach((player) => {
     if (player.status !== "Archived") {
-      batch.update(doc(db, "players", player.id), {
+      batch.update(getTenantDoc("players", player.id), {
         status: "Archived",
         currentMatchId: null,
         updatedAt: now,
@@ -280,7 +280,7 @@ export async function archiveAllPlayers(playersList) {
 
   const courtIds = ["court-1", "court-2", "court-3"];
   courtIds.forEach((courtId) => {
-    batch.update(doc(db, "courts", courtId), {
+    batch.update(getTenantDoc("courts", courtId), {
       status: "Available",
       matchId: null,
       players: [],
@@ -297,7 +297,7 @@ export async function updatePlayerSkill(playerId, newSkill) {
   const normalizedSkill = normalizeSkill(newSkill || "");
   if (!normalizedSkill) throw new Error("Skill level is invalid.");
 
-  const playerRef = doc(db, "players", playerId);
+  const playerRef = getTenantDoc("players", playerId);
 
   await runTransaction(db, async (tx) => {
     const playerSnap = await tx.get(playerRef);
@@ -340,7 +340,7 @@ export async function updatePlayerSkill(playerId, newSkill) {
 }
 
 export async function markPlayerAbsent(playerId, absent) {
-  const playerRef = doc(db, "players", playerId);
+  const playerRef = getTenantDoc("players", playerId);
 
   await runTransaction(db, async (tx) => {
     const playerSnap = await tx.get(playerRef);
@@ -385,7 +385,7 @@ export async function markPlayerAbsent(playerId, absent) {
 }
 
 export async function skipPlayer(playerId) {
-  const playerRef = doc(db, "players", playerId);
+  const playerRef = getTenantDoc("players", playerId);
 
   await runTransaction(db, async (tx) => {
     const playerSnap = await tx.get(playerRef);
@@ -436,7 +436,7 @@ export function listenToQueues(callback) {
 
 export function listenToPlayers(callback) {
   return onSnapshot(
-    query(collection(db, "players"), orderBy("createdAt")),
+    query(getTenantCollection("players"), orderBy("createdAt")),
     (snapshot) => {
       const players = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
@@ -448,7 +448,7 @@ export function listenToPlayers(callback) {
 }
 
 export async function fetchExistingNames() {
-  const snapshot = await getDocs(query(collection(db, "players"), orderBy("nameLower")));
+  const snapshot = await getDocs(query(getTenantCollection("players"), orderBy("nameLower")));
   const map = new Map();
   snapshot.docs.forEach((docSnap) => {
     map.set(docSnap.data().nameLower, docSnap.data().status);
@@ -513,7 +513,7 @@ export async function generateNextRound(playersList) {
     // 3. Ensure all drafted players are marked as "Waiting" so they appear in the queue
     players.forEach(p => {
       if (p.status !== "Waiting") {
-        const pRef = doc(db, "players", p.id);
+        const pRef = getTenantDoc("players", p.id);
         batch.update(pRef, { status: "Waiting", updatedAt: now });
       }
     });

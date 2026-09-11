@@ -12,7 +12,7 @@ import {
   onSnapshot,
   serverTimestamp,
   runTransaction,
-} from "./firebase.js";
+, getTenantCollection, getTenantDoc} from "./firebase.js";
 import { skillLabelFromKey, getQueueDocRef, skillKeyFromLabel, markPlayerAbsent } from "./queue.js";
 
 export const COURTS = [
@@ -24,7 +24,7 @@ export const COURTS = [
 export async function ensureCourtsExist() {
   await Promise.all(
     COURTS.map(async (court) => {
-      const courtRef = doc(db, "courts", court.id);
+      const courtRef = getTenantDoc("courts", court.id);
       const snap = await getDoc(courtRef);
       if (!snap.exists()) {
         await setDoc(courtRef, {
@@ -43,7 +43,7 @@ export async function ensureCourtsExist() {
 }
 
 export function listenToCourts(callback) {
-  return onSnapshot(query(collection(db, "courts"), orderBy("name")), (snapshot) => {
+  return onSnapshot(query(getTenantCollection("courts"), orderBy("name")), (snapshot) => {
     const courts = snapshot.docs.map((docSnap) => ({
       id: docSnap.id,
       ...docSnap.data(),
@@ -53,9 +53,9 @@ export function listenToCourts(callback) {
 }
 
 export async function assignMatchToCourt(courtId, skillKey) {
-  const courtRef = doc(db, "courts", courtId);
+  const courtRef = getTenantDoc("courts", courtId);
   const queueRef = getQueueDocRef(skillKey);
-  const matchRef = doc(collection(db, "matches"));
+  const matchRef = getTenantDoc("matches");
   const now = serverTimestamp();
   const skillLabel = skillLabelFromKey(skillKey);
   const pairKey = (a, b) => [a, b].sort().join("__");
@@ -66,7 +66,7 @@ export async function assignMatchToCourt(courtId, skillKey) {
   try {
     const lastMatchSnap = await getDocs(
       query(
-        collection(db, "matches"),
+        getTenantCollection("matches"),
         where("status", "==", "Completed"),
         where("skill", "==", skillLabel),
         orderBy("endedAt", "desc"),
@@ -107,7 +107,7 @@ export async function assignMatchToCourt(courtId, skillKey) {
     const orderRaw = queueSnap.exists() ? queueSnap.data().order || [] : [];
     const uniqueOrder = Array.from(new Set(orderRaw));
 
-    const playerRefs = uniqueOrder.map(id => doc(db, "players", id));
+    const playerRefs = uniqueOrder.map(id => getTenantDoc("players", id));
     const playerSnaps = await Promise.all(playerRefs.map(ref => tx.get(ref)));
 
     const cleanOrder = [];   // valid player IDs in queue order
@@ -217,7 +217,7 @@ export async function assignMatchToCourt(courtId, skillKey) {
     }, { merge: true });
 
     finalPlayers.forEach(playerId => {
-      tx.set(doc(db, "players", playerId), {
+      tx.set(getTenantDoc("players", playerId), {
         status: "Playing", currentMatchId: matchRef.id, updatedAt: now,
       }, { merge: true });
     });
@@ -228,7 +228,7 @@ export async function assignMatchToCourt(courtId, skillKey) {
 
 
 export async function toggleCourtStatus(courtId) {
-  const courtRef = doc(db, "courts", courtId);
+  const courtRef = getTenantDoc("courts", courtId);
   const now = serverTimestamp();
 
   await runTransaction(db, async (tx) => {
@@ -246,7 +246,7 @@ export async function toggleCourtStatus(courtId) {
 }
 
 export async function finishMatch(courtId, winnerTeam = null) {
-  const courtRef = doc(db, "courts", courtId);
+  const courtRef = getTenantDoc("courts", courtId);
 
   await runTransaction(db, async (tx) => {
     // ── PHASE 1: ALL READS ─────────────────────────────────────────────────
@@ -256,7 +256,7 @@ export async function finishMatch(courtId, winnerTeam = null) {
     const court = courtSnap.data();
     if (!court.matchId) return;
 
-    const matchRef = doc(db, "matches", court.matchId);
+    const matchRef = getTenantDoc("matches", court.matchId);
     const matchSnap = await tx.get(matchRef);
     const match = matchSnap.exists() ? matchSnap.data() : null;
 
@@ -266,7 +266,7 @@ export async function finishMatch(courtId, winnerTeam = null) {
     const now = serverTimestamp();
 
 
-    const playerRefs = players.map(id => doc(db, "players", id));
+    const playerRefs = players.map(id => getTenantDoc("players", id));
     const playerSnaps = await Promise.all(playerRefs.map(ref => tx.get(ref)));
 
     // ── PHASE 2: ALL WRITES ────────────────────────────────────────────────
@@ -318,11 +318,11 @@ export async function finishMatch(courtId, winnerTeam = null) {
 }
 
 export async function queueCustomMatch(playerIds, teamA, teamB) {
-  const matchRef = doc(collection(db, "matches"));
+  const matchRef = getTenantDoc("matches");
   const now = serverTimestamp();
 
   await runTransaction(db, async (tx) => {
-    const playerRefs = playerIds.map(id => doc(db, "players", id));
+    const playerRefs = playerIds.map(id => getTenantDoc("players", id));
     const playerSnaps = await Promise.all(playerRefs.map(ref => tx.get(ref)));
     
     const queuesToUpdate = new Map();
@@ -380,8 +380,8 @@ export async function queueCustomMatch(playerIds, teamA, teamB) {
 }
 
 export async function activatePendingMatch(matchId, courtId) {
-  const courtRef = doc(db, "courts", courtId);
-  const matchRef = doc(db, "matches", matchId);
+  const courtRef = getTenantDoc("courts", courtId);
+  const matchRef = getTenantDoc("matches", matchId);
   const now = serverTimestamp();
 
   await runTransaction(db, async (tx) => {
@@ -395,7 +395,7 @@ export async function activatePendingMatch(matchId, courtId) {
     if (match.status !== "Pending") throw new Error("Match is not pending");
 
     const playerIds = match.players;
-    const playerRefs = playerIds.map(id => doc(db, "players", id));
+    const playerRefs = playerIds.map(id => getTenantDoc("players", id));
 
     tx.set(matchRef, {
       courtId,
@@ -423,6 +423,6 @@ export async function activatePendingMatch(matchId, courtId) {
 }
 
 export async function updateCourtAllowedSkill(courtId, allowedSkill) {
-  const courtRef = doc(db, "courts", courtId);
+  const courtRef = getTenantDoc("courts", courtId);
   await setDoc(courtRef, { allowedSkill, updatedAt: serverTimestamp() }, { merge: true });
 }

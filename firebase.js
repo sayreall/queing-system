@@ -44,6 +44,17 @@ const db = initializeFirestore(app, {
 });
 const auth = getAuth(app);
 
+export function getTenantCollection(collectionName) {
+  if (!auth.currentUser) throw new Error("Not authenticated");
+  return collection(db, "users", auth.currentUser.uid, collectionName);
+}
+
+export function getTenantDoc(collectionName, docId) {
+  if (!auth.currentUser) throw new Error("Not authenticated");
+  if (!docId) return doc(getTenantCollection(collectionName));
+  return doc(db, "users", auth.currentUser.uid, collectionName, docId);
+}
+
 export {
   auth,
   db,

@@ -24,7 +24,7 @@ import {
 import { 
   db, collection, query, where, orderBy, limit, onSnapshot,
   auth, onAuthStateChanged, signOut, doc, getDoc
-} from "./firebase.js";
+, getTenantCollection, getTenantDoc} from "./firebase.js";
 
 const AVG_MATCH_MINUTES = 15;
 
@@ -1423,7 +1423,7 @@ async function bootstrap() {
     }
   });
 
-  const q = query(collection(db, "matches"), where("status", "==", "Pending"));
+  const q = query(getTenantCollection("matches"), where("status", "==", "Pending"));
   onSnapshot(q, (snapshot) => {
     const docs = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
     docs.sort((a, b) => {
@@ -1454,12 +1454,12 @@ async function bootstrap() {
     renderMatchLog();
   };
 
-  onSnapshot(query(collection(db, "matches"), where("status", "==", "Completed")), (snap) => {
+  onSnapshot(query(getTenantCollection("matches"), where("status", "==", "Completed")), (snap) => {
     matchLogCache.completed = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     mergeMatchLog();
   }, (err) => console.error("Match log (Completed) error:", err));
 
-  onSnapshot(query(collection(db, "matches"), where("status", "==", "Archived")), (snap) => {
+  onSnapshot(query(getTenantCollection("matches"), where("status", "==", "Archived")), (snap) => {
     matchLogCache.archived = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     mergeMatchLog();
   }, (err) => console.error("Match log (Archived) error:", err));
@@ -1677,7 +1677,7 @@ const MATCH_LOG_PAGE_SIZE = 10;
 
 async function archiveMatch(matchId) {
   const { doc, setDoc, serverTimestamp } = await import("./firebase.js");
-  const matchRef = doc(db, "matches", matchId);
+  const matchRef = getTenantDoc("matches", matchId);
   await setDoc(matchRef, { status: "Archived", updatedAt: serverTimestamp() }, { merge: true });
 }
 
@@ -1850,7 +1850,7 @@ onAuthStateChanged(auth, async (user) => {
   }
   
   try {
-    const userDocRef = doc(db, 'users', user.uid);
+    const userDocRef = getTenantDoc('users', user.uid);
     const userDoc = await getDoc(userDocRef);
     if (userDoc.exists() && userDoc.data().role === 'admin') {
       // "the role of queing master is the one who will access the queing"

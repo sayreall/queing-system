@@ -1,6 +1,6 @@
 import { SKILLS, listenToQueues, listenToPlayers } from "./queue.js";
 import { COURTS, listenToCourts, ensureCourtsExist } from "./courts.js";
-import { db, collection, query, where, onSnapshot } from "./firebase.js";
+import { db, collection, query, where, onSnapshot , getTenantCollection, getTenantDoc} from "./firebase.js";
 
 const state = {
   queues: {},
@@ -184,7 +184,7 @@ async function bootstrap() {
     renderLeaderboards();
   });
 
-  onSnapshot(query(collection(db, "matches"), where("status", "==", "Completed")), (snap) => {
+  onSnapshot(query(getTenantCollection("matches"), where("status", "==", "Completed")), (snap) => {
     state.completedMatches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     renderLeaderboards();
   });
