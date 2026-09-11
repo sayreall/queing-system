@@ -15,8 +15,7 @@ import {
   onSnapshot,
   serverTimestamp,
   runTransaction,
-  writeBatch,
-, getTenantCollection, getTenantDoc} from "./firebase.js";
+  writeBatch, getTenantCollection, getTenantDoc} from "./firebase.js";
 
 export const SKILLS = [
   { label: "Beginner", key: "beginner" },

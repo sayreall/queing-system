@@ -11,8 +11,7 @@ import {
   limit,
   onSnapshot,
   serverTimestamp,
-  runTransaction,
-, getTenantCollection, getTenantDoc} from "./firebase.js";
+  runTransaction, getTenantCollection, getTenantDoc} from "./firebase.js";
 import { skillLabelFromKey, getQueueDocRef, skillKeyFromLabel, markPlayerAbsent } from "./queue.js";
 
 export const COURTS = [
