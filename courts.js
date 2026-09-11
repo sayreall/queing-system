@@ -136,68 +136,13 @@ export async function assignMatchToCourt(courtId, skillKey) {
 
     if (cleanOrder.length < 4) return;
 
-    // ── Sort queue by fairness (GP and Freshness) ───────────────────────────
-    cleanOrder.sort((a, b) => {
-      const pA = playerDataMap.get(a);
-      const pB = playerDataMap.get(b);
-      
-      // 1. Lowest Games Played (GP) always goes first
-      if (pA.gp !== pB.gp) return pA.gp - pB.gp;
-      
-      // 2. Tiebreaker: Fresh players (didn't just play) go before repeat players
-      const aFresh = !lastMatchPlayers.has(a);
-      const bFresh = !lastMatchPlayers.has(b);
-      if (aFresh && !bFresh) return -1;
-      if (!aFresh && bFresh) return 1;
-      
-      return 0; // Maintain FIFO for exact ties
-    });
+    // ── Take exactly the top 4 players in the exact queue order ─────────────
+    const selectedIds = cleanOrder.slice(0, 4);
 
-    if (cleanOrder.length < 4) return;
-
-    // ── Take exactly the top 4 most deserving players ───────────────────────
-    const bestCombo = cleanOrder.slice(0, 4);
-    const selectedIds = bestCombo;
-
-    // ── Pick balanced teams from these 4 players ────────────────────────────
-    const comboData = bestCombo.map(id => playerDataMap.get(id));
-    const teamCombos = [
-      { a: [comboData[0], comboData[1]], b: [comboData[2], comboData[3]] },
-      { a: [comboData[0], comboData[2]], b: [comboData[1], comboData[3]] },
-      { a: [comboData[0], comboData[3]], b: [comboData[1], comboData[2]] },
-    ];
-
-    const getOverlap = (p1, p2) => (p1.playedWith[p2.id] || 0) + (p2.playedWith[p1.id] || 0);
-
-    let bestTeamCombo = teamCombos[0];
-    let minTeamScore = Infinity;
-    
-    for (const combo of teamCombos) {
-      const aPairBlocked = lastTeammatePairs.has(pairKey(combo.a[0].id, combo.a[1].id));
-      const bPairBlocked = lastTeammatePairs.has(pairKey(combo.b[0].id, combo.b[1].id));
-      
-      // Score = How many times they've played together + huge penalty if they just teamed up
-      let score = getOverlap(combo.a[0], combo.a[1]) + getOverlap(combo.b[0], combo.b[1]);
-      if (aPairBlocked) score += 1000;
-      if (bPairBlocked) score += 1000;
-      
-      // Balance W/L: Encourage a Winner and a Loser to team up, discourage W+W vs L+L
-      const sameResult = (pair) => {
-        if (!pair[0].lastResult || !pair[1].lastResult) return 0;
-        return pair[0].lastResult === pair[1].lastResult ? 50 : -50;
-      };
-      score += sameResult(combo.a) + sameResult(combo.b);
-
-      if (score < minTeamScore) {
-        minTeamScore = score;
-        bestTeamCombo = combo;
-      }
-    }
-
-    const teamA = [bestTeamCombo.a[0].id, bestTeamCombo.a[1].id];
-    const teamB = [bestTeamCombo.b[0].id, bestTeamCombo.b[1].id];
+    const teamA = [selectedIds[0], selectedIds[1]];
+    const teamB = [selectedIds[2], selectedIds[3]];
     const finalPlayers = [...teamA, ...teamB];
-    const remaining = cleanOrder.filter(id => !finalPlayers.includes(id));
+    const remaining = cleanOrder.slice(4);
 
     // ── Write everything atomically ─────────────────────────────────────────
     tx.set(matchRef, {
