@@ -964,17 +964,44 @@ function bindEvents() {
     }
   });
 
-  elements.playersBody.addEventListener("change", async (event) => {
-    if (event.target.dataset.playerSkill) {
-      const playerId = event.target.dataset.playerSkill;
-      const newSkill = event.target.value;
-      try {
-        await updatePlayerSkill(playerId, newSkill);
-        showToast("Player skill updated");
-      } catch (err) {
-        showToast(err.message || "Error updating skill", "error");
+  [elements.playersBodyBeginner, elements.playersBodyIntermediate, elements.playersBodyAdvanced].forEach(body => {
+    if (!body) return;
+    
+    body.addEventListener("change", async (event) => {
+      if (event.target.dataset.playerSkill) {
+        const playerId = event.target.dataset.playerSkill;
+        const newSkill = event.target.value;
+        try {
+          await updatePlayerSkill(playerId, newSkill);
+          showToast("Player skill updated");
+        } catch (err) {
+          showToast(err.message || "Error updating skill", "error");
+        }
       }
-    }
+    });
+
+    body.addEventListener("click", handlePlayerActionClick);
+    
+    body.addEventListener("change", (event) => {
+      if (event.target.classList.contains("stack-checkbox")) {
+        const checkedBoxes = document.querySelectorAll(".stack-checkbox:checked");
+        if (checkedBoxes.length > 4) {
+          event.target.checked = false;
+          showToast("You can only select up to 4 players for a custom match.", "error");
+          return;
+        }
+        const count = checkedBoxes.length;
+        document.getElementById("custom-match-count").textContent = count;
+        const btn = document.getElementById("start-custom-match-btn");
+        if (count === 4) {
+          btn.disabled = false;
+          btn.classList.remove("opacity-50", "cursor-not-allowed");
+        } else {
+          btn.disabled = true;
+          btn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+      }
+    });
   });
 
   elements.donePlayersBody.addEventListener("change", async (event) => {
@@ -1004,28 +1031,7 @@ function bindEvents() {
     }
   });
 
-  elements.playersBody.addEventListener("click", handlePlayerActionClick);
   elements.donePlayersBody.addEventListener("click", handlePlayerActionClick);
-  elements.playersBody.addEventListener("change", (event) => {
-    if (event.target.classList.contains("stack-checkbox")) {
-      const checkedBoxes = document.querySelectorAll(".stack-checkbox:checked");
-      if (checkedBoxes.length > 4) {
-        event.target.checked = false;
-        showToast("You can only select up to 4 players for a custom match.", "error");
-        return;
-      }
-      const count = checkedBoxes.length;
-      document.getElementById("custom-match-count").textContent = count;
-      const btn = document.getElementById("start-custom-match-btn");
-      if (count === 4) {
-        btn.disabled = false;
-        btn.classList.remove("opacity-50", "cursor-not-allowed");
-      } else {
-        btn.disabled = true;
-        btn.classList.add("opacity-50", "cursor-not-allowed");
-      }
-    }
-  });
 
   const customBtn = document.getElementById("start-custom-match-btn");
   const customModal = document.getElementById("custom-match-modal");
