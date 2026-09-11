@@ -163,43 +163,70 @@ function renderQueues() {
         const titleText = isUpNext ? "Up Next" : `Match ${index + 1}`;
         const headerColor = isUpNext ? "text-emerald-400" : "text-slate-400";
         const bgStyles = isUpNext 
-            ? "border border-emerald-500/30 bg-emerald-500/10" 
-            : "border border-slate-700/60 bg-slate-800/40";
+            ? "border border-emerald-500/30 bg-emerald-500/5 shadow-lg shadow-emerald-500/5" 
+            : "border border-slate-700/60 bg-slate-800/20";
         
-        matchCard.className = `rounded-xl p-3 ${bgStyles}`;
+        matchCard.className = `rounded-xl p-2 sm:p-3 ${bgStyles}`;
         matchCard.innerHTML = `
-          <div class="flex items-center justify-between mb-3 border-b border-slate-700/50 pb-2">
-            <h4 class="text-xs uppercase tracking-widest font-bold ${headerColor}">${titleText}</h4>
-            <span class="text-xs font-semibold ${isComplete ? "text-green-400" : "text-amber-400"}">${chunk.length}/4</span>
+          <div class="flex items-center justify-between mb-2 border-b border-slate-700/50 pb-1.5">
+            <h4 class="text-[10px] uppercase tracking-wider font-bold ${headerColor}">${titleText}</h4>
+            <span class="text-[10px] font-semibold ${isComplete ? "text-green-400" : "text-amber-400"}">${chunk.length}/4</span>
           </div>
-          <ul class="match-players space-y-2 min-h-[40px]" data-queue="${skill.key}"></ul>
+          
+          <div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-stretch">
+            <div class="bg-slate-900/60 rounded-lg border border-slate-700/50 p-1.5">
+               <div class="text-[9px] text-slate-500 font-bold uppercase mb-1 text-center">Team A</div>
+               <ul class="team-list space-y-1 min-h-[32px]" data-queue="${skill.key}"></ul>
+            </div>
+            
+            <div class="flex items-center justify-center px-1">
+              <span class="text-[9px] font-bold text-slate-500 bg-slate-800/80 px-1.5 py-0.5 rounded">VS</span>
+            </div>
+            
+            <div class="bg-slate-900/60 rounded-lg border border-slate-700/50 p-1.5">
+               <div class="text-[9px] text-slate-500 font-bold uppercase mb-1 text-center">Team B</div>
+               <ul class="team-list space-y-1 min-h-[32px]" data-queue="${skill.key}"></ul>
+            </div>
+          </div>
         `;
 
-        const ul = matchCard.querySelector("ul");
-        chunk.forEach((playerId) => {
+        const teamAList = matchCard.querySelectorAll("ul")[0];
+        const teamBList = matchCard.querySelectorAll("ul")[1];
+
+        chunk.forEach((playerId, i) => {
           const player = state.players.get(playerId);
           const item = document.createElement("li");
-          item.className = "queue-item bg-slate-900/50 border border-slate-700 p-2 rounded flex items-center justify-between";
+          item.className = "queue-item bg-slate-800 hover:bg-slate-700 transition-colors border border-slate-600/50 p-1 rounded flex items-center justify-between";
           item.dataset.playerId = playerId;
 
           const lastResult = player?.lastResult;
           const resultBadge = lastResult === "Win"
-            ? `<span class="text-[10px] font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded ml-2">W</span>`
+            ? `<span class="text-[9px] font-bold text-green-400 bg-green-400/10 px-1 rounded">W</span>`
             : lastResult === "Loss"
-            ? `<span class="text-[10px] font-bold text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded ml-2">L</span>`
+            ? `<span class="text-[9px] font-bold text-red-400 bg-red-400/10 px-1 rounded">L</span>`
             : "";
 
           item.innerHTML = `
-            <div class="flex items-center gap-2">
-              <span class="drag-handle text-slate-500 cursor-grab hover:text-white">::</span>
-              <span class="font-semibold text-sm">${player ? player.name : "Unknown"} ${resultBadge}</span>
+            <div class="flex items-center gap-1 overflow-hidden">
+              <span class="drag-handle text-slate-400 cursor-grab hover:text-white px-0.5 text-xs">⋮⋮</span>
+              <span class="font-semibold text-[11px] truncate max-w-[70px] sm:max-w-[90px]" title="${player ? player.name : "Unknown"}">${player ? player.name : "Unknown"}</span>
+              ${resultBadge}
             </div>
-            <div class="flex items-center gap-1">
-              <button class="btn-secondary text-[10px] px-2 py-1" data-action="skip" title="Move to end of match block">⬇️</button>
-              <button class="btn-secondary text-[10px] px-2 py-1" data-action="absent" title="Remove from queue">✕</button>
+            <div class="flex items-center gap-0.5 shrink-0 opacity-60 hover:opacity-100 transition-opacity">
+              <button class="text-slate-300 hover:text-white p-0.5" data-action="skip" title="Skip to bottom">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+              </button>
+              <button class="text-slate-300 hover:text-red-400 p-0.5" data-action="absent" title="Remove">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
             </div>
           `;
-          ul.appendChild(item);
+          
+          if (i < 2) {
+            teamAList.appendChild(item);
+          } else {
+            teamBList.appendChild(item);
+          }
         });
 
         wrapper.appendChild(matchCard);
@@ -633,7 +660,7 @@ function setupSortable() {
   document.querySelectorAll(".queue-matches-container").forEach((container) => {
     const skillKey = container.dataset.queue;
     
-    container.querySelectorAll(".match-players").forEach((list) => {
+    container.querySelectorAll(".team-list").forEach((list) => {
       if (list.dataset.sortableAttached) return;
 
       new Sortable(list, {
