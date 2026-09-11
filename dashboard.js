@@ -38,6 +38,7 @@ const state = {
   search: "",
   filter: "All",
   automationLock: false,
+  editingMatches: new Set(),
   ready: {
     queues: false,
     courts: false,
@@ -45,6 +46,15 @@ const state = {
     pendingMatches: false,
   },
 };
+
+const style = document.createElement('style');
+style.textContent = `
+  .match-card.is-editing .drag-handle,
+  .match-card.is-editing .queue-actions {
+    display: flex !important;
+  }
+`;
+document.head.appendChild(style);
 
 const elements = {
   addForm: document.getElementById("add-player-form"),
@@ -158,6 +168,9 @@ function renderQueues() {
 
       chunks.forEach((chunk, index) => {
         const matchCard = document.createElement("div");
+        const matchId = `${skill.key}-${index}`;
+        const isEditing = state.editingMatches && state.editingMatches.has(matchId);
+        
         const isUpNext = index === 0;
         const isComplete = chunk.length === 4;
         const titleText = isUpNext ? "Up Next" : `Match ${index + 1}`;
@@ -166,11 +179,17 @@ function renderQueues() {
             ? "border border-emerald-500/30 bg-emerald-500/5 shadow-lg shadow-emerald-500/5" 
             : "border border-slate-700/60 bg-slate-800/20";
         
-        matchCard.className = `rounded-xl p-2 sm:p-3 ${bgStyles}`;
+        matchCard.className = `match-card rounded-xl p-2 sm:p-3 ${bgStyles} ${isEditing ? "is-editing" : ""}`;
+        matchCard.dataset.matchId = matchId;
         matchCard.innerHTML = `
           <div class="flex items-center justify-between mb-2 border-b border-slate-700/50 pb-1.5">
             <h4 class="text-[10px] uppercase tracking-wider font-bold ${headerColor}">${titleText}</h4>
-            <span class="text-[10px] font-semibold ${isComplete ? "text-green-400" : "text-amber-400"}">${chunk.length}/4</span>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-semibold ${isComplete ? "text-green-400" : "text-amber-400"}">${chunk.length}/4</span>
+              <button class="text-slate-400 hover:text-white px-1 edit-match-btn transition-colors" title="Edit Match">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+              </button>
+            </div>
           </div>
           
           <div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-stretch">
@@ -208,11 +227,11 @@ function renderQueues() {
 
           item.innerHTML = `
             <div class="flex items-center gap-1 overflow-hidden">
-              <span class="drag-handle text-slate-400 cursor-grab hover:text-white px-0.5 text-xs">⋮⋮</span>
+              <span class="drag-handle text-slate-400 cursor-grab hover:text-white px-0.5 text-xs hidden">⋮⋮</span>
               <span class="font-semibold text-[11px] truncate max-w-[70px] sm:max-w-[90px]" title="${player ? player.name : "Unknown"}">${player ? player.name : "Unknown"}</span>
               ${resultBadge}
             </div>
-            <div class="flex items-center gap-0.5 shrink-0 opacity-60 hover:opacity-100 transition-opacity">
+            <div class="queue-actions flex items-center gap-0.5 shrink-0 hidden">
               <button class="text-slate-300 hover:text-white p-0.5" data-action="skip" title="Skip to bottom">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
               </button>
@@ -931,7 +950,23 @@ function bindEvents() {
   }
 
   document.body.addEventListener("click", async (event) => {
-    const action = event.target.getAttribute("data-action");
+    const editBtn = event.target.closest(".edit-match-btn");
+    if (editBtn) {
+      const matchCard = editBtn.closest(".match-card");
+      if (matchCard) {
+        const id = matchCard.dataset.matchId;
+        if (state.editingMatches.has(id)) {
+          state.editingMatches.delete(id);
+          matchCard.classList.remove("is-editing");
+        } else {
+          state.editingMatches.add(id);
+          matchCard.classList.add("is-editing");
+        }
+      }
+      return;
+    }
+
+    const action = event.target.closest("[data-action]")?.getAttribute("data-action") || event.target.getAttribute("data-action");
     const playerRow = event.target.closest(".queue-item");
 
     if (action && playerRow) {
