@@ -279,7 +279,7 @@ function renderCourts() {
       `;
 
       const selectableQueues = [];
-      if (courtAllowedSkill === null && hasPending) {
+      if ((courtAllowedSkill === null || courtAllowedSkill === "any") && hasPending) {
         selectableQueues.push({
           key: "custom",
           label: `Custom (${state.pendingMatches.length} pending)`,
@@ -287,7 +287,7 @@ function renderCourts() {
         });
       }
       SKILLS
-        .filter(skill => courtAllowedSkill === null || skill.key === courtAllowedSkill)
+        .filter(skill => courtAllowedSkill === null || courtAllowedSkill === "any" || skill.key === courtAllowedSkill)
         .forEach((skill) => {
           const count = (state.queues[skill.key] || []).length;
           if (count >= 4) {
@@ -299,7 +299,7 @@ function renderCourts() {
           }
         });
 
-      const courtQueuedTotal = courtAllowedSkill === null
+      const courtQueuedTotal = (courtAllowedSkill === null || courtAllowedSkill === "any")
         ? totalQueued
         : (state.queues[courtAllowedSkill] || []).length;
 

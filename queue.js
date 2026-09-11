@@ -112,7 +112,7 @@ export async function addPlayer({ name, skill, gender, location }) {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Standby",
+        status: "Waiting",
         playedWith: {},
         updatedAt: now,
       }, { merge: true });
@@ -123,12 +123,23 @@ export async function addPlayer({ name, skill, gender, location }) {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Standby",
+        status: "Waiting",
         playedWith: {},
         currentMatchId: null,
         createdAt: now,
         updatedAt: now,
       });
+    }
+    
+    // Also push to the queue
+    const queueSnap = await tx.get(queueRef);
+    const orderRaw = queueSnap.exists() ? queueSnap.data().order || [] : [];
+    if (!orderRaw.includes(playerRef.id)) {
+      tx.set(
+        queueRef,
+        { skill: normalizedSkill, order: orderRaw.concat(playerRef.id), updatedAt: now },
+        { merge: true }
+      );
     }
   });
 
@@ -180,7 +191,7 @@ export async function addPlayersBulk(entries) {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Standby",
+        status: "Waiting",
         playedWith: {},
         updatedAt: now,
       }, { merge: true });
@@ -191,14 +202,29 @@ export async function addPlayersBulk(entries) {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Standby",
+        status: "Waiting",
         playedWith: {},
         currentMatchId: null,
         createdAt: now,
         updatedAt: now,
       });
     }
+    
+    // Stage player addition to queue
+    if (!queueAdditions.has(skillKey)) {
+      queueAdditions.set(skillKey, []);
+    }
+    queueAdditions.get(skillKey).push(playerRef.id);
   });
+
+  // Apply queue updates using getDocs before commit
+  for (const [skillKey, newIds] of queueAdditions.entries()) {
+    const queueRef = getQueueDocRef(skillKey);
+    const snap = await getDoc(queueRef);
+    const currentOrder = snap.exists() ? snap.data().order || [] : [];
+    const updatedOrder = currentOrder.concat(newIds.filter(id => !currentOrder.includes(id)));
+    batch.set(queueRef, { order: updatedOrder, skill: skillLabelFromKey(skillKey), updatedAt: now }, { merge: true });
+  }
 
   await batch.commit();
 }
