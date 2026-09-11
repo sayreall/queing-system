@@ -106,16 +106,12 @@ export async function addPlayer({ name, skill, gender, location }) {
 
   // Use a transaction to ensure clean state
   await runTransaction(db, async (tx) => {
-    // Firestore requires all reads to happen BEFORE any writes
-    const queueSnap = await tx.get(queueRef);
-    const orderRaw = queueSnap.exists() ? queueSnap.data().order || [] : [];
-
     if (isRevive) {
       tx.set(playerRef, {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Waiting",
+        status: "Standby",
         playedWith: {},
         updatedAt: now,
       }, { merge: true });
@@ -126,21 +122,12 @@ export async function addPlayer({ name, skill, gender, location }) {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Waiting",
+        status: "Standby",
         playedWith: {},
         currentMatchId: null,
         createdAt: now,
         updatedAt: now,
       });
-    }
-    
-    // Also push to the queue
-    if (!orderRaw.includes(playerRef.id)) {
-      tx.set(
-        queueRef,
-        { skill: normalizedSkill, order: orderRaw.concat(playerRef.id), updatedAt: now },
-        { merge: true }
-      );
     }
   });
 
@@ -150,7 +137,6 @@ export async function addPlayer({ name, skill, gender, location }) {
 export async function addPlayersBulk(entries) {
   const now = serverTimestamp();
   const batch = writeBatch(db);
-  const queueAdditions = new Map();
 
   const allPlayersSnap = await getDocs(getTenantCollection("players"));
   const existingMap = new Map();
@@ -182,17 +168,15 @@ export async function addPlayersBulk(entries) {
     } else {
       playerRef = getTenantDoc("players");
       // Add to existingMap so duplicates in the same bulk import don't crash
-      existingMap.set(nameLower, { ref: playerRef, data: () => ({ status: "Waiting" }) });
+      existingMap.set(nameLower, { ref: playerRef, data: () => ({ status: "Standby" }) });
     }
-
-    const skillKey = skillKeyFromLabel(normalizedSkill);
 
     if (isRevive) {
       batch.set(playerRef, {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Waiting",
+        status: "Standby",
         playedWith: {},
         updatedAt: now,
       }, { merge: true });
@@ -203,29 +187,14 @@ export async function addPlayersBulk(entries) {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Waiting",
+        status: "Standby",
         playedWith: {},
         currentMatchId: null,
         createdAt: now,
         updatedAt: now,
       });
     }
-    
-    // Stage player addition to queue
-    if (!queueAdditions.has(skillKey)) {
-      queueAdditions.set(skillKey, []);
-    }
-    queueAdditions.get(skillKey).push(playerRef.id);
   });
-
-  // Apply queue updates using getDocs before commit
-  for (const [skillKey, newIds] of queueAdditions.entries()) {
-    const queueRef = getQueueDocRef(skillKey);
-    const snap = await getDoc(queueRef);
-    const currentOrder = snap.exists() ? snap.data().order || [] : [];
-    const updatedOrder = currentOrder.concat(newIds.filter(id => !currentOrder.includes(id)));
-    batch.set(queueRef, { order: updatedOrder, skill: skillLabelFromKey(skillKey), updatedAt: now }, { merge: true });
-  }
 
   await batch.commit();
 }
