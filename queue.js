@@ -463,31 +463,18 @@ export async function generateNextRound(playersList) {
   const now = serverTimestamp();
   
   for (const [skill, players] of Object.entries(bySkill)) {
-    // 1. Sort primarily by games played (ascending) to prioritize those who played least
-    players.sort((a, b) => {
-      const aGames = (a.wins || 0) + (a.losses || 0);
-      const bGames = (b.wins || 0) + (b.losses || 0);
-      if (aGames !== bGames) return aGames - bGames;
-      return Math.random() - 0.5;
-    });
-
-    const newOrder = [];
-    // 2. Chunk by 4, and interleave inside the chunk by win rate to balance teams
-    for (let i = 0; i < players.length; i += 4) {
-      const chunk = players.slice(i, i + 4);
-      chunk.sort((a, b) => {
-         const aWr = (a.wins || 0) / Math.max(1, (a.wins||0)+(a.losses||0));
-         const bWr = (b.wins || 0) / Math.max(1, (b.wins||0)+(b.losses||0));
-         return bWr - aWr;
-      });
-      // Team A: indices 0 & 3. Team B: indices 1 & 2.
-      if (chunk.length === 4) {
-        newOrder.push(chunk[0].id, chunk[3].id, chunk[1].id, chunk[2].id);
-      } else {
-        chunk.forEach(p => newOrder.push(p.id));
-      }
+    // 1. Pure Random Shuffle (Fisher-Yates) for complete randomization
+    for (let i = players.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [players[i], players[j]] = [players[j], players[i]];
     }
 
+    const newOrder = [];
+    // 2. Chunk by 4 directly from the randomly shuffled array
+    for (let i = 0; i < players.length; i += 4) {
+      const chunk = players.slice(i, i + 4);
+      chunk.forEach(p => newOrder.push(p.id));
+    }
     const queueRef = getQueueDocRef(skill);
     batch.set(queueRef, { order: newOrder, skill: skillLabelFromKey(skill), updatedAt: now }, { merge: true });
     
