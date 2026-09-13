@@ -57,7 +57,7 @@ function renderQueues() {
       return;
     }
 
-    order.slice(0, 4).forEach((playerId, index) => {
+    order.forEach((playerId, index) => {
       const item = document.createElement("li");
       item.className = "queue-item";
       const player = state.players.get(playerId);
