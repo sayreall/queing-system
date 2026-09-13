@@ -20,6 +20,7 @@ import {
   toggleCourtStatus,
   updateCourtAllowedSkill,
   addCourt,
+  removeCourt,
 } from "./courts.js";
 import { 
   db, collection, query, where, orderBy, limit, onSnapshot,
@@ -355,6 +356,10 @@ function renderCourts() {
     };
 
     const cid = court.id;
+    const isBuiltInCourt = ["court-1", "court-2", "court-3"].includes(cid);
+    const removeCourtButton = isBuiltInCourt
+      ? ""
+      : `<button class="btn-secondary w-full mt-2 text-rose-300 border-rose-500/40 hover:border-rose-400" data-remove-court="${cid}">Remove Court</button>`;
 
     if (court.status === "Active") {
       const players = court.players || [];
@@ -402,6 +407,7 @@ function renderCourts() {
           <option value="intermediate" ${courtAllowedSkill === "intermediate" ? "selected" : ""}>Intermediate Only</option>
           <option value="advanced" ${courtAllowedSkill === "advanced" ? "selected" : ""}>Advanced Only</option>
         </select>
+        ${removeCourtButton}
       `;
 
       const selectableQueues = [];
@@ -486,6 +492,7 @@ function renderCourts() {
           <span class="text-xs text-slate-600 uppercase tracking-widest">Inactive</span>
         </div>
         <button class="btn-secondary w-full mt-2" data-toggle-court="${cid}">Mark Available</button>
+        ${removeCourtButton}
       </div>`;
   }).join("");
 }
@@ -1299,6 +1306,30 @@ function bindEvents() {
       } catch (error) {
         console.error("Start court failed", error);
         showToast(formatFirebaseError(error), "error");
+      }
+      return;
+    }
+
+    const removeCourtBtn = event.target.closest("[data-remove-court]");
+    if (removeCourtBtn) {
+      const courtId = removeCourtBtn.dataset.removeCourt;
+      const court = state.courts.find((item) => item.id === courtId);
+      if (!court) return;
+
+      const confirmed = await showConfirmModal(
+        `Remove ${court.name || "this court"}? This cannot be undone.`,
+        "Remove Court"
+      );
+      if (!confirmed) return;
+
+      try {
+        removeCourtBtn.disabled = true;
+        await removeCourt(courtId);
+        showToast(`${court.name || "Court"} removed.`);
+      } catch (error) {
+        console.error("Remove court failed", error);
+        showToast(formatFirebaseError(error), "error");
+        removeCourtBtn.disabled = false;
       }
       return;
     }

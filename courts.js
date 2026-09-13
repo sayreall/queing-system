@@ -68,6 +68,10 @@ export async function addCourt() {
 }
 
 export async function removeCourt(courtId) {
+  if (COURTS.some((court) => court.id === courtId)) {
+    throw new Error("The three built-in courts cannot be removed.");
+  }
+
   const courtRef = getTenantDoc("courts", courtId);
   const snap = await getDoc(courtRef);
   if (!snap.exists()) throw new Error("Court not found");
