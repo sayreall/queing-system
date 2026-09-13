@@ -499,9 +499,6 @@ function renderPlayers() {
 
   const generateRowHTML = (player, idx) => `
       <tr class="border-t border-slate-800/60">
-        <td class="py-3 text-center">
-          <input type="checkbox" class="stack-checkbox w-4 h-4 cursor-pointer" data-player-id="${player.id}" />
-        </td>
         <td class="py-3 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
         <td class="font-semibold">
           ${player.name}
@@ -574,7 +571,7 @@ function renderPlayers() {
     if (countEl) countEl.textContent = rows.length;
 
     if (!rows.length) {
-      tbodyElement.innerHTML = `<tr><td class="py-4 text-slate-500 text-center" colspan="13">No ${skillFilterLabel} players.</td></tr>`;
+      tbodyElement.innerHTML = `<tr><td class="py-4 text-slate-500 text-center" colspan="12">No ${skillFilterLabel} players.</td></tr>`;
     } else {
       tbodyElement.innerHTML = rows.map(generateRowHTML).join("");
     }
@@ -1159,27 +1156,6 @@ function bindEvents() {
     });
 
     body.addEventListener("click", handlePlayerActionClick);
-    
-    body.addEventListener("change", (event) => {
-      if (event.target.classList.contains("stack-checkbox")) {
-        const checkedBoxes = document.querySelectorAll(".stack-checkbox:checked");
-        if (checkedBoxes.length > 4) {
-          event.target.checked = false;
-          showToast("You can only select up to 4 players for a custom match.", "error");
-          return;
-        }
-        const count = checkedBoxes.length;
-        document.getElementById("custom-match-count").textContent = count;
-        const btn = document.getElementById("start-custom-match-btn");
-        if (count === 4) {
-          btn.disabled = false;
-          btn.classList.remove("opacity-50", "cursor-not-allowed");
-        } else {
-          btn.disabled = true;
-          btn.classList.add("opacity-50", "cursor-not-allowed");
-        }
-      }
-    });
   });
 
   elements.donePlayersBody.addEventListener("change", async (event) => {
@@ -1217,15 +1193,15 @@ function bindEvents() {
   const launchCustomBtn = document.getElementById("launch-custom-match");
 
   customBtn.addEventListener("click", () => {
-    const selected = Array.from(document.querySelectorAll(".stack-checkbox:checked")).map(cb => {
-      const id = cb.getAttribute("data-player-id");
-      return state.players.get(id);
-    });
+    const allActive = Array.from(state.players.values())
+      .filter(p => p.status !== "Archived" && p.status !== "Absent")
+      .sort((a, b) => a.name.localeCompare(b.name));
     
     // Populate selects
-    ["custom-team-a1", "custom-team-a2", "custom-team-b1", "custom-team-b2"].forEach((selId, idx) => {
+    ["custom-team-a1", "custom-team-a2", "custom-team-b1", "custom-team-b2"].forEach((selId) => {
       const select = document.getElementById(selId);
-      select.innerHTML = selected.map((p, i) => `<option value="${p.id}" ${i === idx ? 'selected' : ''}>${p.name}</option>`).join("");
+      select.innerHTML = `<option value="" disabled selected>Select player...</option>` + 
+        allActive.map(p => `<option value="${p.id}">${p.name} (${p.skill})</option>`).join("");
     });
     
     checkRepeatMatchup();
@@ -1257,11 +1233,22 @@ function bindEvents() {
   });
 
   document.getElementById("auto-balance-match")?.addEventListener("click", () => {
-    const selected = Array.from(document.querySelectorAll(".stack-checkbox:checked")).map(cb => {
-      const id = cb.getAttribute("data-player-id");
-      return state.players.get(id);
-    });
-    if (selected.length !== 4) return;
+    const ids = [
+      document.getElementById("custom-team-a1").value,
+      document.getElementById("custom-team-a2").value,
+      document.getElementById("custom-team-b1").value,
+      document.getElementById("custom-team-b2").value
+    ];
+    if (ids.includes("")) {
+      showToast("Please select 4 players first.", "error");
+      return;
+    }
+    const unique = new Set(ids);
+    if (unique.size !== 4) {
+      showToast("Please select 4 distinct players.", "error");
+      return;
+    }
+    const selected = ids.map(id => state.players.get(id));
 
     // Calculate power: Skill (1,2,3) * 100 + Win% (0-100)
     const getPower = (p) => {
@@ -1297,6 +1284,10 @@ function bindEvents() {
     const b2 = document.getElementById("custom-team-b2").value;
     
     const playersArr = [a1, a2, b1, b2];
+    if (playersArr.includes("")) {
+      showToast("Please select 4 players.", "error");
+      return;
+    }
     const unique = new Set(playersArr);
     if (unique.size !== 4) {
       showToast("Please assign 4 distinct players to the teams.", "error");
@@ -1310,10 +1301,6 @@ function bindEvents() {
       await queueCustomMatch(playersArr, [a1, a2], [b1, b2]);
       
       customModal.classList.add("hidden");
-      document.querySelectorAll(".stack-checkbox:checked").forEach(cb => cb.checked = false);
-      document.getElementById("custom-match-count").textContent = "0";
-      customBtn.disabled = true;
-      customBtn.classList.add("opacity-50", "cursor-not-allowed");
       showToast("Custom match queued successfully!");
     } catch (err) {
       console.error(err);
