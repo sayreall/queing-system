@@ -51,6 +51,7 @@
         </div>
       </div>
       <div class="header-actions flex items-center gap-2">
+        <button id="view-match-log-btn" class="btn-secondary">Match Log</button>
         <a class="btn-primary" href="import.html">Import Players</a>
         <a class="btn-secondary" href="tv.html">TV Display Mode</a>
         <button id="logout-btn" class="btn-secondary" style="border-color: rgba(248, 113, 113, 0.4); color: #fca5a5;">Logout</button>
@@ -355,10 +356,13 @@
     </div>
   </section>
 
-  <!-- Match Log Section -->
-  <section class="px-6 pb-10 md:px-10">
-    <div class="glass-card">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5">
+  <!-- Match Log Modal -->
+  <div id="match-log-modal"
+    class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="glass-card w-full max-w-5xl relative flex flex-col max-h-[90vh]">
+      <button id="close-match-log-modal"
+        class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5 pr-8">
         <div>
           <h2 class="text-xl font-display font-semibold">Match Log</h2>
           <p class="text-sm text-slate-400">All completed matches — newest first</p>
@@ -370,23 +374,23 @@
             style="border-color:rgba(248,113,113,0.4);color:#fca5a5;">Archive All</button>
         </div>
       </div>
-      <div class="overflow-x-auto">
+      <div class="overflow-auto border border-slate-700/50 rounded-lg flex-1">
         <table class="w-full text-sm whitespace-nowrap" id="match-log-table">
-          <thead class="text-left text-slate-400 border-b border-slate-700">
+          <thead class="text-left text-slate-400 border-b border-slate-700 sticky top-0 bg-panel z-10">
             <tr>
-              <th class="py-2 pr-4">Time</th>
-              <th class="pr-4">Court</th>
-              <th class="pr-4">Skill</th>
-              <th class="pr-4">Team A</th>
-              <th class="pr-4">Team B</th>
-              <th class="pr-4">Winner</th>
-              <th class="pr-4">Duration</th>
-              <th class="text-right">Action</th>
+              <th class="py-3 px-4">Time</th>
+              <th class="px-4">Court</th>
+              <th class="px-4">Skill</th>
+              <th class="px-4">Team A</th>
+              <th class="px-4">Team B</th>
+              <th class="px-4">Winner</th>
+              <th class="px-4">Duration</th>
+              <th class="px-4 text-right">Action</th>
             </tr>
           </thead>
           <tbody id="match-log-body">
             <tr>
-              <td class="py-4 text-slate-500" colspan="8">Loading match log...</td>
+              <td class="py-4 px-4 text-slate-500 text-center" colspan="8">Loading match log...</td>
             </tr>
           </tbody>
         </table>
@@ -401,7 +405,7 @@
           class="btn-secondary text-xs py-1.5 px-4 disabled:opacity-30 disabled:cursor-not-allowed">Next →</button>
       </div>
     </div>
-  </section>
+  </div>
 
 
   <!-- Add Player Modal -->

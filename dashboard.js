@@ -921,8 +921,31 @@ function bindEvents() {
     });
   }
 
+  // Match Log Modal Logic
+  const viewMatchLogBtn = document.getElementById("view-match-log-btn");
+  const closeMatchLogModal = document.getElementById("close-match-log-modal");
+  const matchLogModal = document.getElementById("match-log-modal");
 
+  if (viewMatchLogBtn && matchLogModal) {
+    viewMatchLogBtn.addEventListener("click", () => {
+      matchLogModal.classList.remove("hidden");
+    });
+  }
 
+  if (closeMatchLogModal && matchLogModal) {
+    closeMatchLogModal.addEventListener("click", () => {
+      matchLogModal.classList.add("hidden");
+    });
+  }
+
+  // Close modal when clicking outside
+  if (matchLogModal) {
+    matchLogModal.addEventListener("click", (e) => {
+      if (e.target === matchLogModal) {
+        matchLogModal.classList.add("hidden");
+      }
+    });
+  }
   if (elements.archiveAll) {
     elements.archiveAll.addEventListener("click", async () => {
       if (!confirm("Are you sure you want to end the day and archive all active players? This will clear all courts and queues.")) return;
@@ -1828,14 +1851,14 @@ function renderMatchLog() {
 
     return `
       <tr class="border-t border-slate-800/60 hover:bg-slate-800/30 transition-colors ${isArchived ? "opacity-40" : ""}">
-        <td class="py-3 pr-4 text-slate-400">${formatTime(match.endedAt)}</td>
-        <td class="pr-4 font-semibold">${courtLabel(match.courtId)}</td>
-        <td class="pr-4 ${skillColor}">${match.skill || "—"}</td>
-        <td class="pr-4 ${winner === "teamA" ? "text-cyan-300 font-semibold" : "text-slate-300"}">${teamA}</td>
-        <td class="pr-4 ${winner === "teamB" ? "text-rose-300 font-semibold" : "text-slate-300"}">${teamB}</td>
-        <td class="pr-4">${winnerBadge}</td>
-        <td class="pr-4 text-slate-400">${formatDuration(match.startedAt, match.endedAt)}</td>
-        <td class="text-right">${archiveBtn}</td>
+        <td class="py-3 px-4 text-slate-400">${formatTime(match.endedAt)}</td>
+        <td class="px-4 font-semibold">${courtLabel(match.courtId)}</td>
+        <td class="px-4 ${skillColor}">${match.skill || "—"}</td>
+        <td class="px-4 ${winner === "teamA" ? "text-cyan-300 font-semibold" : "text-slate-300"}">${teamA}</td>
+        <td class="px-4 ${winner === "teamB" ? "text-rose-300 font-semibold" : "text-slate-300"}">${teamB}</td>
+        <td class="px-4">${winnerBadge}</td>
+        <td class="px-4 text-slate-400">${formatDuration(match.startedAt, match.endedAt)}</td>
+        <td class="px-4 text-right">${archiveBtn}</td>
       </tr>
     `;
   }).join("");
