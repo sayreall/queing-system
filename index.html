@@ -615,6 +615,19 @@
     </div>
   </div>
 
+  <!-- Add Player to Match Modal -->
+  <div id="add-player-modal" class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="glass-card w-full max-w-lg relative max-h-[90vh] flex flex-col">
+      <button id="close-add-player-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
+      <h2 class="text-xl font-display font-semibold mb-2">Add Player</h2>
+      <p class="text-sm text-slate-400 mb-4">Select a waiting player to fill this slot.</p>
+      <input type="text" id="add-player-search" class="input-field mb-4" placeholder="Search players..." />
+      <div class="overflow-y-auto flex-1 border border-slate-700/50 rounded-lg custom-scrollbar p-2 bg-slate-900/40">
+        <ul id="add-player-list" class="space-y-2"></ul>
+      </div>
+    </div>
+  </div>
+
   <div id="toast-container"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>

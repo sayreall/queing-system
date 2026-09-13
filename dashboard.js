@@ -242,41 +242,60 @@ function renderQueues() {
         const teamAList = matchCard.querySelectorAll("ul")[0];
         const teamBList = matchCard.querySelectorAll("ul")[1];
 
-        chunk.forEach((playerId, i) => {
-          const player = state.players.get(playerId);
+        for (let i = 0; i < 4; i++) {
+          const playerId = chunk[i];
           const item = document.createElement("li");
-          item.className = "queue-item bg-slate-800 hover:bg-slate-700 transition-colors border border-slate-600/50 p-1 rounded flex items-center justify-between";
-          item.dataset.playerId = playerId;
 
-          const lastResult = player?.lastResult;
-          const resultBadge = lastResult === "Win"
-            ? `<span class="text-[9px] font-bold text-green-400 bg-green-400/10 px-1 rounded">W</span>`
-            : lastResult === "Loss"
-            ? `<span class="text-[9px] font-bold text-red-400 bg-red-400/10 px-1 rounded">L</span>`
-            : "";
+          if (playerId) {
+            const player = state.players.get(playerId);
+            item.className = "queue-item bg-slate-800 hover:bg-slate-700 transition-colors border border-slate-600/50 p-1 rounded flex items-center justify-between min-h-[28px]";
+            item.dataset.playerId = playerId;
 
-          item.innerHTML = `
-            <div class="flex items-center gap-1 overflow-hidden">
-              <span class="drag-handle text-slate-400 cursor-grab hover:text-white px-0.5 text-xs hidden">⋮⋮</span>
-              <span class="font-semibold text-[11px] truncate max-w-[70px] sm:max-w-[90px]" title="${player ? player.name : "Unknown"}">${player ? player.name : "Unknown"}</span>
-              ${resultBadge}
-            </div>
-            <div class="queue-actions flex items-center gap-0.5 shrink-0 hidden">
-              <button class="text-slate-300 hover:text-white p-0.5" data-action="skip" title="Skip to bottom">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
-              </button>
-              <button class="text-slate-300 hover:text-red-400 p-0.5" data-action="absent" title="Remove">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-              </button>
-            </div>
-          `;
+            const lastResult = player?.lastResult;
+            const resultBadge = lastResult === "Win"
+              ? `<span class="text-[9px] font-bold text-green-400 bg-green-400/10 px-1 rounded">W</span>`
+              : lastResult === "Loss"
+              ? `<span class="text-[9px] font-bold text-red-400 bg-red-400/10 px-1 rounded">L</span>`
+              : "";
+
+            item.innerHTML = `
+              <div class="flex items-center gap-1 overflow-hidden">
+                <span class="drag-handle text-slate-400 cursor-grab hover:text-white px-0.5 text-xs hidden">⋮⋮</span>
+                <span class="font-semibold text-[11px] truncate max-w-[70px] sm:max-w-[90px]" title="${player ? player.name : "Unknown"}">${player ? player.name : "Unknown"}</span>
+                ${resultBadge}
+              </div>
+              <div class="queue-actions flex items-center gap-0.5 shrink-0 hidden">
+                <button class="text-slate-300 hover:text-white p-0.5" data-action="skip" title="Skip to bottom">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+                </button>
+                <button class="text-slate-300 hover:text-red-400 p-0.5" data-action="absent" title="Remove">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              </div>
+            `;
+          } else {
+            item.className = "queue-item add-player-btn bg-slate-800/40 hover:bg-slate-700/60 transition-colors border border-dashed border-slate-600/50 p-1 rounded flex items-center justify-center cursor-pointer min-h-[28px]";
+            item.dataset.action = "open-add-player-modal";
+            item.dataset.queueKey = skill.key;
+            item.dataset.matchId = matchId;
+            item.dataset.slotIndex = i;
+            item.innerHTML = `
+              <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider flex items-center gap-1 pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                Add
+              </span>
+            `;
+            if (!isEditing) {
+              item.style.display = "none";
+            }
+          }
           
           if (i < 2) {
             teamAList.appendChild(item);
           } else {
             teamBList.appendChild(item);
           }
-        });
+        }
 
         wrapper.appendChild(matchCard);
       });
@@ -885,6 +904,80 @@ function startTimerLoop() {
   }, 1000);
 }
 
+let _pendingAddSlotInfo = null;
+
+function openAddPlayerModal(queueKey, matchIndex, slotIndex) {
+  _pendingAddSlotInfo = { queueKey, matchIndex, slotIndex };
+  const modal = document.getElementById("add-player-modal");
+  const list = document.getElementById("add-player-list");
+  const search = document.getElementById("add-player-search");
+  
+  search.value = "";
+  
+  const populateList = (filterText = "") => {
+    const allWaiting = Array.from(state.players.values()).filter(p => p.status === "Waiting");
+    allWaiting.sort((a, b) => a.name.localeCompare(b.name));
+    
+    list.innerHTML = "";
+    
+    const filtered = allWaiting.filter(p => p.name.toLowerCase().includes(filterText.toLowerCase()));
+    
+    if (filtered.length === 0) {
+      list.innerHTML = `<li class="text-sm text-slate-500 text-center py-2">No matching waiting players found.</li>`;
+      return;
+    }
+    
+    filtered.forEach(p => {
+      const li = document.createElement("li");
+      li.className = "p-2 hover:bg-slate-700/50 cursor-pointer rounded-md flex justify-between items-center transition-colors border border-transparent hover:border-slate-600";
+      li.innerHTML = `
+        <span class="font-semibold text-sm text-slate-200">${p.name}</span>
+        <span class="text-xs text-slate-500 px-2 py-0.5 rounded-full bg-slate-800">${p.skill}</span>
+      `;
+      li.onclick = () => confirmAddPlayer(p.id);
+      list.appendChild(li);
+    });
+  };
+  
+  populateList();
+  search.oninput = (e) => populateList(e.target.value);
+  modal.classList.remove("hidden");
+}
+
+async function confirmAddPlayer(playerId) {
+  if (!_pendingAddSlotInfo) return;
+  const { queueKey, matchIndex, slotIndex } = _pendingAddSlotInfo;
+  
+  const order = state.queues.get(queueKey) || [];
+  const targetIndex = (matchIndex * 4) + slotIndex;
+  
+  const newOrder = [...order];
+  const existingIdx = newOrder.indexOf(playerId);
+  if (existingIdx !== -1) {
+    newOrder.splice(existingIdx, 1);
+  }
+  
+  let finalTargetIndex = targetIndex;
+  if (existingIdx !== -1 && existingIdx < targetIndex) {
+    finalTargetIndex -= 1;
+  }
+  
+  newOrder.splice(finalTargetIndex, 0, playerId);
+  
+  try {
+    const { doc, updateDoc, db } = await import("./firebase.js");
+    const queueRef = doc(db, "queues", queueKey);
+    await updateDoc(queueRef, { order: newOrder });
+    showToast("Player added to match!");
+  } catch (error) {
+    console.error("Failed to add player", error);
+    showToast(error.message || "Failed to add player", "error");
+  } finally {
+    document.getElementById("add-player-modal").classList.add("hidden");
+    _pendingAddSlotInfo = null;
+  }
+}
+
 let _pendingFinishCourtId = null;
 
 function openWinnerModal(courtId) {
@@ -1081,9 +1174,11 @@ function bindEvents() {
         if (willBeEditing) {
           state.editingMatches.add(id);
           matchCard.classList.add("is-editing");
+          matchCard.querySelectorAll('.add-player-btn').forEach(btn => btn.style.display = 'flex');
         } else {
           state.editingMatches.delete(id);
           matchCard.classList.remove("is-editing");
+          matchCard.querySelectorAll('.add-player-btn').forEach(btn => btn.style.display = 'none');
         }
         
         // Dynamically enable/disable Sortable on this match card's lists
@@ -1368,6 +1463,18 @@ function bindEvents() {
   document.getElementById("winner-modal-close").addEventListener("click", () => {
     _pendingFinishCourtId = null;
     document.getElementById("winner-modal").classList.add("hidden");
+  });
+
+  const addPlayerModal = document.getElementById("add-player-modal");
+  document.getElementById("close-add-player-modal")?.addEventListener("click", () => {
+    addPlayerModal.classList.add("hidden");
+    _pendingAddSlotInfo = null;
+  });
+  addPlayerModal?.addEventListener("click", (e) => {
+    if (e.target === addPlayerModal) {
+      addPlayerModal.classList.add("hidden");
+      _pendingAddSlotInfo = null;
+    }
   });
 
   // TV Share Modal logic
