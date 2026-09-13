@@ -738,7 +738,9 @@ function setupSortable() {
           // Rebuild the entire order array from ALL match cards in this skill's container
           const order = [];
           container.querySelectorAll(".queue-item").forEach((item) => {
-            order.push(item.dataset.playerId);
+            if (item.dataset.playerId) {
+              order.push(item.dataset.playerId);
+            }
           });
           
           try {
@@ -1134,7 +1136,7 @@ function bindEvents() {
           return;
         }
       }
-      matchingModedocument.getElementById("add-to-match-modal").classList.remove("hidden");
+      matchingModeModal.classList.remove("hidden");
     });
 
     closeMatchingModeModal?.addEventListener("click", () => {
@@ -1195,6 +1197,15 @@ function bindEvents() {
     const playerRow = event.target.closest(".queue-item");
 
     if (action && playerRow) {
+      if (action === "open-add-player-modal") {
+        const queueKey = playerRow.dataset.queueKey;
+        const matchId = playerRow.dataset.matchId;
+        const slotIndex = parseInt(playerRow.dataset.slotIndex, 10);
+        // matchId format is "skillKey-index", e.g. "beginner-0"
+        const matchIndex = parseInt(matchId.split("-").pop(), 10);
+        openAddPlayerModal(queueKey, matchIndex, slotIndex);
+        return;
+      }
       const playerId = playerRow.dataset.playerId;
       try {
         if (action === "skip") {
