@@ -951,7 +951,7 @@ async function confirmAddPlayer(playerId) {
   if (!_pendingAddSlotInfo) return;
   const { queueKey, matchIndex, slotIndex } = _pendingAddSlotInfo;
   
-  const order = state.queues.get(queueKey) || [];
+  const order = state.queues[queueKey] || [];
   const targetIndex = (matchIndex * 4) + slotIndex;
   
   const newOrder = [...order];
@@ -968,9 +968,7 @@ async function confirmAddPlayer(playerId) {
   newOrder.splice(finalTargetIndex, 0, playerId);
   
   try {
-    const { doc, updateDoc, db } = await import("./firebase.js");
-    const queueRef = doc(db, "queues", queueKey);
-    await updateDoc(queueRef, { order: newOrder });
+    await reorderQueue(queueKey, newOrder);
     showToast("Player added to match!");
   } catch (error) {
     console.error("Failed to add player", error);
