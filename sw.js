@@ -1,4 +1,4 @@
-const CACHE_NAME = "pickleball-queue-v3";
+const CACHE_NAME = "pickleball-queue-v4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -42,5 +42,6 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
 
 
