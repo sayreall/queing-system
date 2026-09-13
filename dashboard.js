@@ -742,7 +742,11 @@ async function maybeAutoAssignMatches() {
     let pendingIndex = 0;
     const localAssignedTally = {};
     const localQueueDeductions = {};
-    
+    const busyPlayers = new Set();
+    state.courts.forEach(c => {
+      if (c.status === "Active" && c.players) c.players.forEach(p => busyPlayers.add(p));
+    });
+
     for (const court of availableCourts) {
       const allowedSkill = getAllowedSkillsForCourt(court); // null = any, string = specific key
 
@@ -771,18 +775,32 @@ async function maybeAutoAssignMatches() {
         }).filter((queue) => queue.length >= 4);
 
       // Custom (stacked) matches go to any court
-      if (allowedSkill === null && pendingIndex < state.pendingMatches.length) {
-        queueOptions.push({
-          key: "custom",
-          label: "Custom",
-          length: (state.pendingMatches.length - pendingIndex) * 4,
-          isCustom: true
-        });
+      if (allowedSkill === null) {
+        // Find the next pending match where NO players are currently busy
+        while (pendingIndex < state.pendingMatches.length) {
+          const match = state.pendingMatches[pendingIndex];
+          const hasBusyPlayer = match.players.some(pid => busyPlayers.has(pid));
+          if (!hasBusyPlayer) break;
+          pendingIndex++; // skip this match for now, players are busy
+        }
+
+        if (pendingIndex < state.pendingMatches.length) {
+          queueOptions.push({
+            key: "custom",
+            label: "Custom",
+            length: (state.pendingMatches.length - pendingIndex) * 4,
+            isCustom: true
+          });
+        }
       }
 
       if (!queueOptions.length) continue; // skip this court, no eligible queue
 
       queueOptions.sort((a, b) => {
+        // Force custom matches to always have the lowest priority
+        if (a.isCustom && !b.isCustom) return 1;
+        if (!a.isCustom && b.isCustom) return -1;
+
         const aActive = activeTally[a.label] || 0;
         const bActive = activeTally[b.label] || 0;
         if (aActive !== bActive) return aActive - bActive;
@@ -795,6 +813,7 @@ async function maybeAutoAssignMatches() {
         const match = state.pendingMatches[pendingIndex];
         const { activatePendingMatch } = await import("./courts.js");
         await activatePendingMatch(match.id, court.id);
+        match.players.forEach(pid => busyPlayers.add(pid));
         pendingIndex++;
         localAssignedTally["Custom"] = (localAssignedTally["Custom"] || 0) + 1;
       } else {
