@@ -1338,6 +1338,54 @@ function bindEvents() {
     _pendingFinishCourtId = null;
     document.getElementById("winner-modal").classList.add("hidden");
   });
+
+  // TV Share Modal logic
+  const tvShareModal = document.getElementById("tv-share-modal");
+  const openTvShareBtn = document.getElementById("open-tv-share-btn");
+  const closeTvShareBtn = document.getElementById("close-tv-share-modal");
+  const tvShareLink = document.getElementById("tv-share-link");
+  const copyTvLinkBtn = document.getElementById("copy-tv-link-btn");
+  const tvQrcodeContainer = document.getElementById("tv-qrcode");
+  let qrCodeInstance = null;
+
+  openTvShareBtn?.addEventListener("click", async () => {
+    try {
+      const { auth } = await import("./firebase.js");
+      if (!auth.currentUser) return;
+      
+      const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+      const shareUrl = `${baseUrl}/tv.html?tenant=${auth.currentUser.uid}`;
+      
+      tvShareLink.value = shareUrl;
+      
+      // Generate QR Code
+      tvQrcodeContainer.innerHTML = ""; // Clear existing
+      qrCodeInstance = new QRCode(tvQrcodeContainer, {
+        text: shareUrl,
+        width: 200,
+        height: 200,
+        colorDark : "#0f3d3d",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+      
+      tvShareModal.classList.remove("hidden");
+    } catch (err) {
+      console.error(err);
+      showToast("Error generating share link.", "error");
+    }
+  });
+
+  closeTvShareBtn?.addEventListener("click", () => {
+    tvShareModal.classList.add("hidden");
+  });
+
+  copyTvLinkBtn?.addEventListener("click", () => {
+    tvShareLink.select();
+    document.execCommand("copy");
+    copyTvLinkBtn.textContent = "Copied!";
+    setTimeout(() => { copyTvLinkBtn.textContent = "Copy"; }, 2000);
+  });
 }
 
 async function bootstrap() {

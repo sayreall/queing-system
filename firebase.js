@@ -44,15 +44,23 @@ const db = initializeFirestore(app, {
 });
 const auth = getAuth(app);
 
-export function getTenantCollection(collectionName) {
+export function getTenantId() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const tenantParam = urlParams.get('tenant');
+  if (tenantParam) return tenantParam;
   if (!auth.currentUser) throw new Error("Not authenticated");
-  return collection(db, "users", auth.currentUser.uid, collectionName);
+  return auth.currentUser.uid;
+}
+
+export function getTenantCollection(collectionName) {
+  const tenantId = getTenantId();
+  return collection(db, "users", tenantId, collectionName);
 }
 
 export function getTenantDoc(collectionName, docId) {
-  if (!auth.currentUser) throw new Error("Not authenticated");
+  const tenantId = getTenantId();
   if (!docId) return doc(getTenantCollection(collectionName));
-  return doc(db, "users", auth.currentUser.uid, collectionName, docId);
+  return doc(db, "users", tenantId, collectionName, docId);
 }
 
 export {

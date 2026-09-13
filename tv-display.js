@@ -164,7 +164,6 @@ function startTimerLoop() {
 }
 
 async function bootstrap() {
-  await ensureCourtsExist();
 
   listenToCourts((courts) => {
     state.courts = courts;
@@ -192,7 +191,9 @@ async function bootstrap() {
 }
 
 onAuthStateChanged(auth, (user) => {
-  if (user) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const tenantParam = urlParams.get('tenant');
+  if (user || tenantParam) {
     bootstrap();
   } else {
     window.location.href = 'login.html';
