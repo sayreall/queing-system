@@ -48,6 +48,9 @@ export function listenToCourts(callback) {
       ...docSnap.data(),
     }));
     callback(courts);
+  }, (error) => {
+    console.error("Courts listener error:", error);
+    if (window.showTvError) window.showTvError(error);
   });
 }
 

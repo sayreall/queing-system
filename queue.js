@@ -409,6 +409,9 @@ export function listenToQueues(callback) {
       const order = snap.exists() ? snap.data().order || [] : [];
       queueState.set(skill.key, order);
       callback(getQueueState());
+    }, (error) => {
+      console.error("Queue listener error:", error);
+      if (window.showTvError) window.showTvError(error);
     })
   );
 
@@ -416,16 +419,16 @@ export function listenToQueues(callback) {
 }
 
 export function listenToPlayers(callback) {
-  return onSnapshot(
-    query(getTenantCollection("players"), orderBy("createdAt")),
-    (snapshot) => {
-      const players = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-      }));
-      callback(players);
-    }
-  );
+  return onSnapshot(query(getTenantCollection("players"), orderBy("createdAt", "desc")), (snapshot) => {
+    const players = snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    }));
+    callback(players);
+  }, (error) => {
+    console.error("Players listener error:", error);
+    if (window.showTvError) window.showTvError(error);
+  });
 }
 
 export async function fetchExistingNames() {

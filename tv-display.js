@@ -10,6 +10,16 @@ const state = {
   pendingMatches: [],
 };
 
+window.showTvError = function(error) {
+  const container = document.getElementById("tv-upcoming-matches");
+  if (container) {
+    container.innerHTML = `<div class="col-span-full glass-card text-center py-8" style="border-color: rgba(248,113,113,0.4); background: rgba(248,113,113,0.1);">
+      <p class="text-red-400 font-bold text-lg mb-2">Database Access Denied</p>
+      <p class="text-red-300 text-sm">Please update your Firebase Firestore rules to allow public reads as instructed by the AI.</p>
+    </div>`;
+  }
+};
+
 function renderCourts() {
   COURTS.forEach((courtInfo) => {
     const court = state.courts.find((item) => item.id === courtInfo.id);
@@ -371,11 +381,15 @@ async function bootstrap() {
   onSnapshot(query(getTenantCollection("matches"), where("status", "==", "Completed")), (snap) => {
     state.completedMatches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     renderLeaderboards();
+  }, (error) => {
+    if (window.showTvError) window.showTvError(error);
   });
 
   onSnapshot(query(getTenantCollection("matches"), where("status", "==", "Pending")), (snap) => {
     state.pendingMatches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => a.createdAt - b.createdAt);
     renderUpcomingMatches();
+  }, (error) => {
+    if (window.showTvError) window.showTvError(error);
   });
 
   startTimerLoop();
