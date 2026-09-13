@@ -917,12 +917,13 @@ function openAddPlayerModal(queueKey, matchIndex, slotIndex) {
   search.value = "";
   
   const populateList = (filterText = "") => {
-    const allWaiting = Array.from(state.players.values()).filter(p => p.status === "Waiting");
-    allWaiting.sort((a, b) => a.name.localeCompare(b.name));
+    const excludedStatuses = new Set(["Archived", "Done Playing"]);
+    const allAvailable = Array.from(state.players.values()).filter(p => !excludedStatuses.has(p.status));
+    allAvailable.sort((a, b) => a.name.localeCompare(b.name));
     
     list.innerHTML = "";
     
-    const filtered = allWaiting.filter(p => p.name.toLowerCase().includes(filterText.toLowerCase()));
+    const filtered = allAvailable.filter(p => p.name.toLowerCase().includes(filterText.toLowerCase()));
     
     if (filtered.length === 0) {
       list.innerHTML = `<li class="text-sm text-slate-500 text-center py-2">No matching waiting players found.</li>`;
