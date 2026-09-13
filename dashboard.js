@@ -530,10 +530,10 @@ function renderPlayers() {
 
   const doneRows = state.filter.startsWith("Archived")
     ? []
-    : filteredRows.filter((player) => player.status === "Standby");
+    : filteredRows.filter((player) => player.status === "Standby" || player.status === "Absent");
   const activeRows = state.filter.startsWith("Archived")
     ? filteredRows
-    : filteredRows.filter((player) => player.status !== "Standby");
+    : filteredRows.filter((player) => player.status !== "Standby" && player.status !== "Absent");
 
   // Update total players count badge
   const countEl = document.getElementById("total-players-count");
