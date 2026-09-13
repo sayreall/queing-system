@@ -105,7 +105,7 @@ function showConfirmModal(message, title = "Please Confirm") {
 
     titleEl.textContent = title;
     msgEl.textContent = message;
-    modal.classList.remove("hidden");
+    document.getElementById("add-to-match-modal").classList.remove("hidden");
 
     const cleanup = () => {
       modal.classList.add("hidden");
@@ -908,9 +908,9 @@ let _pendingAddSlotInfo = null;
 
 function openAddPlayerModal(queueKey, matchIndex, slotIndex) {
   _pendingAddSlotInfo = { queueKey, matchIndex, slotIndex };
-  const modal = document.getElementById("add-player-modal");
-  const list = document.getElementById("add-player-list");
-  const search = document.getElementById("add-player-search");
+  const modal = document.getElementById("add-to-match-modal");
+  const list = document.getElementById("add-to-match-list");
+  const search = document.getElementById("add-to-match-search");
   
   search.value = "";
   
@@ -941,7 +941,7 @@ function openAddPlayerModal(queueKey, matchIndex, slotIndex) {
   
   populateList();
   search.oninput = (e) => populateList(e.target.value);
-  modal.classList.remove("hidden");
+  document.getElementById("add-to-match-modal").classList.remove("hidden");
 }
 
 async function confirmAddPlayer(playerId) {
@@ -973,7 +973,7 @@ async function confirmAddPlayer(playerId) {
     console.error("Failed to add player", error);
     showToast(error.message || "Failed to add player", "error");
   } finally {
-    document.getElementById("add-player-modal").classList.add("hidden");
+    document.getElementById("add-to-match-modal").classList.add("hidden");
     _pendingAddSlotInfo = null;
   }
 }
@@ -996,7 +996,7 @@ function openWinnerModal(courtId) {
   const modal = document.getElementById("winner-modal");
   document.getElementById("winner-team-a-names").textContent = teamANames.join(" & ") || "Team A";
   document.getElementById("winner-team-b-names").textContent = teamBNames.join(" & ") || "Team B";
-  modal.classList.remove("hidden");
+  document.getElementById("add-to-match-modal").classList.remove("hidden");
 }
 
 async function confirmFinishMatch(winnerTeam) {
@@ -1044,7 +1044,7 @@ function bindEvents() {
 
   if (openAddPlayerBtn && addPlayerModal) {
     openAddPlayerBtn.addEventListener("click", () => {
-      addPlayerModal.classList.remove("hidden");
+      addPlayerdocument.getElementById("add-to-match-modal").classList.remove("hidden");
       elements.nameInput?.focus();
     });
   }
@@ -1071,7 +1071,7 @@ function bindEvents() {
 
   if (viewMatchLogBtn && matchLogModal) {
     viewMatchLogBtn.addEventListener("click", () => {
-      matchLogModal.classList.remove("hidden");
+      matchLogdocument.getElementById("add-to-match-modal").classList.remove("hidden");
     });
   }
 
@@ -1134,7 +1134,7 @@ function bindEvents() {
           return;
         }
       }
-      matchingModeModal.classList.remove("hidden");
+      matchingModedocument.getElementById("add-to-match-modal").classList.remove("hidden");
     });
 
     closeMatchingModeModal?.addEventListener("click", () => {
@@ -1350,7 +1350,7 @@ function bindEvents() {
     });
     
     checkRepeatMatchup();
-    customModal.classList.remove("hidden");
+    customdocument.getElementById("add-to-match-modal").classList.remove("hidden");
   });
 
   const checkRepeatMatchup = () => {
@@ -1465,14 +1465,14 @@ function bindEvents() {
     document.getElementById("winner-modal").classList.add("hidden");
   });
 
-  const addPlayerModal = document.getElementById("add-player-modal");
-  document.getElementById("close-add-player-modal")?.addEventListener("click", () => {
-    addPlayerModal.classList.add("hidden");
+  const addToMatchModal = document.getElementById("add-to-match-modal");
+  document.getElementById("close-add-to-match-modal")?.addEventListener("click", () => {
+    addToMatchModal.classList.add("hidden");
     _pendingAddSlotInfo = null;
   });
-  addPlayerModal?.addEventListener("click", (e) => {
-    if (e.target === addPlayerModal) {
-      addPlayerModal.classList.add("hidden");
+  addToMatchModal?.addEventListener("click", (e) => {
+    if (e.target === addToMatchModal) {
+      addToMatchModal.classList.add("hidden");
       _pendingAddSlotInfo = null;
     }
   });
@@ -1507,7 +1507,7 @@ function bindEvents() {
         correctLevel : QRCode.CorrectLevel.H
       });
       
-      tvShareModal.classList.remove("hidden");
+      tvSharedocument.getElementById("add-to-match-modal").classList.remove("hidden");
     } catch (err) {
       console.error(err);
       showToast("Error generating share link.", "error");
@@ -2153,5 +2153,6 @@ document.getElementById('logout-btn')?.addEventListener('click', async () => {
     showToast(error.message, "error");
   }
 });
+
 
 
