@@ -1213,7 +1213,7 @@ function bindEvents() {
 
   customBtn.addEventListener("click", () => {
     const allActive = Array.from(state.players.values())
-      .filter(p => p.status !== "Archived" && p.status !== "Absent")
+      .filter(p => p.status === "Standby")
       .sort((a, b) => a.name.localeCompare(b.name));
     
     // Populate selects
