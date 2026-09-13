@@ -115,3 +115,72 @@ saveButton.addEventListener("click", async () => {
   fileInput.value = "";
   summary.textContent = "Players imported and queued.";
 });
+
+// Reclub Import Logic
+const openReclubBtn = document.getElementById("open-reclub-modal");
+const closeReclubBtn = document.getElementById("close-reclub-modal");
+const cancelReclubBtn = document.getElementById("reclub-cancel-btn");
+const importReclubBtn = document.getElementById("reclub-import-btn");
+const reclubModal = document.getElementById("reclub-modal");
+const reclubText = document.getElementById("reclub-text");
+
+function closeReclubModal() {
+  reclubModal.classList.add("hidden");
+  reclubText.value = "";
+}
+
+openReclubBtn?.addEventListener("click", () => {
+  reclubModal.classList.remove("hidden");
+  reclubText.focus();
+});
+
+closeReclubBtn?.addEventListener("click", closeReclubModal);
+cancelReclubBtn?.addEventListener("click", closeReclubModal);
+
+reclubModal?.addEventListener("click", (e) => {
+  if (e.target === reclubModal) closeReclubModal();
+});
+
+importReclubBtn?.addEventListener("click", async () => {
+  const text = reclubText.value;
+  if (!text.trim()) return;
+
+  let cleanText = text.replace(/Participants\s*\(\d+\)\s*/i, '');
+  const segments = cleanText.split(/(?:^|\s+)\d+\.\s+/).filter(s => s.trim());
+  
+  const parsedRows = segments.map(segment => {
+    const parts = segment.split('|').map(p => p.trim());
+    const name = parts[0];
+    
+    let skill = "Beginner"; // Default
+    let gender = "Unspecified";
+    let location = "";
+    
+    for (let i = 1; i < parts.length; i++) {
+      const pLower = parts[i].toLowerCase();
+      if (pLower.includes('rating=')) {
+        const rating = parseFloat(pLower.split('=')[1]);
+        if (!isNaN(rating)) {
+          if (rating >= 4.0) skill = "Advanced";
+          else if (rating >= 3.0) skill = "Intermediate";
+        }
+      }
+      if (pLower.includes('skill=')) {
+        skill = parts[i].split('=')[1].trim();
+      }
+      if (pLower.includes('gender=')) {
+        gender = parts[i].split('=')[1].trim();
+      }
+      if (pLower.includes('location=')) {
+        location = parts[i].split('=')[1].trim();
+      }
+    }
+    
+    return { Name: name, Skill: skill, Gender: gender, Location: location };
+  });
+
+  existingNames = await fetchExistingNames();
+  validateRows(parsedRows);
+  renderRows();
+  closeReclubModal();
+});
