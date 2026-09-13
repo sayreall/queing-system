@@ -449,8 +449,8 @@ export function getQueueState() {
 }
 
 export async function generateNextRound(playersList, mode = "social_mix") {
-  // Gather all eligible players (those waiting or done playing)
-  const eligiblePlayers = playersList.filter(p => p.status === "Waiting" || p.status === "Standby");
+  // Gather all eligible players (those waiting, standby, or currently playing)
+  const eligiblePlayers = playersList.filter(p => p.status === "Waiting" || p.status === "Standby" || p.status === "Playing");
   
   if (eligiblePlayers.length === 0) {
     throw new Error("No waiting or standby players available.");
@@ -505,8 +505,9 @@ export async function generateNextRound(playersList, mode = "social_mix") {
     batch.set(queueRef, { order: newOrder, skill: skillLabelFromKey(skill), updatedAt: now }, { merge: true });
     
     // Ensure all drafted players are marked as "Waiting" so they appear in the queue
+    // (Unless they are currently Playing, they should keep their Playing status)
     players.forEach(p => {
-      if (p.status !== "Waiting") {
+      if (p.status !== "Waiting" && p.status !== "Playing") {
         const pRef = getTenantDoc("players", p.id);
         batch.update(pRef, { status: "Waiting", updatedAt: now });
       }

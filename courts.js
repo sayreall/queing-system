@@ -118,11 +118,12 @@ export async function assignMatchToCourt(courtId, skillKey) {
     for (const snap of playerSnaps) {
       if (!snap.exists()) continue;
       const data = snap.data();
-      if (data.status !== "Waiting") continue;
-      if (data.currentMatchId) continue;
+      if (data.status !== "Waiting" && data.status !== "Standby" && data.status !== "Playing") continue;
       cleanOrder.push(snap.id);
       playerDataMap.set(snap.id, {
         id: snap.id,
+        status: data.status,
+        currentMatchId: data.currentMatchId,
         lastResult: data.lastResult || null,
         gp: (data.wins || 0) + (data.losses || 0),
         playedWith: data.playedWith || {},
@@ -141,6 +142,15 @@ export async function assignMatchToCourt(courtId, skillKey) {
 
     // ── Take exactly the top 4 players in the exact queue order ─────────────
     const selectedIds = cleanOrder.slice(0, 4);
+
+    const anyBusy = selectedIds.some(id => {
+      const p = playerDataMap.get(id);
+      return p.status === "Playing" || p.currentMatchId;
+    });
+
+    if (anyBusy) {
+      throw new Error("Cannot start match: one or more players are still playing on another court.");
+    }
 
     const teamA = [selectedIds[0], selectedIds[1]];
     const teamB = [selectedIds[2], selectedIds[3]];

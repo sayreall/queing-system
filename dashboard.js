@@ -835,17 +835,22 @@ async function maybeAutoAssignMatches() {
 
       const chosen = queueOptions[0];
 
-      if (chosen.isCustom) {
-        const match = state.pendingMatches[pendingIndex];
-        const { activatePendingMatch } = await import("./courts.js");
-        await activatePendingMatch(match.id, court.id);
-        match.players.forEach(pid => busyPlayers.add(pid));
-        pendingIndex++;
-        localAssignedTally["Custom"] = (localAssignedTally["Custom"] || 0) + 1;
-      } else {
-        await assignMatchToCourt(court.id, chosen.key);
-        localAssignedTally[chosen.label] = (localAssignedTally[chosen.label] || 0) + 1;
-        localQueueDeductions[chosen.key] = (localQueueDeductions[chosen.key] || 0) + 4;
+      try {
+        if (chosen.isCustom) {
+          const match = state.pendingMatches[pendingIndex];
+          const { activatePendingMatch } = await import("./courts.js");
+          await activatePendingMatch(match.id, court.id);
+          match.players.forEach(pid => busyPlayers.add(pid));
+          pendingIndex++;
+          localAssignedTally["Custom"] = (localAssignedTally["Custom"] || 0) + 1;
+        } else {
+          await assignMatchToCourt(court.id, chosen.key);
+          localAssignedTally[chosen.label] = (localAssignedTally[chosen.label] || 0) + 1;
+          localQueueDeductions[chosen.key] = (localQueueDeductions[chosen.key] || 0) + 4;
+        }
+      } catch (err) {
+        // If match cannot be started (e.g., players are still busy playing), skip this court
+        console.warn(`Could not assign court ${court.id}: ${err.message}`);
       }
     }
   } catch (error) {
@@ -1032,7 +1037,7 @@ function bindEvents() {
     generateRoundBtn.addEventListener("click", async () => {
       const activeCourts = state.courts.filter(c => c.status === "Active");
       if (activeCourts.length > 0) {
-        if (!(await showConfirmModal(`There are ${activeCourts.length} matches still playing on the courts. Generating a new round now will place all currently waiting players into the next round, but the players currently on court won't be included until they finish. Proceed anyway?`))) {
+        if (!(await showConfirmModal(`There are ${activeCourts.length} matches still playing on the courts. Generating a new round now will include both Waiting and Playing players in the shuffle. The new matches won't start until the players finish their current games. Proceed?`))) {
           return;
         }
       }
