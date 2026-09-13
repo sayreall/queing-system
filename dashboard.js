@@ -95,6 +95,32 @@ function showToast(message, tone = "info") {
   setTimeout(() => toast.remove(), 3200);
 }
 
+function showConfirmModal(message, title = "Please Confirm") {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("confirm-modal");
+    const titleEl = document.getElementById("confirm-modal-title");
+    const msgEl = document.getElementById("confirm-modal-message");
+    const btnOk = document.getElementById("confirm-modal-ok");
+    const btnCancel = document.getElementById("confirm-modal-cancel");
+
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    modal.classList.remove("hidden");
+
+    const cleanup = () => {
+      modal.classList.add("hidden");
+      btnOk.removeEventListener("click", onOk);
+      btnCancel.removeEventListener("click", onCancel);
+    };
+
+    const onOk = () => { cleanup(); resolve(true); };
+    const onCancel = () => { cleanup(); resolve(false); };
+
+    btnOk.addEventListener("click", onOk);
+    btnCancel.addEventListener("click", onCancel);
+  });
+}
+
 function formatFirebaseError(error) {
   if (!error) return "Unexpected error";
   const code = error.code || "";
@@ -967,7 +993,7 @@ function bindEvents() {
   }
   if (elements.archiveAll) {
     elements.archiveAll.addEventListener("click", async () => {
-      if (!confirm("Are you sure you want to end the day and archive all active players? This will clear all courts and queues.")) return;
+      if (!(await showConfirmModal("Are you sure you want to end the day and archive all active players? This will clear all courts and queues."))) return;
       try {
         await archiveAllPlayers(Array.from(state.players.values()));
         showToast("Session ended. All players archived.");
@@ -1003,10 +1029,10 @@ function bindEvents() {
   const confirmMatchingModeBtn = document.getElementById("confirm-matching-mode-btn");
 
   if (generateRoundBtn && matchingModeModal) {
-    generateRoundBtn.addEventListener("click", () => {
-      const activeCourts = state.courts.filter(c => c.matchId);
+    generateRoundBtn.addEventListener("click", async () => {
+      const activeCourts = state.courts.filter(c => c.status === "Active");
       if (activeCourts.length > 0) {
-        if (!confirm(`There are ${activeCourts.length} matches still playing on the courts. Generating a new round now will place all currently waiting players into the next round, but the players currently on court won't be included until they finish. Proceed anyway?`)) {
+        if (!(await showConfirmModal(`There are ${activeCourts.length} matches still playing on the courts. Generating a new round now will place all currently waiting players into the next round, but the players currently on court won't be included until they finish. Proceed anyway?`))) {
           return;
         }
       }
@@ -1824,7 +1850,7 @@ async function archiveAllMatchLog() {
   const logs = state.matchLog || [];
   const visible = state.matchLogShowArchived ? logs : logs.filter(m => m.status !== "Archived");
   if (!visible.length) return;
-  if (!confirm(`Archive all ${visible.length} visible matches? They will be hidden from the log.`)) return;
+  if (!(await showConfirmModal(`Archive all ${visible.length} visible matches? They will be hidden from the log.`))) return;
   try {
     await Promise.all(visible.map(m => archiveMatch(m.id)));
     showToast("All visible matches archived.");

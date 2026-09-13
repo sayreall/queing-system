@@ -611,6 +611,18 @@
     </div>
   </div>
 
+  <!-- Custom Confirm Modal -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="glass-card w-full max-w-sm relative">
+      <h2 class="text-xl font-display font-semibold mb-2" id="confirm-modal-title">Please Confirm</h2>
+      <p class="text-sm text-slate-300 mb-6" id="confirm-modal-message"></p>
+      <div class="flex justify-end gap-3 mt-4">
+        <button id="confirm-modal-cancel" class="btn-secondary py-2 px-4">Cancel</button>
+        <button id="confirm-modal-ok" class="btn-primary py-2 px-6">OK</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast-container"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
