@@ -134,39 +134,39 @@ function buildNextMatchHTML(teamAIds, teamBIds, skillLabel, type, courtReady) {
     const losses = p.losses || 0;
     const wBadge = `<span class="text-xs font-bold text-green-400">${wins}W</span>`;
     const lBadge = `<span class="text-xs font-bold text-red-400">${losses}L</span>`;
-    return \`
+    return `
       <div class="flex items-center justify-between py-1.5 border-b border-slate-700/50 last:border-0">
-        <span class="font-semibold text-slate-100">\${p.name}</span>
+        <span class="font-semibold text-slate-100">${p.name}</span>
         <div class="flex items-center gap-2">
-          \${wBadge} \${lBadge}
+          ${wBadge} ${lBadge}
         </div>
-      </div>\`;
+      </div>`;
   };
 
-  return \`
+  return `
     <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3 h-full">
       <div class="flex items-center gap-2 flex-wrap">
         <span class="text-xs uppercase tracking-widest font-bold text-emerald-400">Next Match</span>
-        \${typeTag}
-        <span class="px-2 py-0.5 rounded-full text-xs font-bold border border-slate-600 \${skillColorClass}">\${skillLabel}</span>
-        \${courtTag}
+        ${typeTag}
+        <span class="px-2 py-0.5 rounded-full text-xs font-bold border border-slate-600 ${skillColorClass}">${skillLabel}</span>
+        ${courtTag}
       </div>
 
       <div class="grid grid-cols-2 gap-4">
         <div class="glass-card p-3" style="border-color: rgba(31, 207, 177, 0.2); background: rgba(31, 207, 177, 0.05);">
           <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2" style="color:#1fcfb1;">Team A</h4>
           <div class="space-y-1">
-            \${teamAIds.map(playerRow).join("")}
+            ${teamAIds.map(playerRow).join("")}
           </div>
         </div>
         <div class="glass-card p-3" style="border-color: rgba(232, 90, 26, 0.2); background: rgba(232, 90, 26, 0.05);">
           <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2" style="color:#E85A1A;">Team B</h4>
           <div class="space-y-1">
-            \${teamBIds.map(playerRow).join("")}
+            ${teamBIds.map(playerRow).join("")}
           </div>
         </div>
       </div>
-    </div>\`;
+    </div>`;
 }
 
 function renderUpcomingMatches() {
@@ -258,7 +258,7 @@ function renderUpcomingMatches() {
   if (upcomingMatchesHTML.length > 0) {
     container.innerHTML = upcomingMatchesHTML.join("");
   } else {
-    container.innerHTML = \`<div class="col-span-full glass-card text-center text-slate-400 py-8">No players waiting for a match</div>\`;
+    container.innerHTML = `<div class="col-span-full glass-card text-center text-slate-400 py-8">No players waiting for a match</div>`;
   }
 }
 
