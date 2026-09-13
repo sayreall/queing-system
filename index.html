@@ -448,91 +448,88 @@
     </div>
   </div>
 
-  <!-- Matching Mode Modal -->
   <div id="matching-mode-modal"
     class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="glass-card w-full max-w-2xl relative bg-white rounded-2xl text-slate-800 p-0 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-      <div class="p-6 pb-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-        <h2 class="text-xl font-bold text-slate-900">Matching mode</h2>
-        <button id="close-matching-mode-modal" class="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
-      </div>
+    <div class="glass-card w-full max-w-xl relative flex flex-col max-h-[90vh]">
+      <button id="close-matching-mode-modal"
+        class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
       
-      <div class="p-6 overflow-y-auto bg-slate-50 flex-1 space-y-3" id="matching-mode-list">
+      <h2 class="text-2xl font-display font-semibold mb-2">Matching mode</h2>
+      <p class="text-sm text-slate-400 mb-6">Select how the next round should be generated.</p>
+      
+      <div class="overflow-y-auto pr-2" id="matching-mode-list">
         
         <!-- Balanced -->
-        <label class="block cursor-pointer relative border border-slate-200 bg-white rounded-xl p-4 transition hover:border-green-400 hover:shadow-sm">
+        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
           <input type="radio" name="matching_mode" value="balanced" class="peer sr-only">
-          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-green-500 pointer-events-none transition-all"></div>
-          <div class="flex items-center gap-2 mb-1">
-            <h3 class="text-lg font-semibold text-slate-900">Balanced</h3>
-            <span class="text-[10px] font-bold uppercase tracking-wider bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Recommended</span>
-            <svg class="w-5 h-5 text-green-500 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all"></div>
+          <div class="flex items-center gap-2 mb-1 relative z-10">
+            <h3 class="text-base font-semibold text-white">Balanced</h3>
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style="background: rgba(31,207,177,0.2); color: #1fcfb1;">Recommended</span>
+            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <p class="text-sm text-slate-500">Balances teams by rating. Avoids repeat matchups when possible.</p>
+          <p class="text-sm text-slate-400 relative z-10">Balances teams by win ratio. Avoids repeat matchups when possible.</p>
         </label>
 
         <!-- Social Mix -->
-        <label class="block cursor-pointer relative border border-slate-200 bg-white rounded-xl p-4 transition hover:border-green-400 hover:shadow-sm">
+        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
           <input type="radio" name="matching_mode" value="social_mix" class="peer sr-only" checked>
-          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-green-500 pointer-events-none transition-all"></div>
-          <div class="flex items-center gap-2 mb-1">
-            <h3 class="text-lg font-semibold text-slate-900">Social Mix</h3>
-            <span class="text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Improved</span>
-            <svg class="w-5 h-5 text-green-500 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all"></div>
+          <div class="flex items-center gap-2 mb-1 relative z-10">
+            <h3 class="text-base font-semibold text-white">Social Mix</h3>
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style="background: rgba(245,196,42,0.2); color: #F5C42A;">Improved</span>
+            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <p class="text-sm text-slate-500">Rotates partners before repeating, then spreads opponents as fairly as possible. Ratings aren't used.</p>
+          <p class="text-sm text-slate-400 relative z-10">Rotates partners and opponents as fairly as possible. Stats aren't used.</p>
         </label>
 
         <!-- Skill Separated -->
-        <label class="block cursor-pointer relative border border-slate-200 bg-white rounded-xl p-4 transition hover:border-green-400 hover:shadow-sm">
+        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
           <input type="radio" name="matching_mode" value="skill_separated" class="peer sr-only">
-          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-green-500 pointer-events-none transition-all"></div>
-          <div class="flex items-center gap-2 mb-1">
-            <h3 class="text-lg font-semibold text-slate-900">Skill Separated</h3>
-            <svg class="w-5 h-5 text-green-500 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all"></div>
+          <div class="flex items-center gap-2 mb-1 relative z-10">
+            <h3 class="text-base font-semibold text-white">Skill Separated</h3>
+            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <p class="text-sm text-slate-500">Keeps similar skill levels together. May leave a court waiting.</p>
+          <p class="text-sm text-slate-400 relative z-10">Keeps similar skill levels together. May leave a court waiting.</p>
         </label>
 
         <!-- Winners / Losers -->
-        <label class="block cursor-pointer relative border border-slate-200 bg-white rounded-xl p-4 transition hover:border-green-400 hover:shadow-sm">
+        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
           <input type="radio" name="matching_mode" value="winners_losers" class="peer sr-only">
-          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-green-500 pointer-events-none transition-all"></div>
-          <div class="flex items-center gap-2 mb-1">
-            <h3 class="text-lg font-semibold text-slate-900">Winners / Losers</h3>
-            <svg class="w-5 h-5 text-green-500 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all"></div>
+          <div class="flex items-center gap-2 mb-1 relative z-10">
+            <h3 class="text-base font-semibold text-white">Winners / Losers</h3>
+            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <p class="text-sm text-slate-500">Winners play winners and losers play losers. Rotates between both groups.</p>
+          <p class="text-sm text-slate-400 relative z-10">Winners play winners and losers play losers. Rotates between both groups.</p>
         </label>
 
         <!-- Mixed Doubles -->
-        <label class="block cursor-pointer relative border border-slate-200 bg-white rounded-xl p-4 transition hover:border-green-400 hover:shadow-sm">
+        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
           <input type="radio" name="matching_mode" value="mixed" class="peer sr-only">
-          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-green-500 pointer-events-none transition-all"></div>
-          <div class="flex items-center gap-2 mb-1">
-            <h3 class="text-lg font-semibold text-slate-900">Mixed Doubles</h3>
-            <svg class="w-5 h-5 text-green-500 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all"></div>
+          <div class="flex items-center gap-2 mb-1 relative z-10">
+            <h3 class="text-base font-semibold text-white">Mixed Doubles</h3>
+            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <p class="text-sm text-slate-500">Every team has one male and one female player.</p>
+          <p class="text-sm text-slate-400 relative z-10">Every team has one male and one female player where possible.</p>
         </label>
-
       </div>
       
-      <div class="p-4 border-t border-slate-200 bg-white">
-        <button id="confirm-matching-mode-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl transition-colors">
-          Generate Matches
-        </button>
-      </div>
+      <button id="confirm-matching-mode-btn" class="btn-primary w-full py-3 mt-4 text-sm">
+        Generate Matches
+      </button>
     </div>
   </div>
 
