@@ -97,7 +97,7 @@ export async function assignMatchToCourt(courtId, skillKey) {
     const court = courtSnap.data();
     if (court.status !== "Available") return;
 
-    if (court.allowedSkill && court.allowedSkill !== skillKey && skillKey !== "custom") {
+    if (court.allowedSkill && court.allowedSkill !== "any" && court.allowedSkill !== "Any" && court.allowedSkill !== skillKey && skillKey !== "custom") {
       throw new Error(`This court only accepts ${court.allowedSkill} matches.`);
     }
 
