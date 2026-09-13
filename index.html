@@ -100,12 +100,20 @@
             <span class="text-sm text-slate-400">Realtime match control</span>
           </div>
           
-          <div class="flex items-center gap-2 bg-slate-800/50 border border-slate-700 px-3 py-1.5 rounded-lg">
-            <span class="text-sm font-semibold text-slate-300">Auto-Assign:</span>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" id="auto-assign-toggle" class="sr-only peer">
-              <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-beginner"></div>
-            </label>
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="add-court-btn" class="btn-secondary flex items-center gap-2 text-sm" title="Add a new court">
+              <svg aria-hidden="true" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Add Court
+            </button>
+            <div class="flex items-center gap-2 bg-slate-800/50 border border-slate-700 px-3 py-1.5 rounded-lg">
+              <span class="text-sm font-semibold text-slate-300">Auto-Assign:</span>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="auto-assign-toggle" class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-beginner"></div>
+              </label>
+            </div>
           </div>
         </div>
 

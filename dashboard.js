@@ -13,13 +13,13 @@ import {
   generateNextRound,
 } from "./queue.js";
 import {
-  COURTS,
   ensureCourtsExist,
   listenToCourts,
   assignMatchToCourt,
   finishMatch,
   toggleCourtStatus,
   updateCourtAllowedSkill,
+  addCourt,
 } from "./courts.js";
 import { 
   db, collection, query, where, orderBy, limit, onSnapshot,
@@ -344,9 +344,15 @@ function renderCourts() {
 
   const nameFor = id => (id && state.players.get(id)?.name) || "--";
 
-  container.innerHTML = COURTS.map(courtInfo => {
-    const court = state.courts.find(c => c.id === courtInfo.id);
-    if (!court) return "";
+  const courts = [...state.courts].sort((a, b) =>
+    (a.name || a.id).localeCompare(b.name || b.id, undefined, { numeric: true })
+  );
+
+  container.innerHTML = courts.map(court => {
+    const courtInfo = {
+      id: court.id,
+      name: court.name || court.id.replace(/^court-/, "Court "),
+    };
 
     const cid = court.id;
 
@@ -1121,6 +1127,23 @@ function bindEvents() {
       }
     });
   }
+
+  const addCourtBtn = document.getElementById("add-court-btn");
+  addCourtBtn?.addEventListener("click", async () => {
+    const originalContent = addCourtBtn.innerHTML;
+    try {
+      addCourtBtn.disabled = true;
+      addCourtBtn.textContent = "Adding...";
+      const court = await addCourt();
+      showToast(`${court.name} added and ready for matches.`);
+    } catch (error) {
+      console.error("Add court failed", error);
+      showToast(formatFirebaseError(error), "error");
+    } finally {
+      addCourtBtn.disabled = false;
+      addCourtBtn.innerHTML = originalContent;
+    }
+  });
 
   const generateRoundBtn = document.getElementById("generate-round-btn");
   const matchingModeModal = document.getElementById("matching-mode-modal");
