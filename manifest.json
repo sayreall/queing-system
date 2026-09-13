@@ -1,0 +1,23 @@
+{
+  "name": "Pickleball Queue",
+  "short_name": "PickleQueue",
+  "description": "Pickleball Doubles Queuing System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a2e2e",
+  "theme_color": "#0a2e2e",
+  "icons": [
+    {
+      "src": "deuce-game-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "deuce-game-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
