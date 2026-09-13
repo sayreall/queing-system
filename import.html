@@ -60,17 +60,19 @@
 
         <!-- Reclub Import Modal -->
         <div id="reclub-modal" class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div class="w-full max-w-3xl relative bg-white rounded-2xl text-slate-800 p-8 shadow-2xl">
-            <button id="close-reclub-modal" class="absolute top-4 right-5 text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
-            <h2 class="text-2xl font-bold mb-3 text-slate-900">Import from Reclub</h2>
-            <p class="text-sm text-slate-500 mb-4">
+          <div class="glass-card w-full max-w-3xl relative">
+            <button id="close-reclub-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
+            <h2 class="text-2xl font-display font-semibold mb-2">Import from Reclub</h2>
+            <p class="text-sm text-slate-400 mb-6">
               Copy the participant list from Reclub and paste it below. Optional metadata uses pipes, for example: 1. Player | rating=4.2 | duprId=23q4321
             </p>
-            <textarea id="reclub-text" rows="8" class="w-full border-2 border-green-500 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-300" placeholder="Example: Participants (26) 1. Player One 2. Player Two ..."></textarea>
+            <textarea id="reclub-text" rows="8" class="input-field w-full resize-none text-sm font-sans" placeholder="Example: Participants (26)
+1. Player One
+2. Player Two ..."></textarea>
             
-            <div class="flex gap-4 mt-4">
-              <button id="reclub-import-btn" class="flex-1 bg-green-400 hover:bg-green-500 text-white font-semibold py-3 rounded-lg transition-colors">Import Players</button>
-              <button id="reclub-cancel-btn" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold py-3 rounded-lg transition-colors">Cancel</button>
+            <div class="flex flex-col sm:flex-row gap-4 mt-6">
+              <button id="reclub-import-btn" class="flex-1 btn-primary py-3">Import Players</button>
+              <button id="reclub-cancel-btn" class="flex-1 btn-secondary py-3">Cancel</button>
             </div>
           </div>
         </div>
