@@ -979,25 +979,43 @@ function bindEvents() {
   }
 
   const generateRoundBtn = document.getElementById("generate-round-btn");
-  if (generateRoundBtn) {
-    generateRoundBtn.addEventListener("click", async () => {
+  const matchingModeModal = document.getElementById("matching-mode-modal");
+  const closeMatchingModeModal = document.getElementById("close-matching-mode-modal");
+  const confirmMatchingModeBtn = document.getElementById("confirm-matching-mode-btn");
+
+  if (generateRoundBtn && matchingModeModal) {
+    generateRoundBtn.addEventListener("click", () => {
       const activeCourts = state.courts.filter(c => c.matchId);
       if (activeCourts.length > 0) {
         if (!confirm(`There are ${activeCourts.length} matches still playing on the courts. Generating a new round now will place all currently waiting players into the next round, but the players currently on court won't be included until they finish. Proceed anyway?`)) {
           return;
         }
       }
+      matchingModeModal.classList.remove("hidden");
+    });
+
+    closeMatchingModeModal?.addEventListener("click", () => {
+      matchingModeModal.classList.add("hidden");
+    });
+
+    matchingModeModal.addEventListener("click", (e) => {
+      if (e.target === matchingModeModal) matchingModeModal.classList.add("hidden");
+    });
+
+    confirmMatchingModeBtn?.addEventListener("click", async () => {
+      const selectedMode = document.querySelector('input[name="matching_mode"]:checked')?.value || 'social_mix';
       
       try {
-        generateRoundBtn.disabled = true;
-        generateRoundBtn.innerHTML = "GENERATING...";
-        await generateNextRound(Array.from(state.players.values()));
+        confirmMatchingModeBtn.disabled = true;
+        confirmMatchingModeBtn.innerHTML = "Generating...";
+        await generateNextRound(Array.from(state.players.values()), selectedMode);
         showToast("Next round generated successfully!");
+        matchingModeModal.classList.add("hidden");
       } catch (error) {
         showToast(error.message || "Failed to generate round.", "error");
       } finally {
-        generateRoundBtn.disabled = false;
-        generateRoundBtn.innerHTML = "Generate Round";
+        confirmMatchingModeBtn.disabled = false;
+        confirmMatchingModeBtn.innerHTML = "Generate Matches";
       }
     });
   }

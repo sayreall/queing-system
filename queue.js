@@ -445,7 +445,7 @@ export function getQueueState() {
   return state;
 }
 
-export async function generateNextRound(playersList) {
+export async function generateNextRound(playersList, mode = "social_mix") {
   // Gather all eligible players (those waiting or done playing)
   const eligiblePlayers = playersList.filter(p => p.status === "Waiting" || p.status === "Standby");
   
@@ -463,22 +463,45 @@ export async function generateNextRound(playersList) {
   const now = serverTimestamp();
   
   for (const [skill, players] of Object.entries(bySkill)) {
-    // 1. Pure Random Shuffle (Fisher-Yates) for complete randomization
+    // Basic shuffle first to break ties
     for (let i = players.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [players[i], players[j]] = [players[j], players[i]];
     }
 
-    const newOrder = [];
-    // 2. Chunk by 4 directly from the randomly shuffled array
-    for (let i = 0; i < players.length; i += 4) {
-      const chunk = players.slice(i, i + 4);
-      chunk.forEach(p => newOrder.push(p.id));
+    if (mode === "winners_losers") {
+      players.sort((a, b) => {
+        const scoreA = a.lastResult === "win" ? 1 : (a.lastResult === "loss" ? -1 : 0);
+        const scoreB = b.lastResult === "win" ? 1 : (b.lastResult === "loss" ? -1 : 0);
+        return scoreB - scoreA;
+      });
+    } else if (mode === "balanced") {
+      players.sort((a, b) => {
+        const ratioA = (a.wins || 0) / Math.max(1, (a.wins || 0) + (a.losses || 0));
+        const ratioB = (b.wins || 0) / Math.max(1, (b.wins || 0) + (b.losses || 0));
+        return ratioB - ratioA;
+      });
+    } else if (mode === "mixed") {
+      const males = players.filter(p => p.gender === "Male");
+      const females = players.filter(p => p.gender === "Female");
+      const unspec = players.filter(p => p.gender !== "Male" && p.gender !== "Female");
+      
+      const mixedOrder = [];
+      while (males.length > 0 || females.length > 0 || unspec.length > 0) {
+        if (males.length > 0) mixedOrder.push(males.shift());
+        else if (unspec.length > 0) mixedOrder.push(unspec.shift());
+        
+        if (females.length > 0) mixedOrder.push(females.shift());
+        else if (unspec.length > 0) mixedOrder.push(unspec.shift());
+      }
+      players.splice(0, players.length, ...mixedOrder);
     }
+
+    const newOrder = players.map(p => p.id);
     const queueRef = getQueueDocRef(skill);
     batch.set(queueRef, { order: newOrder, skill: skillLabelFromKey(skill), updatedAt: now }, { merge: true });
     
-    // 3. Ensure all drafted players are marked as "Waiting" so they appear in the queue
+    // Ensure all drafted players are marked as "Waiting" so they appear in the queue
     players.forEach(p => {
       if (p.status !== "Waiting") {
         const pRef = getTenantDoc("players", p.id);
