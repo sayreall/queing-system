@@ -20,8 +20,6 @@ import {
   finishMatch,
   toggleCourtStatus,
   updateCourtAllowedSkill,
-  addCourt,
-  removeCourt,
 } from "./courts.js";
 import { 
   db, collection, query, where, orderBy, limit, onSnapshot,
@@ -346,10 +344,7 @@ function renderCourts() {
 
   const nameFor = id => (id && state.players.get(id)?.name) || "--";
 
-  // Build court list from Firestore state (dynamic, not hardcoded)
-  const courtList = state.courts.map(court => ({ id: court.id, name: court.name || court.id }));
-
-  container.innerHTML = courtList.map(courtInfo => {
+  container.innerHTML = COURTS.map(courtInfo => {
     const court = state.courts.find(c => c.id === courtInfo.id);
     if (!court) return "";
 
@@ -484,18 +479,9 @@ function renderCourts() {
           <h3 class="court-title text-slate-500">${courtInfo.name}</h3>
           <span class="text-xs text-slate-600 uppercase tracking-widest">Inactive</span>
         </div>
-        <div class="flex gap-2 mt-2">
-          <button class="btn-secondary flex-1" data-toggle-court="${cid}">Mark Available</button>
-          <button class="text-red-400 hover:text-red-300 text-xs px-2 py-1 border border-red-500/30 rounded-lg hover:bg-red-500/10 transition-colors" data-remove-court="${cid}" title="Remove Court">Remove</button>
-        </div>
+        <button class="btn-secondary w-full mt-2" data-toggle-court="${cid}">Mark Available</button>
       </div>`;
-  }).join("") + `
-    <div class="glass-card court-card flex items-center justify-center cursor-pointer hover:border-cyan-500/40 transition-colors border-dashed" id="add-court-card" style="min-height:120px;">
-      <div class="text-center">
-        <div class="text-3xl text-slate-500 mb-1">+</div>
-        <p class="text-sm text-slate-400 font-semibold">Add Court</p>
-      </div>
-    </div>`;
+  }).join("");
 }
 
 
@@ -544,10 +530,10 @@ function renderPlayers() {
 
   const doneRows = state.filter.startsWith("Archived")
     ? []
-    : filteredRows.filter((player) => player.status === "Standby" || player.status === "Absent");
+    : filteredRows.filter((player) => player.status === "Standby");
   const activeRows = state.filter.startsWith("Archived")
     ? filteredRows
-    : filteredRows.filter((player) => player.status !== "Standby" && player.status !== "Absent");
+    : filteredRows.filter((player) => player.status !== "Standby");
 
   // Update total players count badge
   const countEl = document.getElementById("total-players-count");
@@ -1303,35 +1289,6 @@ function bindEvents() {
       } catch (error) {
         console.error("Toggle court failed", error);
         showToast(formatFirebaseError(error), "error");
-      }
-      return;
-    }
-
-    // Add Court
-    const addCourtCard = event.target.closest("#add-court-card");
-    if (addCourtCard) {
-      try {
-        const result = await addCourt();
-        showToast(`${result.name} added!`);
-      } catch (error) {
-        console.error("Add court failed", error);
-        showToast(error.message || "Failed to add court", "error");
-      }
-      return;
-    }
-
-    // Remove Court
-    const removeCourtBtn = event.target.closest("[data-remove-court]");
-    if (removeCourtBtn) {
-      const courtId = removeCourtBtn.dataset.removeCourt;
-      const courtName = state.courts.find(c => c.id === courtId)?.name || courtId;
-      if (!confirm(`Remove ${courtName}? This cannot be undone.`)) return;
-      try {
-        await removeCourt(courtId);
-        showToast(`${courtName} removed`);
-      } catch (error) {
-        console.error("Remove court failed", error);
-        showToast(error.message || "Failed to remove court", "error");
       }
       return;
     }
