@@ -724,8 +724,11 @@ const COURT_SKILL_RESTRICTION = {
 };
 
 // Returns allowed skill keys for a given court
-function getAllowedSkillsForCourt(courtId) {
-  const restriction = COURT_SKILL_RESTRICTION[courtId];
+function getAllowedSkillsForCourt(court) {
+  if (court.allowedSkill !== undefined) {
+    return (court.allowedSkill === "any" || court.allowedSkill === "Any") ? null : court.allowedSkill;
+  }
+  const restriction = COURT_SKILL_RESTRICTION[court.id];
   if (restriction === null || restriction === undefined) return null; // null means any
   return restriction; // single key string
 }
@@ -744,7 +747,7 @@ async function maybeAutoAssignMatches() {
     const localQueueDeductions = {};
     
     for (const court of availableCourts) {
-      const allowedSkill = getAllowedSkillsForCourt(court.id); // null = any, string = specific key
+      const allowedSkill = getAllowedSkillsForCourt(court); // null = any, string = specific key
 
       const activeTally = {};
       state.courts.forEach(c => {
