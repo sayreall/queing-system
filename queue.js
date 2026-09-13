@@ -419,11 +419,23 @@ export function listenToQueues(callback) {
 }
 
 export function listenToPlayers(callback) {
-  return onSnapshot(query(getTenantCollection("players"), orderBy("createdAt", "desc")), (snapshot) => {
+  return onSnapshot(getTenantCollection("players"), (snapshot) => {
     const players = snapshot.docs.map((docSnap) => ({
       id: docSnap.id,
       ...docSnap.data(),
     }));
+    // An orderBy query excludes documents that do not contain its field. Sort
+    // locally so legacy/imported players without createdAt remain visible.
+    players.sort((a, b) => {
+      const createdAtMs = (player) => {
+        const value = player.createdAt;
+        if (typeof value?.toMillis === "function") return value.toMillis();
+        if (typeof value?.seconds === "number") return value.seconds * 1000;
+        const parsed = new Date(value || 0).getTime();
+        return Number.isNaN(parsed) ? 0 : parsed;
+      };
+      return createdAtMs(b) - createdAtMs(a);
+    });
     callback(players);
   }, (error) => {
     console.error("Players listener error:", error);

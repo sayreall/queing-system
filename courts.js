@@ -40,6 +40,47 @@ export async function ensureCourtsExist() {
     })
   );
 }
+export async function addCourt() {
+  // Find the next court number by reading existing courts
+  const snapshot = await getDocs(getTenantCollection("courts"));
+  const existingIds = snapshot.docs.map(d => d.id);
+  
+  let nextNum = 1;
+  while (existingIds.includes(`court-${nextNum}`)) {
+    nextNum++;
+  }
+  
+  const courtId = `court-${nextNum}`;
+  const courtName = `Court ${nextNum}`;
+  
+  await setDoc(getTenantDoc("courts", courtId), {
+    name: courtName,
+    status: "Available",
+    matchId: null,
+    players: [],
+    skill: null,
+    allowedSkill: "any",
+    startedAt: null,
+    updatedAt: serverTimestamp(),
+  });
+  
+  return { id: courtId, name: courtName };
+}
+
+export async function removeCourt(courtId) {
+  const courtRef = getTenantDoc("courts", courtId);
+  const snap = await getDoc(courtRef);
+  if (!snap.exists()) throw new Error("Court not found");
+  
+  const court = snap.data();
+  if (court.status === "Active") {
+    throw new Error("Cannot remove a court with an active match. Finish the match first.");
+  }
+  
+  const { deleteDoc } = await import("./firebase.js");
+  await deleteDoc(courtRef);
+}
+
 
 export function listenToCourts(callback) {
   return onSnapshot(query(getTenantCollection("courts"), orderBy("name")), (snapshot) => {

@@ -105,7 +105,7 @@ function showConfirmModal(message, title = "Please Confirm") {
 
     titleEl.textContent = title;
     msgEl.textContent = message;
-    document.getElementById("add-to-match-modal").classList.remove("hidden");
+    modal.classList.remove("hidden");
 
     const cleanup = () => {
       modal.classList.add("hidden");
@@ -944,7 +944,7 @@ function openAddPlayerModal(queueKey, matchIndex, slotIndex) {
   
   populateList();
   search.oninput = (e) => populateList(e.target.value);
-  document.getElementById("add-to-match-modal").classList.remove("hidden");
+  modal.classList.remove("hidden");
 }
 
 async function confirmAddPlayer(playerId) {
@@ -997,7 +997,7 @@ function openWinnerModal(courtId) {
   const modal = document.getElementById("winner-modal");
   document.getElementById("winner-team-a-names").textContent = teamANames.join(" & ") || "Team A";
   document.getElementById("winner-team-b-names").textContent = teamBNames.join(" & ") || "Team B";
-  document.getElementById("add-to-match-modal").classList.remove("hidden");
+  modal.classList.remove("hidden");
 }
 
 async function confirmFinishMatch(winnerTeam) {
@@ -1045,7 +1045,7 @@ function bindEvents() {
 
   if (openAddPlayerBtn && addPlayerModal) {
     openAddPlayerBtn.addEventListener("click", () => {
-      addPlayerdocument.getElementById("add-to-match-modal").classList.remove("hidden");
+      addPlayerModal.classList.remove("hidden");
       elements.nameInput?.focus();
     });
   }
@@ -1072,7 +1072,7 @@ function bindEvents() {
 
   if (viewMatchLogBtn && matchLogModal) {
     viewMatchLogBtn.addEventListener("click", () => {
-      matchLogdocument.getElementById("add-to-match-modal").classList.remove("hidden");
+      matchLogModal.classList.remove("hidden");
     });
   }
 
@@ -1360,7 +1360,7 @@ function bindEvents() {
     });
     
     checkRepeatMatchup();
-    customdocument.getElementById("add-to-match-modal").classList.remove("hidden");
+    customModal.classList.remove("hidden");
   });
 
   const checkRepeatMatchup = () => {
@@ -1517,7 +1517,7 @@ function bindEvents() {
         correctLevel : QRCode.CorrectLevel.H
       });
       
-      tvSharedocument.getElementById("add-to-match-modal").classList.remove("hidden");
+      tvShareModal.classList.remove("hidden");
     } catch (err) {
       console.error(err);
       showToast("Error generating share link.", "error");
@@ -1615,7 +1615,7 @@ async function bootstrap() {
       }
     });
 
-    const filterEl = elements.playerFilter;
+    const filterEl = elements.filterSelect;
     if (filterEl) {
       const currentVal = filterEl.value;
       const staticOptions = `
