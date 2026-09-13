@@ -107,19 +107,17 @@ export async function assignMatchToCourt(courtId, skillKey) {
 
     // ── Build a clean, validated queue ──────────────────────────────────────
     const orderRaw = queueSnap.exists() ? queueSnap.data().order || [] : [];
-    const uniqueOrder = Array.from(new Set(orderRaw));
-
-    const playerRefs = uniqueOrder.map(id => getTenantDoc("players", id));
+    
+    // Fetch unique player docs to avoid redundant reads
+    const uniqueIds = Array.from(new Set(orderRaw));
+    const playerRefs = uniqueIds.map(id => getTenantDoc("players", id));
     const playerSnaps = await Promise.all(playerRefs.map(ref => tx.get(ref)));
 
-    const cleanOrder = [];   // valid player IDs in queue order
     const playerDataMap = new Map(); // id → player data
-
     for (const snap of playerSnaps) {
       if (!snap.exists()) continue;
       const data = snap.data();
       if (data.status !== "Waiting" && data.status !== "Standby" && data.status !== "Playing") continue;
-      cleanOrder.push(snap.id);
       playerDataMap.set(snap.id, {
         id: snap.id,
         status: data.status,
@@ -128,6 +126,13 @@ export async function assignMatchToCourt(courtId, skillKey) {
         gp: (data.wins || 0) + (data.losses || 0),
         playedWith: data.playedWith || {},
       });
+    }
+
+    const cleanOrder = [];   // valid player IDs in queue order (can contain duplicates for filling empty slots)
+    for (const id of orderRaw) {
+      if (playerDataMap.has(id)) {
+        cleanOrder.push(id);
+      }
     }
 
     // Self-heal the queue document if it drifted.

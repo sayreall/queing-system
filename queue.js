@@ -501,6 +501,23 @@ export async function generateNextRound(playersList, mode = "social_mix") {
     }
 
     const newOrder = players.map(p => p.id);
+    
+    // Fill empty slots if not a multiple of 4
+    if (newOrder.length > 0 && newOrder.length % 4 !== 0) {
+      const needed = 4 - (newOrder.length % 4);
+      const uniqueIds = Array.from(new Set(newOrder));
+      const frontPool = uniqueIds.slice(0, Math.max(needed, Math.floor(uniqueIds.length / 2)));
+      
+      for (let i = 0; i < needed; i++) {
+        // Randomly pick from the front pool
+        const randIdx = Math.floor(Math.random() * frontPool.length);
+        newOrder.push(frontPool[randIdx]);
+        // To avoid picking the exact same player multiple times if needed > 1
+        frontPool.splice(randIdx, 1);
+        if (frontPool.length === 0) break; // fallback
+      }
+    }
+
     const queueRef = getQueueDocRef(skill);
     batch.set(queueRef, { order: newOrder, skill: skillLabelFromKey(skill), updatedAt: now }, { merge: true });
     
