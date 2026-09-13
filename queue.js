@@ -500,30 +500,34 @@ export async function generateNextRound(playersList, mode = "social_mix") {
       players.splice(0, players.length, ...mixedOrder);
     }
 
-    // CRITICAL: Ensure Waiting/Standby players ALWAYS come before Playing players
-    // This prevents waiting players from being stuck behind players who are still on court,
-    // while preserving the random shuffle order within each group.
+    // CRITICAL: Ensure Waiting/Standby players ALWAYS come before Playing players.
+    // To prevent "handcuffing" ready players to playing players, we pad them INDEPENDENTLY
+    // so that ready players form perfect 4/4 matches, and playing players form their own 4/4 matches.
     const readyPlayers = players.filter(p => p.status !== "Playing");
     const playingPlayers = players.filter(p => p.status === "Playing");
-    players.splice(0, players.length, ...readyPlayers, ...playingPlayers);
 
-    const newOrder = players.map(p => p.id);
-    
-    // Fill empty slots if not a multiple of 4
-    if (newOrder.length > 0 && newOrder.length % 4 !== 0) {
-      const needed = 4 - (newOrder.length % 4);
-      const uniqueIds = Array.from(new Set(newOrder));
-      const frontPool = uniqueIds.slice(0, Math.max(needed, Math.floor(uniqueIds.length / 2)));
-      
-      for (let i = 0; i < needed; i++) {
-        // Randomly pick from the front pool
-        const randIdx = Math.floor(Math.random() * frontPool.length);
-        newOrder.push(frontPool[randIdx]);
-        // To avoid picking the exact same player multiple times if needed > 1
-        frontPool.splice(randIdx, 1);
-        if (frontPool.length === 0) break; // fallback
+    function padToMultipleOf4(group) {
+      if (group.length > 0 && group.length % 4 !== 0) {
+        const needed = 4 - (group.length % 4);
+        const uniqueIds = Array.from(new Set(group.map(p => p.id)));
+        if (uniqueIds.length >= 4) {
+          const frontPool = group.slice(0, Math.max(needed, Math.floor(group.length / 2)));
+          for (let i = 0; i < needed; i++) {
+            const randIdx = Math.floor(Math.random() * frontPool.length);
+            group.push({ ...frontPool[randIdx] }); // clone object
+            frontPool.splice(randIdx, 1);
+            if (frontPool.length === 0) break;
+          }
+        }
       }
+      return group;
     }
+
+    const paddedReady = padToMultipleOf4(readyPlayers);
+    const paddedPlaying = padToMultipleOf4(playingPlayers);
+    
+    players.splice(0, players.length, ...paddedReady, ...paddedPlaying);
+    const newOrder = players.map(p => p.id);
 
     const queueRef = getQueueDocRef(skill);
     batch.set(queueRef, { order: newOrder, skill: skillLabelFromKey(skill), updatedAt: now }, { merge: true });
