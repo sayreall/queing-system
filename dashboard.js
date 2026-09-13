@@ -917,7 +917,7 @@ function openAddPlayerModal(queueKey, matchIndex, slotIndex) {
   search.value = "";
   
   const populateList = (filterText = "") => {
-    const excludedStatuses = new Set(["Archived", "Done Playing", "Absent"]);
+    const excludedStatuses = new Set(["Archived", "Done Playing"]);
     const allAvailable = Array.from(state.players.values()).filter(p => !excludedStatuses.has(p.status));
     allAvailable.sort((a, b) => a.name.localeCompare(b.name));
     
