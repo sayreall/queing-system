@@ -500,6 +500,13 @@ export async function generateNextRound(playersList, mode = "social_mix") {
       players.splice(0, players.length, ...mixedOrder);
     }
 
+    // CRITICAL: Ensure Waiting/Standby players ALWAYS come before Playing players
+    // This prevents waiting players from being stuck behind players who are still on court,
+    // while preserving the random shuffle order within each group.
+    const readyPlayers = players.filter(p => p.status !== "Playing");
+    const playingPlayers = players.filter(p => p.status === "Playing");
+    players.splice(0, players.length, ...readyPlayers, ...playingPlayers);
+
     const newOrder = players.map(p => p.id);
     
     // Fill empty slots if not a multiple of 4
