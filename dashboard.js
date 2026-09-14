@@ -2199,20 +2199,22 @@ onAuthStateChanged(auth, async (user) => {
   }
   
   try {
-    const userDocRef = getTenantDoc('users', user.uid);
+    // Account profiles live at users/{userId}; tenant collections (courts,
+    // queues, etc.) live below that document.  Do not look for the profile in
+    // the users subcollection, or its club setting will never be found.
+    const userDocRef = doc(db, 'users', user.uid);
     const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists()) {
-      const data = userDoc.data();
-      if (data.role === 'admin') {
-        window.location.href = 'admin.html';
-        return;
-      }
-      
-      // Save club preference for fast-loading UI
-      const userClub = data.club || 'deuce';
-      localStorage.setItem('dq_club_preference', userClub);
-      applyClubBranding(userClub);
+    const data = userDoc.exists() ? userDoc.data() : {};
+    if (data.role === 'admin') {
+      window.location.href = 'admin.html';
+      return;
     }
+
+    // Always reset an unknown/missing club to Deuce so a prior Longos login
+    // cannot leave its branding on this account's dashboard.
+    const userClub = data.club === 'longos' ? 'longos' : 'deuce';
+    localStorage.setItem('dq_club_preference', userClub);
+    applyClubBranding(userClub);
   } catch (err) {
     console.warn("Could not fetch user role", err);
   }
@@ -2247,6 +2249,9 @@ function applyClubBranding(club) {
     document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
       link.href = 'logo-lpc.jpg';
     });
+    document.querySelectorAll('link[rel="manifest"]').forEach(link => {
+      link.href = 'manifest-longos.json';
+    });
   } else {
     document.title = 'Deuce Club Queuing System';
     document.querySelectorAll('.splash-logo, .header-logo').forEach(img => img.src = 'deuce-game-logo.png');
@@ -2255,8 +2260,10 @@ function applyClubBranding(club) {
     document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
       link.href = 'deuce-game-logo.png';
     });
+    document.querySelectorAll('link[rel="manifest"]').forEach(link => {
+      link.href = 'manifest.json';
+    });
   }
 }
 
 // Club Selector logic
-

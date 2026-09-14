@@ -27,6 +27,7 @@ const attemptCounter  = document.getElementById('attempt-counter');
 
 let isLoginMode = true;
 let lockoutTimer = null;
+let registrationInProgress = false;
 
 // ─── Rate-limit helpers ────────────────────────────────────────────────────
 function getSecurityState() {
@@ -154,7 +155,11 @@ async function redirectBasedOnRole(user) {
     const userDocRef = doc(db, 'users', user.uid);
     const userDoc = await getDoc(userDocRef);
     if (userDoc.exists()) {
-      const role = userDoc.data().role;
+      const profile = userDoc.data();
+      // Apply the saved account club before navigation so an older browser
+      // preference from the other club cannot win during dashboard loading.
+      localStorage.setItem('dq_club_preference', profile.club === 'longos' ? 'longos' : 'deuce');
+      const role = profile.role;
       if (role === 'admin') {
         window.location.href = 'admin.html?refresh=' + new Date().getTime();
       } else {
@@ -272,6 +277,7 @@ registerForm.addEventListener('submit', async (e) => {
   const btn = registerForm.querySelector('button[type=submit]');
   btn.disabled = true;
   btn.textContent = 'Creating account…';
+  registrationInProgress = true;
 
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -286,8 +292,11 @@ registerForm.addEventListener('submit', async (e) => {
       createdAt: serverTimestamp()
     });
 
+    // Keep the selected club available during the first redirect. Without this,
+    // an earlier Longos preference can briefly (or permanently, if offline) win.
+    localStorage.setItem('dq_club_preference', club);
     resetAttempts();
-    // onAuthStateChanged will handle redirection
+    await redirectBasedOnRole(user);
   } catch (error) {
     recordFailedAttempt();
     resetCaptcha();
@@ -299,6 +308,7 @@ registerForm.addEventListener('submit', async (e) => {
       showError(friendlyError(error.code));
     }
   } finally {
+    registrationInProgress = false;
     btn.disabled = false;
     btn.textContent = 'Register Account';
   }
@@ -329,7 +339,7 @@ onAuthStateChanged(auth, (user) => {
     splash.addEventListener('transitionend', () => splash.remove(), { once: true });
   }
 
-  if (user) {
+  if (user && !registrationInProgress) {
     redirectBasedOnRole(user);
   }
 
