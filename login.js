@@ -240,7 +240,7 @@ registerForm.addEventListener('submit', async (e) => {
   if (isLockedOut()) { showLockout(); return; }
 
   // 2. Verify reCAPTCHA
-  const captcha = getCaptchaResponse(loginWidgetId);
+  const captcha = getCaptchaResponse(registerWidgetId);
   if (!captcha) {
     showError('Please complete the "I\'m not a robot" verification.');
     return;
