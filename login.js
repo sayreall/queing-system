@@ -148,12 +148,12 @@ async function redirectBasedOnRole(user) {
     if (userDoc.exists()) {
       const role = userDoc.data().role;
       if (role === 'admin') {
-        window.location.href = 'admin.html';
+        window.location.href = 'admin.html?refresh=' + new Date().getTime();
       } else {
-        window.location.href = 'index.html';
+        window.location.href = 'index.html?refresh=' + new Date().getTime();
       }
     } else {
-      window.location.href = 'index.html';
+      window.location.href = 'index.html?refresh=' + new Date().getTime();
     }
   } catch (error) {
     showError("Error fetching user role: " + error.message);
