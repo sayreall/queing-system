@@ -102,22 +102,30 @@ function updateAttemptUI() {
   }
 }
 
-// ─── reCAPTCHA helpers ─────────────────────────────────────────────────────
+// ─── reCAPTCHA helpers (Explicit Rendering) ──────────────────────────────
+const SITE_KEY = "6LdJjrotAAAAAJqGDiYH0B1AdQSMpTK6abxALn1S";
+let loginWidgetId = null;
+let registerWidgetId = null;
+let isGrecaptchaReady = false;
+
+window.renderCaptchas = function() {
+  isGrecaptchaReady = true;
+  if (isLoginMode && loginWidgetId === null) {
+    loginWidgetId = window.grecaptcha.render("recaptcha-login", { sitekey: SITE_KEY, theme: "dark" });
+  } else if (!isLoginMode && registerWidgetId === null) {
+    registerWidgetId = window.grecaptcha.render("recaptcha-register", { sitekey: SITE_KEY, theme: "dark" });
+  }
+};
+
 function getCaptchaResponse(widgetId) {
-  try {
-    // If widgetId is defined use it, else fall back to default (first widget)
-    return widgetId !== undefined
-      ? window.grecaptcha.getResponse(widgetId)
-      : window.grecaptcha.getResponse();
-  } catch { return ''; }
+  if (widgetId === null) return "";
+  try { return window.grecaptcha.getResponse(widgetId); } catch { return ""; }
 }
 
 function resetCaptcha() {
   try {
-    if (window.grecaptcha) {
-      try { window.grecaptcha.reset(0); } catch(e){}
-      try { window.grecaptcha.reset(1); } catch(e){}
-    }
+    if (loginWidgetId !== null) window.grecaptcha.reset(loginWidgetId);
+    if (registerWidgetId !== null) window.grecaptcha.reset(registerWidgetId);
   } catch { /* ignore */ }
 }
 
@@ -158,6 +166,14 @@ toggleBtn.addEventListener('click', () => {
   clearError();
   resetCaptcha();
 
+  if (isGrecaptchaReady) {
+    if (isLoginMode && loginWidgetId === null) {
+      loginWidgetId = window.grecaptcha.render("recaptcha-login", { sitekey: SITE_KEY, theme: "dark" });
+    } else if (!isLoginMode && registerWidgetId === null) {
+      registerWidgetId = window.grecaptcha.render("recaptcha-register", { sitekey: SITE_KEY, theme: "dark" });
+    }
+  }
+
   if (isLoginMode) {
     loginForm.classList.remove('hidden');
     registerForm.classList.add('hidden');
@@ -181,7 +197,7 @@ loginForm.addEventListener('submit', async (e) => {
   if (isLockedOut()) { showLockout(); return; }
 
   // 2. Verify reCAPTCHA
-  const captcha = loginForm.querySelector('[name="g-recaptcha-response"]')?.value;
+  const captcha = getCaptchaResponse(loginWidgetId);
   if (!captcha) {
     showError('Please complete the "I\'m not a robot" verification.');
     return;
@@ -224,7 +240,7 @@ registerForm.addEventListener('submit', async (e) => {
   if (isLockedOut()) { showLockout(); return; }
 
   // 2. Verify reCAPTCHA
-  const captcha = loginForm.querySelector('[name="g-recaptcha-response"]')?.value;
+  const captcha = getCaptchaResponse(loginWidgetId);
   if (!captcha) {
     showError('Please complete the "I\'m not a robot" verification.');
     return;

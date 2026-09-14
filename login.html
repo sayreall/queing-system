@@ -53,7 +53,7 @@
     })();
   </script>
   <!-- Google reCAPTCHA v2 -->
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <script src="https://www.google.com/recaptcha/api.js?onload=renderCaptchas&render=explicit" async defer></script>
   <style>
     /* Dark-theme reCAPTCHA wrapper */
     .recaptcha-wrap {
@@ -63,7 +63,7 @@
     }
     /* Scale down reCAPTCHA on very small screens */
     @media (max-width: 360px) {
-      .recaptcha-wrap .g-recaptcha {
+      .recaptcha-wrap > div {
         transform: scale(0.85);
         transform-origin: center;
       }
@@ -127,11 +127,7 @@
 
       <!-- reCAPTCHA v2 – Login -->
       <div class="recaptcha-wrap">
-        <div class="g-recaptcha"
-          data-sitekey="6LdJjrotAAAAAJqGDiYH0B1AdQSMpTK6abxALn1S"
-          data-theme="dark"
-          id="recaptcha-login">
-        </div>
+        <div id="recaptcha-login"></div>
       </div>
 
       <div id="attempt-counter" class="attempt-counter"></div>
@@ -164,11 +160,7 @@
 
       <!-- reCAPTCHA v2 – Register -->
       <div class="recaptcha-wrap">
-        <div class="g-recaptcha"
-          data-sitekey="6LdJjrotAAAAAJqGDiYH0B1AdQSMpTK6abxALn1S"
-          data-theme="dark"
-          id="recaptcha-register">
-        </div>
+        <div id="recaptcha-register"></div>
       </div>
 
       <button type="submit" class="btn-primary w-full py-3 mt-2" style="background: linear-gradient(135deg, rgba(31, 207, 177, 0.9), rgba(13, 148, 136, 0.9));">Register Account</button>
