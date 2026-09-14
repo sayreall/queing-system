@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -73,6 +73,13 @@
       text-align: center;
       margin-top: 6px;
       display: none;
+    }
+    
+    /* Hide splash screen on mobile for login page */
+    @media (max-width: 768px) {
+      #splash-screen {
+        display: none !important;
+      }
     }
   </style>
 </head>
