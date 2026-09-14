@@ -80,6 +80,10 @@
         </div>
       </div>
       <div class="header-actions flex items-center gap-2">
+        <select id="club-selector" class="input-field text-xs py-1 px-2 h-auto hidden md:block">
+          <option value="deuce">Deuce Club</option>
+          <option value="longos">Longos Pickleball</option>
+        </select>
         <button id="view-match-log-btn" class="btn-secondary">Match Log</button>
         <a class="btn-primary" href="import.html">Import Players</a>
         <a class="btn-secondary" href="tv.html">View TV Display</a>
@@ -677,7 +681,7 @@
   <div id="toast-container"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-  <script type="module" src="dashboard.js?v=10"></script>
+  <script type="module" src="dashboard.js?v=11"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

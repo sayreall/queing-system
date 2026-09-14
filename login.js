@@ -111,11 +111,18 @@ let isGrecaptchaReady = false;
 window.renderCaptchas = function() {
   isGrecaptchaReady = true;
   if (isLoginMode && loginWidgetId === null) {
-    loginWidgetId = window.grecaptcha.render("recaptcha-login", { sitekey: SITE_KEY, theme: "dark" });
+    try { loginWidgetId = window.grecaptcha.render("recaptcha-login", { sitekey: SITE_KEY, theme: "dark" }); } catch(e){}
   } else if (!isLoginMode && registerWidgetId === null) {
-    registerWidgetId = window.grecaptcha.render("recaptcha-register", { sitekey: SITE_KEY, theme: "dark" });
+    try { registerWidgetId = window.grecaptcha.render("recaptcha-register", { sitekey: SITE_KEY, theme: "dark" }); } catch(e){}
   }
 };
+
+// Handle race condition if Google loaded before this module
+setTimeout(() => {
+  if (window.grecaptcha && window.grecaptcha.render && !isGrecaptchaReady) {
+    window.renderCaptchas();
+  }
+}, 500);
 
 function getCaptchaResponse(widgetId) {
   if (widgetId === null) return "";
