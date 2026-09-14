@@ -10,19 +10,149 @@ import {
   serverTimestamp
 } from "./firebase.js";
 
-const loginForm = document.getElementById('login-form');
-const registerForm = document.getElementById('register-form');
-const toggleBtn = document.getElementById('toggle-btn');
-const toggleText = document.getElementById('toggle-text');
-const errorDiv = document.getElementById('auth-error');
+// ─── Security Config ───────────────────────────────────────────────────────
+const MAX_ATTEMPTS    = 5;          // Failed attempts before lockout
+const LOCKOUT_MS      = 10 * 60 * 1000; // 10-minute lockout
+const STORAGE_KEY     = 'dq_login_security';
+
+// ─── DOM refs ──────────────────────────────────────────────────────────────
+const loginForm       = document.getElementById('login-form');
+const registerForm    = document.getElementById('register-form');
+const toggleBtn       = document.getElementById('toggle-btn');
+const toggleText      = document.getElementById('toggle-text');
+const errorDiv        = document.getElementById('auth-error');
+const lockoutBanner   = document.getElementById('lockout-banner');
+const attemptCounter  = document.getElementById('attempt-counter');
 
 let isLoginMode = true;
+let lockoutTimer = null;
 
-// Toggle between Login and Register modes
+// ─── Rate-limit helpers ────────────────────────────────────────────────────
+function getSecurityState() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { attempts: 0, lockedUntil: 0 };
+  } catch { return { attempts: 0, lockedUntil: 0 }; }
+}
+
+function saveSecurityState(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function isLockedOut() {
+  const { lockedUntil } = getSecurityState();
+  return Date.now() < lockedUntil;
+}
+
+function recordFailedAttempt() {
+  const state = getSecurityState();
+  state.attempts += 1;
+  if (state.attempts >= MAX_ATTEMPTS) {
+    state.lockedUntil = Date.now() + LOCKOUT_MS;
+    state.attempts = 0; // reset counter so next window starts fresh
+  }
+  saveSecurityState(state);
+}
+
+function resetAttempts() {
+  saveSecurityState({ attempts: 0, lockedUntil: 0 });
+}
+
+function getRemainingAttempts() {
+  const { attempts } = getSecurityState();
+  return MAX_ATTEMPTS - attempts;
+}
+
+// ─── Lockout UI ────────────────────────────────────────────────────────────
+function showLockout() {
+  const { lockedUntil } = getSecurityState();
+  lockoutBanner.style.display = 'block';
+  attemptCounter.style.display = 'none';
+
+  // Disable all submit buttons
+  document.querySelectorAll('#login-form button[type=submit], #register-form button[type=submit]')
+    .forEach(b => { b.disabled = true; b.style.opacity = '0.5'; });
+
+  // Countdown ticker
+  clearInterval(lockoutTimer);
+  lockoutTimer = setInterval(() => {
+    const remaining = Math.max(0, lockedUntil - Date.now());
+    if (remaining <= 0) {
+      clearInterval(lockoutTimer);
+      lockoutBanner.style.display = 'none';
+      resetAttempts();
+      document.querySelectorAll('#login-form button[type=submit], #register-form button[type=submit]')
+        .forEach(b => { b.disabled = false; b.style.opacity = ''; });
+      return;
+    }
+    const mins = Math.floor(remaining / 60000);
+    const secs = Math.floor((remaining % 60000) / 1000);
+    lockoutBanner.innerHTML =
+      `🔒 Too many failed attempts. Please wait <strong>${mins}m ${secs}s</strong> before trying again.`;
+  }, 1000);
+}
+
+function updateAttemptUI() {
+  const remaining = getRemainingAttempts();
+  if (remaining < MAX_ATTEMPTS) {
+    attemptCounter.style.display = 'block';
+    attemptCounter.textContent =
+      `⚠️ ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before 10-minute lockout`;
+  } else {
+    attemptCounter.style.display = 'none';
+  }
+}
+
+// ─── reCAPTCHA helpers ─────────────────────────────────────────────────────
+function getCaptchaResponse(widgetId) {
+  try {
+    // If widgetId is defined use it, else fall back to default (first widget)
+    return widgetId !== undefined
+      ? window.grecaptcha.getResponse(widgetId)
+      : window.grecaptcha.getResponse();
+  } catch { return ''; }
+}
+
+function resetCaptcha() {
+  try { window.grecaptcha.reset(); } catch { /* grecaptcha may not be loaded yet */ }
+}
+
+// ─── Error display ─────────────────────────────────────────────────────────
+function showError(message) {
+  errorDiv.textContent = message;
+  errorDiv.classList.remove('hidden');
+}
+
+function clearError() {
+  errorDiv.classList.add('hidden');
+  errorDiv.textContent = '';
+}
+
+// ─── Role-based redirect ───────────────────────────────────────────────────
+async function redirectBasedOnRole(user) {
+  try {
+    const userDocRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+      const role = userDoc.data().role;
+      if (role === 'admin') {
+        window.location.href = 'admin.html';
+      } else {
+        window.location.href = 'index.html';
+      }
+    } else {
+      window.location.href = 'index.html';
+    }
+  } catch (error) {
+    showError("Error fetching user role: " + error.message);
+  }
+}
+
+// ─── Toggle login ↔ register ───────────────────────────────────────────────
 toggleBtn.addEventListener('click', () => {
   isLoginMode = !isLoginMode;
-  errorDiv.classList.add('hidden');
-  
+  clearError();
+  resetCaptcha();
+
   if (isLoginMode) {
     loginForm.classList.remove('hidden');
     registerForm.classList.add('hidden');
@@ -32,64 +162,87 @@ toggleBtn.addEventListener('click', () => {
     registerForm.classList.remove('hidden');
     toggleText.innerHTML = `Already have an account? <button type="button" id="toggle-btn" class="text-beginner hover:underline focus:outline-none">Sign in here</button>`;
   }
-  
+
   // Re-attach listener since we replaced innerHTML
-  document.getElementById('toggle-btn').addEventListener('click', () => {
-    toggleBtn.click();
-  });
+  document.getElementById('toggle-btn').addEventListener('click', () => toggleBtn.click());
 });
 
-function showError(message) {
-  errorDiv.textContent = message;
-  errorDiv.classList.remove('hidden');
-}
-
-async function redirectBasedOnRole(user) {
-  try {
-    const userDocRef = doc(db, 'users', user.uid);
-    const userDoc = await getDoc(userDocRef);
-    
-    if (userDoc.exists()) {
-      const role = userDoc.data().role;
-      if (role === 'admin') {
-        window.location.href = 'admin.html';
-      } else {
-        window.location.href = 'index.html'; // queuing_master or default
-      }
-    } else {
-      // If user doc doesn't exist for some reason, default to index.html
-      window.location.href = 'index.html';
-    }
-  } catch (error) {
-    showError("Error fetching user role: " + error.message);
-  }
-}
-
-// Handle Login
+// ─── Login handler ─────────────────────────────────────────────────────────
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const email = document.getElementById('login-email').value;
+  clearError();
+
+  // 1. Check lockout
+  if (isLockedOut()) { showLockout(); return; }
+
+  // 2. Verify reCAPTCHA
+  const captcha = getCaptchaResponse();
+  if (!captcha) {
+    showError('Please complete the "I\'m not a robot" verification.');
+    return;
+  }
+
+  const email    = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
-  
+
+  const btn = loginForm.querySelector('button[type=submit]');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    // onAuthStateChanged will handle redirection
+    await signInWithEmailAndPassword(auth, email, password);
+    resetAttempts();
+    // onAuthStateChanged handles redirect
   } catch (error) {
-    showError(error.message);
+    recordFailedAttempt();
+    resetCaptcha();
+
+    if (isLockedOut()) {
+      showLockout();
+    } else {
+      updateAttemptUI();
+      const msg = friendlyError(error.code);
+      showError(msg);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
   }
 });
 
-// Handle Register
+// ─── Register handler ──────────────────────────────────────────────────────
 registerForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const email = document.getElementById('register-email').value;
+  clearError();
+
+  // 1. Check lockout
+  if (isLockedOut()) { showLockout(); return; }
+
+  // 2. Verify reCAPTCHA
+  const captcha = getCaptchaResponse();
+  if (!captcha) {
+    showError('Please complete the "I\'m not a robot" verification.');
+    return;
+  }
+
+  const email    = document.getElementById('register-email').value.trim();
   const password = document.getElementById('register-password').value;
-  const name = document.getElementById('register-name').value;
-  
+  const name     = document.getElementById('register-name').value.trim();
+
+  // 3. Extra password strength check
+  if (password.length < 8) {
+    showError('Password must be at least 8 characters.');
+    return;
+  }
+
+  const btn = registerForm.querySelector('button[type=submit]');
+  btn.disabled = true;
+  btn.textContent = 'Creating account…';
+
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    
+
     // Save user to Firestore with default role
     await setDoc(doc(db, 'users', user.uid), {
       email: user.email,
@@ -97,24 +250,58 @@ registerForm.addEventListener('submit', async (e) => {
       role: 'queuing_master', // Default role. Admin can change this.
       createdAt: serverTimestamp()
     });
-    
+
+    resetAttempts();
     // onAuthStateChanged will handle redirection
   } catch (error) {
-    showError(error.message);
+    recordFailedAttempt();
+    resetCaptcha();
+
+    if (isLockedOut()) {
+      showLockout();
+    } else {
+      updateAttemptUI();
+      showError(friendlyError(error.code));
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Register Account';
   }
 });
 
-// Check auth state
+// ─── Human-readable Firebase error messages ────────────────────────────────
+function friendlyError(code) {
+  const map = {
+    'auth/invalid-email':            'Please enter a valid email address.',
+    'auth/user-disabled':            'This account has been disabled.',
+    'auth/user-not-found':           'No account found with this email.',
+    'auth/wrong-password':           'Incorrect password. Please try again.',
+    'auth/invalid-credential':       'Invalid email or password.',
+    'auth/email-already-in-use':     'An account with this email already exists.',
+    'auth/weak-password':            'Password is too weak. Use at least 8 characters.',
+    'auth/network-request-failed':   'Network error. Check your connection.',
+    'auth/too-many-requests':        'Too many requests. Please wait a few minutes.',
+  };
+  return map[code] || 'An error occurred. Please try again.';
+}
+
+// ─── Auth state change ─────────────────────────────────────────────────────
 onAuthStateChanged(auth, (user) => {
   // Hide splash screen once auth state is resolved
   const splash = document.getElementById('splash-screen');
   if (splash) {
     splash.classList.add('splash-hidden');
-    // Remove from DOM after transition ends
     splash.addEventListener('transitionend', () => splash.remove(), { once: true });
   }
 
   if (user) {
     redirectBasedOnRole(user);
+  }
+
+  // If already locked out on page load, show the banner
+  if (isLockedOut()) {
+    showLockout();
+  } else {
+    updateAttemptUI();
   }
 });
