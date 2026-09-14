@@ -1,4 +1,4 @@
-﻿import { 
+import { 
   auth, 
   db, 
   signInWithEmailAndPassword, 
@@ -24,6 +24,25 @@ const toggleText      = document.getElementById('toggle-text');
 const errorDiv        = document.getElementById('auth-error');
 const lockoutBanner   = document.getElementById('lockout-banner');
 const attemptCounter  = document.getElementById('attempt-counter');
+
+// ─── Password Toggle ───────────────────────────────────────────────────────
+document.querySelectorAll('.toggle-password').forEach(button => {
+  button.addEventListener('click', () => {
+    const targetId = button.getAttribute('data-target');
+    const input = document.getElementById(targetId);
+    if (!input) return;
+    
+    if (input.type === 'password') {
+      input.type = 'text';
+      button.querySelector('.eye-open').classList.add('hidden');
+      button.querySelector('.eye-closed').classList.remove('hidden');
+    } else {
+      input.type = 'password';
+      button.querySelector('.eye-open').classList.remove('hidden');
+      button.querySelector('.eye-closed').classList.add('hidden');
+    }
+  });
+});
 
 let isLoginMode = true;
 let lockoutTimer = null;
