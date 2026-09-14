@@ -1724,6 +1724,24 @@ function bindEvents() {
   rankingModal?.addEventListener("click", (e) => {
     if (e.target === rankingModal) rankingModal.classList.add("hidden");
   });
+
+  // Guide Modal Logic
+  const guideBtn = document.getElementById("guide-btn");
+  const guideModal = document.getElementById("guide-modal");
+  const closeGuideBtn = document.getElementById("close-guide-modal");
+
+  guideBtn?.addEventListener("click", () => {
+    guideModal.classList.remove("hidden");
+    if (window.innerWidth < 768 && toggleMobileMenu) toggleMobileMenu();
+  });
+
+  closeGuideBtn?.addEventListener("click", () => {
+    guideModal.classList.add("hidden");
+  });
+
+  guideModal?.addEventListener("click", (e) => {
+    if (e.target === guideModal) guideModal.classList.add("hidden");
+  });
 }
 
 async function bootstrap() {

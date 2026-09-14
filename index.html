@@ -115,6 +115,11 @@
       
       <div class="mt-auto"></div>
 
+      <button id="guide-btn" class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white" title="User Guide">
+        <svg class="w-6 h-6 flex-shrink-0 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+        <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold text-cyan-400 transition-opacity duration-300 pointer-events-none">User Guide</span>
+      </button>
+
       <button id="logout-btn" class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-red-500/10 transition-colors text-left text-red-400 hover:text-red-300" title="Logout">
         <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
         <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">Logout</span>
@@ -748,6 +753,55 @@
             <!-- Rendered via JS -->
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Guide Modal -->
+  <div id="guide-modal" class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="glass-card w-full max-w-3xl relative max-h-[90vh] flex flex-col">
+      <button id="close-guide-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
+      <h2 class="text-2xl font-display font-semibold mb-2 text-cyan-400">User Guide</h2>
+      <p class="text-sm text-slate-400 mb-4">Learn how to manage the queueing system effectively.</p>
+      
+      <div class="overflow-y-auto flex-1 custom-scrollbar text-slate-300 pr-2 space-y-6">
+        
+        <div>
+          <h3 class="text-lg font-semibold text-white mb-2 border-b border-slate-700 pb-1">1. Importing & Adding Players</h3>
+          <ul class="list-disc pl-5 space-y-1 text-sm">
+            <li><strong>Import from Reclub:</strong> Go to <span class="text-orange">Import Players</span> in the sidebar, paste the player list directly from the Reclub app, fix any genders/skills, and import in bulk.</li>
+            <li><strong>Manual Add:</strong> Click the <span class="text-emerald-400">Add Player</span> button in the Player Management section to add walk-in players.</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-white mb-2 border-b border-slate-700 pb-1">2. Understanding the Queues</h3>
+          <ul class="list-disc pl-5 space-y-1 text-sm">
+            <li>Players are organized into 3 skill levels: <strong>Beginner</strong>, <strong>Intermediate</strong>, and <strong>Advanced</strong>.</li>
+            <li>You can drag and drop players between the queues and even re-order them to prioritize someone who's been waiting.</li>
+            <li>The system will automatically try to match 4 players from the top of the queue for the next available court.</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-white mb-2 border-b border-slate-700 pb-1">3. Generating Matches & Courts</h3>
+          <ul class="list-disc pl-5 space-y-1 text-sm">
+            <li><strong>Auto-Assign Toggle:</strong> When turned ON, the system automatically pulls players to an empty court when a match finishes.</li>
+            <li><strong>Round Generator:</strong> Need to quickly dispatch all waiting players? The Round Generator will auto-balance and assign as many matches as possible at once!</li>
+            <li><strong>Custom Match:</strong> Allows you to pick 4 specific players manually to play on an empty court.</li>
+            <li><strong>Ending Matches:</strong> Click <span class="text-green-400">End Match</span> on an active court to mark a winning team. The winning team will get 1 Win and the losing team gets 1 Loss. The players will return to the bottom of their respective queues automatically.</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-white mb-2 border-b border-slate-700 pb-1">4. Player Management & Status</h3>
+          <ul class="list-disc pl-5 space-y-1 text-sm">
+            <li>In the Player Management tables, you can change a player's skill level or gender on the fly. The queues will instantly update.</li>
+            <li><strong>Status:</strong> Players can be marked as "Absent/Standby" via the actions menu. If a player leaves early, you can "Remove" them from today's queue entirely.</li>
+            <li>At the end of the day, click <span class="text-red-400">End Day (Archive All)</span>. This resets all matches and saves everyone's stats. The next day, you can just click "Revive" next to their name to put them back in the queue with their historical stats intact!</li>
+          </ul>
+        </div>
+
       </div>
     </div>
   </div>

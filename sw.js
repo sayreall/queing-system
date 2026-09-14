@@ -1,4 +1,4 @@
-const CACHE_NAME = "pickleball-queue-v14";
+const CACHE_NAME = "pickleball-queue-v15";
 const ASSETS = [
   "./",
   "./index.html",
