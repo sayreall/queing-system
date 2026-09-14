@@ -2209,10 +2209,9 @@ onAuthStateChanged(auth, async (user) => {
       }
       
       // Save club preference for fast-loading UI
-      if (data.club) {
-        localStorage.setItem('dq_club_preference', data.club);
-        applyClubBranding(data.club);
-      }
+      const userClub = data.club || 'deuce';
+      localStorage.setItem('dq_club_preference', userClub);
+      applyClubBranding(userClub);
     }
   } catch (err) {
     console.warn("Could not fetch user role", err);
