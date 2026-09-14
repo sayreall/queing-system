@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "pickleball-queue-v11";
+const CACHE_NAME = "pickleball-queue-v12";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,6 +7,7 @@ const ASSETS = [
   "./manifest.json",
   "./manifest-longos.json",
   "./deuce-game-logo.png",
+  "./logologinpage-transparent.png",
   "./logo-lpc.jpg"
 ];
 
@@ -43,7 +44,7 @@ self.addEventListener("fetch", (event) => {
       }
       return networkResponse;
     }).catch(() => {
-      // If network fails (offline), fall back to cache
+      // If network fails, fall back to cache
       return caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
           return cachedResponse;
@@ -56,9 +57,3 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
-
-
-
-
-
-

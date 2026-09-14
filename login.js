@@ -18,6 +18,7 @@ const STORAGE_KEY     = 'dq_login_security';
 // ─── DOM refs ──────────────────────────────────────────────────────────────
 const loginForm       = document.getElementById('login-form');
 const registerForm    = document.getElementById('register-form');
+const authTitle       = document.getElementById('auth-title');
 const toggleBtn       = document.getElementById('toggle-btn');
 const toggleText      = document.getElementById('toggle-text');
 const errorDiv        = document.getElementById('auth-error');
@@ -184,10 +185,14 @@ toggleBtn.addEventListener('click', () => {
   if (isLoginMode) {
     loginForm.classList.remove('hidden');
     registerForm.classList.add('hidden');
+    authTitle.textContent = 'PicklQ Login';
+    document.title = 'PicklQ Login';
     toggleText.innerHTML = `Don't have an account? <button type="button" id="toggle-btn" class="text-beginner hover:underline focus:outline-none">Register here</button>`;
   } else {
     loginForm.classList.add('hidden');
     registerForm.classList.remove('hidden');
+    authTitle.textContent = 'PicklQ Register';
+    document.title = 'PicklQ Register';
     toggleText.innerHTML = `Already have an account? <button type="button" id="toggle-btn" class="text-beginner hover:underline focus:outline-none">Sign in here</button>`;
   }
 

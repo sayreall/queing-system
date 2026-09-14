@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="shortcut icon" href="deuce-game-logo.png">
+  <link rel="shortcut icon" href="logologinpage-transparent.png">
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0a2e2e" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="deuce-game-logo.png">
-  <title>Login - Pickleball Queuing System</title>
+  <link rel="apple-touch-icon" href="logologinpage-transparent.png">
+  <title>PicklQ Login</title>
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap" />
   <script src="https://cdn.tailwindcss.com"></script>
@@ -38,21 +38,6 @@
     };
   </script>
   <link rel="stylesheet" href="styles.css" />
-  <script>
-    (function() {
-      const club = localStorage.getItem("dq_club_preference");
-      if (club === "longos") {
-        document.title = "Login - Longos Pickleball Club";
-        window.addEventListener("DOMContentLoaded", () => {
-          document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "logo-lpc.jpg");
-          document.querySelectorAll(".splash-title").forEach(el => el.textContent = "Longos Club");
-          document.querySelectorAll(".font-display.text-gold").forEach(el => el.textContent = "Longos Pickleball Club");
-          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "logo-lpc.jpg");
-          document.querySelectorAll("link[rel='manifest']").forEach(link => link.href = "manifest-longos.json");
-        });
-      }
-    })();
-  </script>
   <!-- Google reCAPTCHA v2 -->
   <script src="https://www.google.com/recaptcha/api.js?onload=renderCaptchas&render=explicit" async defer></script>
   <style>
@@ -95,9 +80,9 @@
 <body class="min-h-screen bg-ink font-body flex items-center justify-center p-4" style="color:#F2E8D5;">
   <!-- Splash / Loading Screen -->
   <div id="splash-screen">
-    <img src="deuce-game-logo.png" alt="Deuce Club Logo" class="splash-logo" onerror="this.style.display='none'" />
+    <img src="logologinpage-transparent.png" alt="PicklQ logo" class="splash-logo login-logo" onerror="this.style.display='none'" />
     <div>
-      <p class="splash-title">Deuce Club</p>
+      <p class="splash-title">PicklQ</p>
       <p class="splash-subtitle">Queuing System</p>
     </div>
     <div class="splash-spinner"></div>
@@ -107,8 +92,8 @@
 
   <div class="glass-card w-full max-w-md relative z-10 p-8">
     <div class="text-center mb-8">
-      <img src="deuce-game-logo.png" alt="Logo" class="h-16 mx-auto mb-4" onerror="this.style.display='none'" />
-      <h1 class="text-2xl font-display font-semibold text-gold">Deuce Club Queuing System</h1>
+      <img src="logologinpage-transparent.png" alt="PicklQ logo" class="login-brand-logo mx-auto mb-4" onerror="this.style.display='none'" />
+      <h1 id="auth-title" class="text-2xl font-display font-semibold text-gold">PicklQ Login</h1>
       <p class="text-slate-400 mt-2 text-sm">Sign in to manage queues and courts</p>
     </div>
 

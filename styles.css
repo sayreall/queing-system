@@ -634,6 +634,22 @@ body {
   flex-shrink: 0;
 }
 
+/* The PicklQ login mark is wide and transparent, so it needs its own sizing. */
+.splash-logo.login-logo {
+  width: clamp(180px, 50vw, 300px);
+  height: auto;
+  max-height: 130px;
+  border-radius: 0;
+  object-fit: contain;
+}
+
+.login-brand-logo {
+  width: min(100%, 260px);
+  height: auto;
+  max-height: 130px;
+  object-fit: contain;
+}
+
 .splash-title {
   font-family: "Rajdhani", sans-serif;
   font-size: clamp(1.4rem, 7vw, 2.2rem);
