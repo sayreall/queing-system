@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -43,6 +43,11 @@
         document.title = "TV - Longos Pickleball Club";
         window.addEventListener("DOMContentLoaded", () => {
           document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "logo-lpc.jpg");
+        });
+      } else if (club === "guest") {
+        document.title = "TV - PicklQ Queuing System";
+        window.addEventListener("DOMContentLoaded", () => {
+          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "logologinpage-transparent.png");
         });
       }
     })();

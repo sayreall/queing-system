@@ -177,7 +177,7 @@ async function redirectBasedOnRole(user) {
       const profile = userDoc.data();
       // Apply the saved account club before navigation so an older browser
       // preference from the other club cannot win during dashboard loading.
-      localStorage.setItem('dq_club_preference', profile.club === 'longos' ? 'longos' : 'deuce');
+      localStorage.setItem('dq_club_preference', profile.club === 'longos' ? 'longos' : (profile.club === 'guest' ? 'guest' : 'deuce'));
       const role = profile.role;
       if (role === 'admin') {
         window.location.href = 'admin.html?refresh=' + new Date().getTime();
