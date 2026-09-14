@@ -8,6 +8,7 @@ import {
   skipPlayer,
   markPlayerAbsent,
   updatePlayerSkill,
+  updatePlayerGender,
   removePlayer,
   archiveAllPlayers,
   generateNextRound,
@@ -577,7 +578,13 @@ function renderPlayers() {
             ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C3 Last</span>'
             : ''}
         </td>
-        <td class="text-slate-400">${player.gender || "—"}</td>
+        <td>
+          <select class="input-field max-w-[110px] text-xs py-1" data-player-gender="${player.id}">
+            <option value="" ${!player.gender || (player.gender.toLowerCase() !== "male" && player.gender.toLowerCase() !== "m" && player.gender.toLowerCase() !== "female" && player.gender.toLowerCase() !== "f") ? "selected" : ""}>Unspecified</option>
+            <option value="Male" ${player.gender?.toLowerCase() === "male" || player.gender?.toLowerCase() === "m" ? "selected" : ""}>Male</option>
+            <option value="Female" ${player.gender?.toLowerCase() === "female" || player.gender?.toLowerCase() === "f" ? "selected" : ""}>Female</option>
+          </select>
+        </td>
         <td class="text-slate-300 text-sm">${player.location || "—"}</td>
         <td>${player.status}</td>
         <td>
@@ -664,7 +671,13 @@ function renderPlayers() {
             ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C3 Last</span>'
             : ''}
         </td>
-        <td class="text-slate-400">${player.gender || "—"}</td>
+        <td>
+          <select class="input-field max-w-[110px] text-xs py-1" data-player-gender="${player.id}">
+            <option value="" ${!player.gender || (player.gender.toLowerCase() !== "male" && player.gender.toLowerCase() !== "m" && player.gender.toLowerCase() !== "female" && player.gender.toLowerCase() !== "f") ? "selected" : ""}>Unspecified</option>
+            <option value="Male" ${player.gender?.toLowerCase() === "male" || player.gender?.toLowerCase() === "m" ? "selected" : ""}>Male</option>
+            <option value="Female" ${player.gender?.toLowerCase() === "female" || player.gender?.toLowerCase() === "f" ? "selected" : ""}>Female</option>
+          </select>
+        </td>
         <td class="text-slate-300 text-sm">${player.location || "—"}</td>
         <td>${player.status}</td>
         <td>
@@ -1363,6 +1376,17 @@ function bindEvents() {
           showToast(err.message || "Error updating skill", "error");
         }
       }
+      
+      if (event.target.dataset.playerGender) {
+        const playerId = event.target.dataset.playerGender;
+        const newGender = event.target.value;
+        try {
+          await updatePlayerGender(playerId, newGender);
+          showToast("Player gender updated");
+        } catch (err) {
+          showToast("Error updating gender", "error");
+        }
+      }
     });
 
     body.addEventListener("click", handlePlayerActionClick);
@@ -1377,6 +1401,16 @@ function bindEvents() {
         showToast("Player skill updated");
       } catch (err) {
         showToast(err.message || "Error updating skill", "error");
+      }
+    }
+    if (event.target.dataset.playerGender) {
+      const playerId = event.target.dataset.playerGender;
+      const newGender = event.target.value;
+      try {
+        await updatePlayerGender(playerId, newGender);
+        showToast("Player gender updated");
+      } catch (err) {
+        showToast("Error updating gender", "error");
       }
     }
   });

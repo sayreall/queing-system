@@ -1,4 +1,4 @@
-﻿import {
+import {
   db,
   collection,
   doc,
@@ -317,6 +317,14 @@ export async function updatePlayerSkill(playerId, newSkill) {
     );
 
     tx.update(playerRef, { skill: normalizedSkill, updatedAt: serverTimestamp() });
+  });
+}
+
+export async function updatePlayerGender(playerId, newGender) {
+  const playerRef = getTenantDoc("players", playerId);
+  await updateDoc(playerRef, {
+    gender: newGender || "Unspecified",
+    updatedAt: serverTimestamp(),
   });
 }
 

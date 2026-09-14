@@ -22,17 +22,38 @@ function renderRows() {
     return;
   }
 
-  rows.forEach((row) => {
+  rows.forEach((row, index) => {
     const tr = document.createElement("tr");
     tr.className = "border-t border-slate-800/60";
+    
+    const currentGender = (row.gender || "").toLowerCase();
+    const isMale = currentGender === "m" || currentGender === "male";
+    const isFemale = currentGender === "f" || currentGender === "female";
+    
+    const selectHTML = `
+      <select class="input-field py-1 px-2 text-sm w-full max-w-[120px]" data-index="${index}">
+        <option value="" ${!isMale && !isFemale ? "selected" : ""}>Unspecified</option>
+        <option value="Male" ${isMale ? "selected" : ""}>Male</option>
+        <option value="Female" ${isFemale ? "selected" : ""}>Female</option>
+      </select>
+    `;
+
     tr.innerHTML = `
       <td class="py-3 font-semibold">${row.name || ""}</td>
       <td>${row.skill || ""}</td>
-      <td>${row.gender || "Unspecified"}</td>
+      <td>${selectHTML}</td>
       <td class="text-slate-400">${row.location || "—"}</td>
       <td>${row.valid ? (row.isRevive ? "Ready (Revive)" : "Ready") : row.reason}</td>
     `;
     tableBody.appendChild(tr);
+  });
+
+  const selects = tableBody.querySelectorAll("select");
+  selects.forEach((select) => {
+    select.addEventListener("change", (e) => {
+      const idx = e.target.getAttribute("data-index");
+      rows[idx].gender = e.target.value;
+    });
   });
 
   const validCount = rows.filter((row) => row.valid).length;
