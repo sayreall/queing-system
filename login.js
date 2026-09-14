@@ -228,6 +228,7 @@ registerForm.addEventListener('submit', async (e) => {
   const email    = document.getElementById('register-email').value.trim();
   const password = document.getElementById('register-password').value;
   const name     = document.getElementById('register-name').value.trim();
+  const club     = document.getElementById('register-club').value;
 
   // 3. Extra password strength check
   if (password.length < 8) {
@@ -247,6 +248,7 @@ registerForm.addEventListener('submit', async (e) => {
     await setDoc(doc(db, 'users', user.uid), {
       email: user.email,
       name: name,
+      club: club,
       role: 'queuing_master', // Default role. Admin can change this.
       createdAt: serverTimestamp()
     });

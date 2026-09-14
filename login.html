@@ -38,6 +38,20 @@
     };
   </script>
   <link rel="stylesheet" href="styles.css" />
+  <script>
+    (function() {
+      const club = localStorage.getItem("dq_club_preference");
+      if (club === "longos") {
+        document.title = "Login - Longos Pickleball Club";
+        window.addEventListener("DOMContentLoaded", () => {
+          document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "lpc-logo.png");
+          document.querySelectorAll(".splash-title").forEach(el => el.textContent = "Longos Club");
+          document.querySelectorAll(".font-display.text-gold").forEach(el => el.textContent = "Longos Pickleball Club");
+          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "lpc-logo.png");
+        });
+      }
+    })();
+  </script>
   <!-- Google reCAPTCHA v2 -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
@@ -138,6 +152,14 @@
       <div>
         <label class="block text-sm text-slate-400 mb-1">Display Name</label>
         <input type="text" id="register-name" class="input-field w-full" autocomplete="name" required />
+      </div>
+
+      <div>
+        <label class="block text-sm text-slate-400 mb-1">Club</label>
+        <select id="register-club" class="input-field w-full" required>
+          <option value="deuce">Deuce Club</option>
+          <option value="longos">Longos Pickleball Club</option>
+        </select>
       </div>
 
       <!-- reCAPTCHA v2 – Register -->

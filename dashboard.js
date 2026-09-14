@@ -2201,12 +2201,18 @@ onAuthStateChanged(auth, async (user) => {
   try {
     const userDocRef = getTenantDoc('users', user.uid);
     const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists() && userDoc.data().role === 'admin') {
-      // "the role of queing master is the one who will access the queing"
-      // Wait, can admin access it? If admin is only for management, redirect to admin.html
-      // Let's redirect admin to admin.html unless they really want to be here.
-      window.location.href = 'admin.html';
-      return;
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+      if (data.role === 'admin') {
+        window.location.href = 'admin.html';
+        return;
+      }
+      
+      // Save club preference for fast-loading UI
+      if (data.club) {
+        localStorage.setItem('dq_club_preference', data.club);
+        applyClubBranding(data.club);
+      }
     }
   } catch (err) {
     console.warn("Could not fetch user role", err);
@@ -2232,3 +2238,23 @@ document.getElementById('logout-btn')?.addEventListener('click', async () => {
 
 
 
+
+function applyClubBranding(club) {
+  if (club === 'longos') {
+    document.title = 'Longos Pickleball Club';
+    document.querySelectorAll('.splash-logo, .header-logo').forEach(img => img.src = 'lpc-logo.png');
+    document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'Longos Club');
+    document.querySelectorAll('.header-title').forEach(el => el.textContent = 'Longos Pickleball Club');
+    document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
+      link.href = 'lpc-logo.png';
+    });
+  } else {
+    document.title = 'Deuce Club Queuing System';
+    document.querySelectorAll('.splash-logo, .header-logo').forEach(img => img.src = 'deuce-game-logo.png');
+    document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'Deuce Club');
+    document.querySelectorAll('.header-title').forEach(el => el.textContent = 'Deuce Club Queuing System');
+    document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
+      link.href = 'deuce-game-logo.png';
+    });
+  }
+}

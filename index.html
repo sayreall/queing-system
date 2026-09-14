@@ -39,6 +39,20 @@
     };
   </script>
   <link rel="stylesheet" href="styles.css" />
+  <script>
+    (function() {
+      const club = localStorage.getItem("dq_club_preference");
+      if (club === "longos") {
+        document.title = "Longos Pickleball Club";
+        window.addEventListener("DOMContentLoaded", () => {
+          document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "lpc-logo.png");
+          document.querySelectorAll(".splash-title").forEach(el => el.textContent = "Longos Club");
+          document.querySelectorAll(".header-title").forEach(el => el.textContent = "Longos Pickleball Club");
+          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "lpc-logo.png");
+        });
+      }
+    })();
+  </script>
 </head>
 
 <body class="min-h-screen bg-ink font-body" style="color:#F2E8D5;">
