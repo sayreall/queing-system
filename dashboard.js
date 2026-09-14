@@ -1554,16 +1554,39 @@ function bindEvents() {
   const sidebarToggle = document.getElementById('sidebar-toggle');
   if (sidebar && sidebarToggle) {
     sidebarToggle.addEventListener('click', () => {
+      // Desktop only logic, bypass on mobile (which relies on offcanvas)
+      if (window.innerWidth < 768) return;
       const texts = sidebar.querySelectorAll('.sidebar-text');
-      if (sidebar.classList.contains('w-16')) {
-        sidebar.classList.replace('w-16', 'w-64');
-        texts.forEach(t => t.classList.replace('opacity-0', 'opacity-100'));
+      if (sidebar.classList.contains('md:w-16')) {
+        sidebar.classList.replace('md:w-16', 'md:w-64');
+        texts.forEach(t => t.classList.replace('md:opacity-0', 'md:opacity-100'));
       } else {
-        sidebar.classList.replace('w-64', 'w-16');
-        texts.forEach(t => t.classList.replace('opacity-100', 'opacity-0'));
+        sidebar.classList.replace('md:w-64', 'md:w-16');
+        texts.forEach(t => t.classList.replace('md:opacity-100', 'md:opacity-0'));
       }
     });
   }
+
+  // Mobile Menu Logic
+  const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  const sidebarOverlay = document.getElementById('sidebar-overlay');
+  
+  function toggleMobileMenu() {
+    if (!sidebar || !sidebarOverlay) return;
+    const isClosed = sidebar.classList.contains('-translate-x-full');
+    if (isClosed) {
+      sidebar.classList.remove('-translate-x-full');
+      sidebarOverlay.classList.remove('hidden');
+      setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+    } else {
+      sidebar.classList.add('-translate-x-full');
+      sidebarOverlay.classList.add('opacity-0');
+      setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+    }
+  }
+
+  if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+  if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleMobileMenu);
 
   const tvQrcodeContainer = document.getElementById("tv-qrcode");
   let qrCodeInstance = null;
