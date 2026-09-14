@@ -1,4 +1,4 @@
-import { 
+﻿import { 
   auth, 
   db, 
   signOut, 
@@ -10,6 +10,7 @@ import {
   updateDoc,
   getDoc
 , getTenantCollection, getTenantDoc} from "./firebase.js";
+import { startAutoLogout, stopAutoLogout } from "./auto-logout.js";
 
 const logoutBtn = document.getElementById('logout-btn');
 const usersTableBody = document.getElementById('users-table-body');
@@ -43,6 +44,8 @@ onAuthStateChanged(auth, async (user) => {
     
     // User is admin, start loading users
     loadUsers();
+    // Start 20-minute inactivity auto-logout
+    startAutoLogout(auth, signOut);
   } catch (error) {
     console.error("Error verifying admin role:", error);
     showToast("Error verifying admin permissions.", "error");
@@ -51,6 +54,7 @@ onAuthStateChanged(auth, async (user) => {
 
 logoutBtn.addEventListener('click', async () => {
   try {
+    stopAutoLogout();
     await signOut(auth);
     window.location.href = 'login.html';
   } catch (error) {

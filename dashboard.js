@@ -1,4 +1,4 @@
-import {
+﻿import {
   SKILLS,
   ensureQueuesExist,
   addPlayer,
@@ -26,6 +26,7 @@ import {
   db, collection, query, where, orderBy, limit, onSnapshot,
   auth, onAuthStateChanged, signOut, doc, getDoc
 , getTenantCollection, getTenantDoc} from "./firebase.js";
+import { startAutoLogout, stopAutoLogout } from "./auto-logout.js";
 
 const AVG_MATCH_MINUTES = 15;
 
@@ -2211,6 +2212,9 @@ onAuthStateChanged(auth, async (user) => {
     console.warn("Could not fetch user role", err);
   }
 
+  // Start 20-minute inactivity auto-logout
+  startAutoLogout(auth, signOut);
+
   // Initialize the dashboard
   bootstrap();
 });
@@ -2218,6 +2222,7 @@ onAuthStateChanged(auth, async (user) => {
 // Logout handler
 document.getElementById('logout-btn')?.addEventListener('click', async () => {
   try {
+    stopAutoLogout();
     await signOut(auth);
     window.location.href = 'login.html';
   } catch (error) {
