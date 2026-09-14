@@ -35,7 +35,10 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   try {
-    const userDocRef = getTenantDoc('users', user.uid);
+    // Account profiles (including the admin role) are stored at users/{userId}.
+    // Tenant subcollections are only for queueing data and must not be used for
+    // the signed-in account's role check.
+    const userDocRef = doc(db, 'users', user.uid);
     const userDoc = await getDoc(userDocRef);
     if (!userDoc.exists() || userDoc.data().role !== 'admin') {
       window.location.href = 'index.html'; // Redirect non-admins
