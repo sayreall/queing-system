@@ -113,7 +113,12 @@ function getCaptchaResponse(widgetId) {
 }
 
 function resetCaptcha() {
-  try { window.grecaptcha.reset(); } catch { /* grecaptcha may not be loaded yet */ }
+  try {
+    if (window.grecaptcha) {
+      try { window.grecaptcha.reset(0); } catch(e){}
+      try { window.grecaptcha.reset(1); } catch(e){}
+    }
+  } catch { /* ignore */ }
 }
 
 // ─── Error display ─────────────────────────────────────────────────────────
@@ -176,7 +181,7 @@ loginForm.addEventListener('submit', async (e) => {
   if (isLockedOut()) { showLockout(); return; }
 
   // 2. Verify reCAPTCHA
-  const captcha = getCaptchaResponse();
+  const captcha = loginForm.querySelector('[name="g-recaptcha-response"]')?.value;
   if (!captcha) {
     showError('Please complete the "I\'m not a robot" verification.');
     return;
@@ -219,7 +224,7 @@ registerForm.addEventListener('submit', async (e) => {
   if (isLockedOut()) { showLockout(); return; }
 
   // 2. Verify reCAPTCHA
-  const captcha = getCaptchaResponse();
+  const captcha = loginForm.querySelector('[name="g-recaptcha-response"]')?.value;
   if (!captcha) {
     showError('Please complete the "I\'m not a robot" verification.');
     return;
