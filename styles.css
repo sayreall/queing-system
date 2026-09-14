@@ -636,22 +636,23 @@ body {
 
 .splash-title {
   font-family: "Rajdhani", sans-serif;
-  font-size: clamp(1.3rem, 6vw, 2.2rem);
+  font-size: clamp(1.4rem, 7vw, 2.2rem);
   font-weight: 700;
   color: #F5C42A;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-align: center;
-  line-height: 1.1;
-  margin-bottom: 0;
+  line-height: 1.15;
+  margin-bottom: 2px;
 }
 
 .splash-subtitle {
-  font-size: clamp(0.62rem, 2.5vw, 0.78rem);
+  font-size: clamp(0.65rem, 3vw, 0.75rem);
   text-transform: uppercase;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.12em;
   color: var(--text-muted);
-  margin-top: -10px;
+  margin-top: 0;
   text-align: center;
+  word-spacing: 0.1em;
 }
 
 /* Spinner ring */
@@ -677,21 +678,22 @@ body {
 /* Extra-small screens (< 360px) */
 @media (max-width: 360px) {
   #splash-screen {
-    gap: 14px;
+    gap: 12px;
   }
   .splash-logo {
     width: 62px;
     height: 62px;
   }
   .splash-title {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
+    letter-spacing: 0.02em;
   }
   .splash-subtitle {
-    font-size: 0.58rem;
-    letter-spacing: 0.22em;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
   }
   .splash-spinner {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
   }
 }
