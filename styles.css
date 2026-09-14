@@ -609,7 +609,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 28px;
+  gap: clamp(16px, 4vw, 28px);
+  padding: 24px;
   background:
     radial-gradient(circle at 20% 15%, rgba(31, 207, 177, 0.18), transparent 40%),
     radial-gradient(circle at 80% 80%, rgba(232, 90, 26, 0.14), transparent 40%),
@@ -624,40 +625,44 @@ body {
 }
 
 .splash-logo {
-  width: 110px;
-  height: 110px;
+  width: clamp(72px, 18vw, 110px);
+  height: clamp(72px, 18vw, 110px);
   border-radius: 50%;
   object-fit: cover;
-  filter: drop-shadow(0 0 28px rgba(31, 207, 177, 0.5));
+  filter: drop-shadow(0 0 20px rgba(31, 207, 177, 0.5));
   animation: splashLogoPulse 1.8s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
 .splash-title {
   font-family: "Rajdhani", sans-serif;
-  font-size: clamp(1.5rem, 5vw, 2.2rem);
+  font-size: clamp(1.3rem, 6vw, 2.2rem);
   font-weight: 700;
   color: #F5C42A;
   letter-spacing: 0.06em;
   text-align: center;
+  line-height: 1.1;
+  margin-bottom: 0;
 }
 
 .splash-subtitle {
-  font-size: 0.78rem;
+  font-size: clamp(0.62rem, 2.5vw, 0.78rem);
   text-transform: uppercase;
-  letter-spacing: 0.35em;
+  letter-spacing: 0.3em;
   color: var(--text-muted);
-  margin-top: -18px;
+  margin-top: -10px;
   text-align: center;
 }
 
 /* Spinner ring */
 .splash-spinner {
-  width: 48px;
-  height: 48px;
+  width: clamp(36px, 8vw, 48px);
+  height: clamp(36px, 8vw, 48px);
   border-radius: 50%;
   border: 3px solid rgba(31, 207, 177, 0.15);
   border-top-color: #1fcfb1;
   animation: splashSpin 0.85s linear infinite;
+  flex-shrink: 0;
 }
 
 @keyframes splashSpin {
@@ -665,6 +670,28 @@ body {
 }
 
 @keyframes splashLogoPulse {
-  0%, 100% { transform: scale(1);   filter: drop-shadow(0 0 28px rgba(31, 207, 177, 0.5)); }
-  50%       { transform: scale(1.06); filter: drop-shadow(0 0 40px rgba(245, 196, 42, 0.55)); }
+  0%, 100% { transform: scale(1);    filter: drop-shadow(0 0 20px rgba(31, 207, 177, 0.5)); }
+  50%       { transform: scale(1.06); filter: drop-shadow(0 0 36px rgba(245, 196, 42, 0.55)); }
+}
+
+/* Extra-small screens (< 360px) */
+@media (max-width: 360px) {
+  #splash-screen {
+    gap: 14px;
+  }
+  .splash-logo {
+    width: 62px;
+    height: 62px;
+  }
+  .splash-title {
+    font-size: 1.2rem;
+  }
+  .splash-subtitle {
+    font-size: 0.58rem;
+    letter-spacing: 0.22em;
+  }
+  .splash-spinner {
+    width: 34px;
+    height: 34px;
+  }
 }
