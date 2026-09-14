@@ -106,6 +106,14 @@ registerForm.addEventListener('submit', async (e) => {
 
 // Check auth state
 onAuthStateChanged(auth, (user) => {
+  // Hide splash screen once auth state is resolved
+  const splash = document.getElementById('splash-screen');
+  if (splash) {
+    splash.classList.add('splash-hidden');
+    // Remove from DOM after transition ends
+    splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+  }
+
   if (user) {
     redirectBasedOnRole(user);
   }

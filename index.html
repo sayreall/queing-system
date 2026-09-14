@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -42,6 +42,16 @@
 </head>
 
 <body class="min-h-screen bg-ink font-body" style="color:#F2E8D5;">
+  <!-- Splash / Loading Screen -->
+  <div id="splash-screen">
+    <img src="deuce-game-logo.png" alt="Deuce Club Logo" class="splash-logo" onerror="this.style.display='none'" />
+    <div>
+      <p class="splash-title">Deuce Club</p>
+      <p class="splash-subtitle">Queuing System</p>
+    </div>
+    <div class="splash-spinner"></div>
+  </div>
+
   <div class="page-bg"></div>
 
   <header class="px-6 py-4 md:px-10 md:py-6">

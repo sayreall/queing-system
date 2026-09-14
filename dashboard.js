@@ -2185,6 +2185,13 @@ function bindMatchLogEvents() {
 
 // Protect the route
 onAuthStateChanged(auth, async (user) => {
+  // Dismiss splash screen once auth is resolved
+  const splash = document.getElementById('splash-screen');
+  if (splash) {
+    splash.classList.add('splash-hidden');
+    splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+  }
+
   if (!user) {
     window.location.href = 'login.html';
     return;
