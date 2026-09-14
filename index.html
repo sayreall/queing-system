@@ -537,6 +537,20 @@
           </div>
           <p class="text-sm text-slate-400 relative z-10">Every team has one male and one female player where possible.</p>
         </label>
+
+        <!-- Flex Borrow from Intermediate -->
+        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-intermediate hover:bg-slate-800/80 mb-3">
+          <input type="radio" name="matching_mode" value="flex_borrow" class="peer sr-only">
+          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-intermediate peer-checked:bg-intermediate/10 pointer-events-none transition-all"></div>
+          <div class="flex items-center gap-2 mb-1 relative z-10">
+            <h3 class="text-base font-semibold text-white">Flex Borrow</h3>
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style="background: rgba(245,196,42,0.2); color: #F5C42A;">Intermediate Pool</span>
+            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <p class="text-sm text-slate-400 relative z-10">If Beginner, Intermediate, or Advanced is short by 1–3 players, the system borrows from the Intermediate queue to complete a full group of 4.</p>
+        </label>
       </div>
       
       <button id="confirm-matching-mode-btn" class="btn-primary w-full py-3 mt-4 text-sm">

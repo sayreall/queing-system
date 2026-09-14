@@ -1,4 +1,4 @@
-import {
+﻿import {
   db,
   collection,
   doc,
@@ -473,6 +473,44 @@ export async function generateNextRound(playersList, mode = "social_mix") {
     const key = skillKeyFromLabel(p.skill);
     if (bySkill[key]) bySkill[key].push(p);
   });
+
+  // ── Flex Borrow: fill short skill groups from Intermediate ──────────────
+  // When a skill group (beginner, intermediate, or advanced) has 1–3 players
+  // (not enough for a full game of 4), borrow the needed players from the
+  // Intermediate queue so no court sits empty.
+  if (mode === "flex_borrow") {
+    // We work on a copy of intermediate so we track what is left to lend.
+    const intPool = bySkill.intermediate.slice();
+
+    for (const skill of ["beginner", "advanced"]) {
+      const group = bySkill[skill];
+      if (group.length === 0) continue; // nothing to help
+      const rem = group.length % 4;
+      if (rem === 0) continue; // already a full multiple of 4
+
+      const needed = 4 - rem; // 1, 2, or 3
+      const available = intPool.filter(p => !group.includes(p));
+      const toAdd = available.slice(0, needed);
+
+      if (toAdd.length === needed) {
+        // Mark borrowed players so we know they came from intermediate
+        toAdd.forEach(p => {
+          group.push(p);
+          // Remove from intermediate pool so they are not double-scheduled
+          const idx = intPool.indexOf(p);
+          if (idx !== -1) intPool.splice(idx, 1);
+          // Also remove from the main intermediate bySkill array
+          const i2 = bySkill.intermediate.indexOf(p);
+          if (i2 !== -1) bySkill.intermediate.splice(i2, 1);
+        });
+      }
+      // If not enough intermediates are available, leave the group as-is;
+      // the existing padToMultipleOf4 will handle it gracefully.
+    }
+
+    // Also check if intermediate itself needs a top-up after lending
+    // (it does its own padToMultipleOf4 in the main loop, so nothing extra needed)
+  }
 
   const batch = writeBatch(db);
   const now = serverTimestamp();
