@@ -1548,6 +1548,23 @@ function bindEvents() {
   const closeTvShareBtn = document.getElementById("close-tv-share-modal");
   const tvShareLink = document.getElementById("tv-share-link");
   const copyTvLinkBtn = document.getElementById("copy-tv-link-btn");
+
+  // Sidebar toggle logic
+  const sidebar = document.getElementById('sidebar');
+  const sidebarToggle = document.getElementById('sidebar-toggle');
+  if (sidebar && sidebarToggle) {
+    sidebarToggle.addEventListener('click', () => {
+      const texts = sidebar.querySelectorAll('.sidebar-text');
+      if (sidebar.classList.contains('w-16')) {
+        sidebar.classList.replace('w-16', 'w-64');
+        texts.forEach(t => t.classList.replace('opacity-0', 'opacity-100'));
+      } else {
+        sidebar.classList.replace('w-64', 'w-16');
+        texts.forEach(t => t.classList.replace('opacity-100', 'opacity-0'));
+      }
+    });
+  }
+
   const tvQrcodeContainer = document.getElementById("tv-qrcode");
   let qrCodeInstance = null;
 
@@ -2243,7 +2260,7 @@ document.getElementById('logout-btn')?.addEventListener('click', async () => {
 function applyClubBranding(club) {
   if (club === 'longos') {
     document.title = 'Longos Pickleball Club';
-    document.querySelectorAll('.splash-logo, .header-logo').forEach(img => img.src = 'logo-lpc.jpg');
+    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'logo-lpc.jpg');
     document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'Longos Club');
     document.querySelectorAll('.header-title').forEach(el => el.textContent = 'Longos Pickleball Club');
     document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
@@ -2254,7 +2271,7 @@ function applyClubBranding(club) {
     });
   } else if (club === 'guest') {
     document.title = 'PicklQ Queuing System';
-    document.querySelectorAll('.splash-logo, .header-logo').forEach(img => img.src = 'logologinpage-transparent.png');
+    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'logologinpage-transparent.png');
     document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'PicklQ');
     document.querySelectorAll('.header-title').forEach(el => el.textContent = 'PicklQ Queuing System');
     document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
@@ -2262,7 +2279,7 @@ function applyClubBranding(club) {
     });
   } else {
     document.title = 'Deuce Club Queuing System';
-    document.querySelectorAll('.splash-logo, .header-logo').forEach(img => img.src = 'deuce-game-logo.png');
+    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'deuce-game-logo.png');
     document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'Deuce Club');
     document.querySelectorAll('.header-title').forEach(el => el.textContent = 'Deuce Club Queuing System');
     document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
