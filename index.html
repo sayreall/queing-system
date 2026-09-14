@@ -761,47 +761,65 @@
   <div id="guide-modal" class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="glass-card w-full max-w-3xl relative max-h-[90vh] flex flex-col">
       <button id="close-guide-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
-      <h2 class="text-2xl font-display font-semibold mb-2 text-cyan-400">User Guide</h2>
-      <p class="text-sm text-slate-400 mb-4">Learn how to manage the queueing system effectively.</p>
+      <h2 class="text-3xl font-display font-semibold mb-2 text-cyan-400">Welcome to the Queuing System! 🎉</h2>
+      <p class="text-sm text-slate-400 mb-6">Here is your quick step-by-step guide to get your first session running smoothly.</p>
       
-      <div class="overflow-y-auto flex-1 custom-scrollbar text-slate-300 pr-2 space-y-6">
+      <div class="overflow-y-auto flex-1 custom-scrollbar text-slate-300 pr-2 space-y-8">
         
-        <div>
-          <h3 class="text-lg font-semibold text-white mb-2 border-b border-slate-700 pb-1">1. Importing & Adding Players</h3>
-          <ul class="list-disc pl-5 space-y-1 text-sm">
-            <li><strong>Import from Reclub:</strong> Go to <span class="text-orange">Import Players</span> in the sidebar, paste the player list directly from the Reclub app, fix any genders/skills, and import in bulk.</li>
-            <li><strong>Manual Add:</strong> Click the <span class="text-emerald-400">Add Player</span> button in the Player Management section to add walk-in players.</li>
-          </ul>
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-orange flex items-center justify-center text-white font-bold">1</div>
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-1">Add Your Players</h3>
+            <p class="text-sm leading-relaxed">
+              Start by getting players into your system. Click <strong class="text-orange">Import Players</strong> in the left sidebar to quickly paste a list of attendees directly from the Reclub app. For walk-ins, use the <strong class="text-emerald-400">Add Player</strong> button located in the Player Management section at the bottom of the dashboard.
+            </p>
+          </div>
         </div>
 
-        <div>
-          <h3 class="text-lg font-semibold text-white mb-2 border-b border-slate-700 pb-1">2. Understanding the Queues</h3>
-          <ul class="list-disc pl-5 space-y-1 text-sm">
-            <li>Players are organized into 3 skill levels: <strong>Beginner</strong>, <strong>Intermediate</strong>, and <strong>Advanced</strong>.</li>
-            <li>You can drag and drop players between the queues and even re-order them to prioritize someone who's been waiting.</li>
-            <li>The system will automatically try to match 4 players from the top of the queue for the next available court.</li>
-          </ul>
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">2</div>
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-1">Set Up Your Courts</h3>
+            <p class="text-sm leading-relaxed">
+              In the "Courts" section at the top, click <strong class="text-white">Add Court</strong> for however many courts you have available. You can assign specific skill levels to each court if you want to restrict them, or leave them as "Any Skill".
+            </p>
+          </div>
         </div>
 
-        <div>
-          <h3 class="text-lg font-semibold text-white mb-2 border-b border-slate-700 pb-1">3. Generating Matches & Courts</h3>
-          <ul class="list-disc pl-5 space-y-1 text-sm">
-            <li><strong>Auto-Assign Toggle:</strong> When turned ON, the system automatically pulls players to an empty court when a match finishes.</li>
-            <li><strong>Round Generator:</strong> Need to quickly dispatch all waiting players? The Round Generator will auto-balance and assign as many matches as possible at once!</li>
-            <li><strong>Custom Match:</strong> Allows you to pick 4 specific players manually to play on an empty court.</li>
-            <li><strong>Ending Matches:</strong> Click <span class="text-green-400">End Match</span> on an active court to mark a winning team. The winning team will get 1 Win and the losing team gets 1 Loss. The players will return to the bottom of their respective queues automatically.</li>
-          </ul>
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">3</div>
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-1">Generate Matches</h3>
+            <p class="text-sm leading-relaxed">
+              Now that you have players and courts, turn on the <strong class="text-white">Auto-Assign Toggle</strong> to automatically pair up players and fill empty courts continuously. Alternatively, use the <strong class="text-emerald-400">Round Generator</strong> to auto-balance and assign as many matches as possible at once!
+            </p>
+          </div>
         </div>
 
-        <div>
-          <h3 class="text-lg font-semibold text-white mb-2 border-b border-slate-700 pb-1">4. Player Management & Status</h3>
-          <ul class="list-disc pl-5 space-y-1 text-sm">
-            <li>In the Player Management tables, you can change a player's skill level or gender on the fly. The queues will instantly update.</li>
-            <li><strong>Status:</strong> Players can be marked as "Absent/Standby" via the actions menu. If a player leaves early, you can "Remove" them from today's queue entirely.</li>
-            <li>At the end of the day, click <span class="text-red-400">End Day (Archive All)</span>. This resets all matches and saves everyone's stats. The next day, you can just click "Revive" next to their name to put them back in the queue with their historical stats intact!</li>
-          </ul>
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">4</div>
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-1">End Matches & Track Stats</h3>
+            <p class="text-sm leading-relaxed">
+              When a game finishes, click <strong class="text-green-400">End Match</strong> on that court. Select the winning team! The winners will receive a Win on their stats, the losers a Loss, and they will automatically be placed at the bottom of the queue to wait for their next game.
+            </p>
+          </div>
         </div>
 
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white font-bold">5</div>
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-1">End of the Day</h3>
+            <p class="text-sm leading-relaxed">
+              When the event is over, click <strong class="text-red-400">End Day (Archive All)</strong>. This will clear the queues and save everyone's stats. Tomorrow, you can instantly revive returning players with their historical stats intact!
+            </p>
+          </div>
+        </div>
+
+      </div>
+      
+      <div class="pt-6 mt-4 border-t border-slate-700/50 flex justify-end">
+        <button id="guide-get-started-btn" class="btn-primary py-2 px-8 text-base shadow-lg shadow-cyan-500/20">Got it, let's start!</button>
       </div>
     </div>
   </div>

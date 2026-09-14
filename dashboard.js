@@ -1729,15 +1729,19 @@ function bindEvents() {
   const guideBtn = document.getElementById("guide-btn");
   const guideModal = document.getElementById("guide-modal");
   const closeGuideBtn = document.getElementById("close-guide-modal");
+  const startGuideBtn = document.getElementById("guide-get-started-btn");
 
   guideBtn?.addEventListener("click", () => {
     guideModal.classList.remove("hidden");
     if (window.innerWidth < 768 && toggleMobileMenu) toggleMobileMenu();
   });
 
-  closeGuideBtn?.addEventListener("click", () => {
+  const closeGuide = () => {
     guideModal.classList.add("hidden");
-  });
+  };
+
+  closeGuideBtn?.addEventListener("click", closeGuide);
+  startGuideBtn?.addEventListener("click", closeGuide);
 
   guideModal?.addEventListener("click", (e) => {
     if (e.target === guideModal) guideModal.classList.add("hidden");
@@ -2377,6 +2381,18 @@ onAuthStateChanged(auth, async (user) => {
 
   // Initialize the dashboard
   bootstrap();
+
+  // Show Guide for first time users
+  const hasSeenGuide = localStorage.getItem('dq_has_seen_guide_' + user.uid);
+  if (!hasSeenGuide) {
+    setTimeout(() => {
+      const guideModal = document.getElementById("guide-modal");
+      if (guideModal) {
+        guideModal.classList.remove("hidden");
+        localStorage.setItem('dq_has_seen_guide_' + user.uid, 'true');
+      }
+    }, 1000);
+  }
 });
 
 // Logout handler
