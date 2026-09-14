@@ -44,10 +44,10 @@
       if (club === "longos") {
         document.title = "Login - Longos Pickleball Club";
         window.addEventListener("DOMContentLoaded", () => {
-          document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "lpc-logo.png");
+          document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "logo-lpc.jpg");
           document.querySelectorAll(".splash-title").forEach(el => el.textContent = "Longos Club");
           document.querySelectorAll(".font-display.text-gold").forEach(el => el.textContent = "Longos Pickleball Club");
-          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "lpc-logo.png");
+          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "logo-lpc.jpg");
         });
       }
     })();
@@ -177,7 +177,7 @@
     </div>
   </div>
 
-  <script type="module" src="login.js?v=10"></script>
+  <script type="module" src="login.js?v=12"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

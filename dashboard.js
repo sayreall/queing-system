@@ -2239,15 +2239,13 @@ document.getElementById('logout-btn')?.addEventListener('click', async () => {
 
 
 function applyClubBranding(club) {
-  const selector = document.getElementById('club-selector');
-  if (selector) selector.value = club || 'deuce';
   if (club === 'longos') {
     document.title = 'Longos Pickleball Club';
-    document.querySelectorAll('.splash-logo, .header-logo').forEach(img => img.src = 'lpc-logo.png');
+    document.querySelectorAll('.splash-logo, .header-logo').forEach(img => img.src = 'logo-lpc.jpg');
     document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'Longos Club');
     document.querySelectorAll('.header-title').forEach(el => el.textContent = 'Longos Pickleball Club');
     document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
-      link.href = 'lpc-logo.png';
+      link.href = 'logo-lpc.jpg';
     });
   } else {
     document.title = 'Deuce Club Queuing System';
@@ -2261,15 +2259,4 @@ function applyClubBranding(club) {
 }
 
 // Club Selector logic
-document.getElementById('club-selector')?.addEventListener('change', async (e) => {
-  const newClub = e.target.value;
-  localStorage.setItem('dq_club_preference', newClub);
-  applyClubBranding(newClub);
-  try {
-    const { updateDoc } = await import('./firebase.js');
-    if (auth.currentUser) {
-      const userRef = getTenantDoc('users', auth.currentUser.uid);
-      await updateDoc(userRef, { club: newClub });
-    }
-  } catch (err) { console.error('Failed to save club preference to DB', err); }
-});
+
