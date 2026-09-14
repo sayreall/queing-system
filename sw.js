@@ -1,4 +1,4 @@
-const CACHE_NAME = "pickleball-queue-v7";
+const CACHE_NAME = "pickleball-queue-v8";
 const ASSETS = [
   "./",
   "./index.html",
@@ -31,14 +31,28 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  // Use Network First strategy for all requests to ensure the app is always up-to-date
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    }).catch(() => {
-      // Fallback if offline
-      if (event.request.mode === "navigate") {
-        return caches.match("./index.html");
+    fetch(event.request).then((networkResponse) => {
+      // If we got a valid response, clone it and put it in the cache
+      if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
       }
+      return networkResponse;
+    }).catch(() => {
+      // If network fails (offline), fall back to cache
+      return caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        // If nothing in cache and it's a page navigation, return index.html
+        if (event.request.mode === "navigate") {
+          return caches.match("./index.html");
+        }
+      });
     })
   );
 });

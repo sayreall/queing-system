@@ -1,4 +1,4 @@
-import { 
+﻿import { 
   auth, 
   db, 
   signInWithEmailAndPassword, 
@@ -303,5 +303,12 @@ onAuthStateChanged(auth, (user) => {
     showLockout();
   } else {
     updateAttemptUI();
+  }
+});
+
+// Force reload on BFCache restore so reCAPTCHA renders correctly
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) {
+    window.location.reload();
   }
 });
