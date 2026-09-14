@@ -49,6 +49,7 @@
           document.querySelectorAll(".splash-title").forEach(el => el.textContent = "Longos Club");
           document.querySelectorAll(".header-title").forEach(el => el.textContent = "Longos Pickleball Club");
           document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "logo-lpc.jpg");
+          document.querySelectorAll("link[rel='manifest']").forEach(link => link.href = "manifest-longos.json");
         });
       }
     })();

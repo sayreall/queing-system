@@ -1,11 +1,13 @@
-﻿const CACHE_NAME = "pickleball-queue-v10";
+﻿const CACHE_NAME = "pickleball-queue-v11";
 const ASSETS = [
   "./",
   "./index.html",
   "./tv.html",
   "./login.html",
   "./manifest.json",
-  "./deuce-game-logo.png"
+  "./manifest-longos.json",
+  "./deuce-game-logo.png",
+  "./logo-lpc.jpg"
 ];
 
 self.addEventListener("install", (event) => {
