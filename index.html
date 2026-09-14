@@ -93,6 +93,11 @@
         <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">Match Log</span>
       </button>
 
+      <button id="view-ranking-btn" class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white" title="Ranking">
+        <svg class="w-6 h-6 flex-shrink-0 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+        <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold text-yellow-400 transition-opacity duration-300 pointer-events-none">Ranking</span>
+      </button>
+
       <a href="import.html" id="import-players-btn" class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white" title="Import Players">
         <svg class="w-6 h-6 flex-shrink-0 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
         <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold text-orange transition-opacity duration-300 pointer-events-none">Import Players</span>
@@ -716,6 +721,33 @@
       <input type="text" id="add-to-match-search" class="input-field mb-4" placeholder="Search players..." />
       <div class="overflow-y-auto flex-1 border border-slate-700/50 rounded-lg custom-scrollbar p-2 bg-slate-900/40">
         <ul id="add-to-match-list" class="space-y-2"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ranking Modal -->
+  <div id="ranking-modal" class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="glass-card w-full max-w-3xl relative max-h-[90vh] flex flex-col">
+      <button id="close-ranking-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
+      <h2 class="text-2xl font-display font-semibold mb-2" style="color:#F5C42A;">Player Ranking</h2>
+      <p class="text-sm text-slate-400 mb-4">Top players sorted by Win Percentage and Matches Played.</p>
+      <div class="overflow-y-auto overflow-x-auto flex-1 border border-slate-700/50 rounded-lg custom-scrollbar bg-slate-900/40">
+        <table class="w-full text-sm whitespace-nowrap relative">
+          <thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+            <tr>
+              <th class="py-3 px-4 text-center w-12">Rank</th>
+              <th class="py-3 px-4">Player</th>
+              <th class="py-3 px-4">Skill</th>
+              <th class="py-3 px-4 text-center text-purple-400">GP</th>
+              <th class="py-3 px-4 text-center text-green-400">W</th>
+              <th class="py-3 px-4 text-center text-red-400">L</th>
+              <th class="py-3 px-4 text-center text-blue-400">Win %</th>
+            </tr>
+          </thead>
+          <tbody id="ranking-tbody">
+            <!-- Rendered via JS -->
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

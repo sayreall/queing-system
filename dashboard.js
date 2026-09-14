@@ -1658,10 +1658,71 @@ function bindEvents() {
   });
 
   copyTvLinkBtn?.addEventListener("click", () => {
-    tvShareLink.select();
-    document.execCommand("copy");
-    copyTvLinkBtn.textContent = "Copied!";
-    setTimeout(() => { copyTvLinkBtn.textContent = "Copy"; }, 2000);
+    const linkInput = document.getElementById("tv-share-link");
+    if (linkInput) {
+      navigator.clipboard.writeText(linkInput.value).then(() => {
+        showToast("Link copied to clipboard!");
+      });
+    }
+  });
+
+  // Ranking Modal Logic
+  const viewRankingBtn = document.getElementById("view-ranking-btn");
+  const rankingModal = document.getElementById("ranking-modal");
+  const closeRankingBtn = document.getElementById("close-ranking-modal");
+  const rankingTbody = document.getElementById("ranking-tbody");
+
+  viewRankingBtn?.addEventListener("click", () => {
+    const allPlayers = Array.from(state.players.values()).filter(p => p.status !== "Archived" && ((p.wins || 0) + (p.losses || 0)) > 0);
+    
+    allPlayers.sort((a, b) => {
+      const aW = a.wins || 0;
+      const aL = a.losses || 0;
+      const bW = b.wins || 0;
+      const bL = b.losses || 0;
+      const aGP = aW + aL;
+      const bGP = bW + bL;
+      
+      const aWinPct = aGP > 0 ? (aW / aGP) * 100 : 0;
+      const bWinPct = bGP > 0 ? (bW / bGP) * 100 : 0;
+
+      if (Math.abs(bWinPct - aWinPct) > 0.1) return bWinPct - aWinPct;
+      if (bW !== aW) return bW - aW;
+      return bGP - aGP;
+    });
+
+    rankingTbody.innerHTML = allPlayers.length > 0 ? allPlayers.map((player, idx) => {
+      const gp = (player.wins || 0) + (player.losses || 0);
+      const winPct = gp > 0 ? Math.round(((player.wins || 0) / gp) * 100) + '%' : '0%';
+      let rankIcon = idx + 1;
+      if (idx === 0) rankIcon = '🥇';
+      else if (idx === 1) rankIcon = '🥈';
+      else if (idx === 2) rankIcon = '🥉';
+
+      return `
+        <tr class="border-t border-slate-800/60 hover:bg-slate-800/20">
+          <td class="py-3 px-4 text-center font-bold text-lg text-slate-300">${rankIcon}</td>
+          <td class="py-3 px-4 font-semibold text-white">${player.name}</td>
+          <td class="py-3 px-4 text-slate-400 text-xs">${player.skill}</td>
+          <td class="py-3 px-4 text-center text-purple-400 font-semibold">${gp}</td>
+          <td class="py-3 px-4 text-center text-green-400 font-semibold">${player.wins || 0}</td>
+          <td class="py-3 px-4 text-center text-red-400 font-semibold">${player.losses || 0}</td>
+          <td class="py-3 px-4 text-center text-blue-400 font-semibold">${winPct}</td>
+        </tr>
+      `;
+    }).join("") : `<tr><td colspan="7" class="py-6 text-center text-slate-500">No players with matches played yet.</td></tr>`;
+
+    rankingModal.classList.remove("hidden");
+    // Ensure mobile sidebar closes when opening modal
+    if (window.innerWidth < 768 && toggleMobileMenu) toggleMobileMenu();
+  });
+
+  closeRankingBtn?.addEventListener("click", () => {
+    rankingModal.classList.add("hidden");
+  });
+  
+  rankingModal?.addEventListener("click", (e) => {
+    if (e.target === rankingModal) rankingModal.classList.add("hidden");
   });
 }
 
