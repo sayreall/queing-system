@@ -364,10 +364,14 @@ onAuthStateChanged(auth, (user) => {
 
     setTimeout(() => {
       splash.classList.add('splash-hidden');
+      splash.style.pointerEvents = 'none'; // Ensure it doesn't block clicks
       splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+      setTimeout(() => { if(document.body.contains(splash)) splash.remove(); }, 1000); // safety fallback
+      sessionStorage.setItem('dq_splash_shown', 'true');
     }, delay);
   } else if (splash) {
     splash.remove();
+    sessionStorage.setItem('dq_splash_shown', 'true');
   }
 
   if (user && !registrationInProgress) {
