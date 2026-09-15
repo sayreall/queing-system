@@ -68,7 +68,7 @@
   <script src="multi-club.js"></script>
 </head>
 
-<body class="h-screen bg-ink font-body flex overflow-hidden" style="color:#F2E8D5;">
+<body class="min-h-screen bg-ink font-body flex overflow-x-hidden" style="color:#F2E8D5;">
   <!-- Splash / Loading Screen -->
   <div id="splash-screen">
     <img src="deuce-game-logo.png" alt="Deuce Club Logo" class="splash-logo" onerror="this.style.display='none'" />
@@ -99,7 +99,7 @@
   <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-40 hidden md:hidden backdrop-blur-sm transition-opacity opacity-0"></div>
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="absolute md:relative top-0 left-0 w-64 md:w-16 -translate-x-full md:translate-x-0 transition-all duration-300 flex flex-col bg-panel border-r border-slate-700/50 h-screen z-50 flex-shrink-0 overflow-hidden" style="background: rgba(15, 61, 61, 0.95);">
+  <aside id="sidebar" class="fixed top-0 left-0 w-64 md:w-16 -translate-x-full md:translate-x-0 transition-all duration-300 flex flex-col bg-panel border-r border-slate-700/50 h-screen z-50 flex-shrink-0 overflow-hidden" style="background: rgba(15, 61, 61, 0.95);">
     <div class="h-[88px] flex items-center px-3 border-b border-slate-700/50 cursor-pointer flex-shrink-0 hover:bg-slate-800/50 transition-colors" id="sidebar-toggle" style="padding-left: 0.6rem;">
       <img src="deuce-game-logo.png" alt="Logo" class="sidebar-logo w-11 h-11 rounded-full object-cover flex-shrink-0" onerror="this.style.display='none'" />
       <span class="ml-4 font-display font-semibold text-lg text-white whitespace-nowrap md:opacity-0 transition-opacity duration-300 sidebar-text block">Menu</span>
@@ -146,7 +146,7 @@
   </aside>
 
   <!-- Main Content Wrapper -->
-  <div class="flex-1 h-screen overflow-y-auto flex flex-col relative w-full">
+  <div class="w-full md:pl-16 flex flex-col relative min-h-screen">
 
   <header class="px-6 py-4 md:px-10 md:py-6">
     <div class="header-inner">
