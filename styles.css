@@ -761,6 +761,16 @@ body {
   background-color: rgba(0, 0, 0, 0.75) !important;
   backdrop-filter: blur(4px);
 }
+
+/* Fix CSS Stacking Contexts trapping elements under the overlay */
+.introjs-fixParent {
+  z-index: auto !important;
+  opacity: 1 !important;
+  transform: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+}
+
 .custom-intro-tooltip {
   background: rgba(15, 61, 61, 0.95) !important;
   border: 1px solid rgba(31, 207, 177, 0.3) !important;

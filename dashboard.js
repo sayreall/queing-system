@@ -1730,6 +1730,9 @@ function bindEvents() {
   
   window.openGuide = function() {
     try {
+      if (window.__tourStarting) return;
+      window.__tourStarting = true;
+
       if (window.__activeTour) {
         window.__activeTour.exit(true);
       }
@@ -1834,9 +1837,16 @@ function bindEvents() {
         position: 'top'
       });
 
-      // Strictly filter out any steps where the target element was requested but is null
+      // Strictly filter out any steps where the target element was requested but is null or hidden
       const validSteps = steps.filter(step => {
-        if (step.hasOwnProperty('element') && step.element === null) return false;
+        if (!step.element) return true; // Steps without specific elements are fine
+        if (!document.body.contains(step.element)) return false; // Must be in DOM
+        
+        // Skip elements that are invisible (e.g. hidden on this screen size)
+        if (step.element.offsetWidth === 0 && step.element.offsetHeight === 0) {
+          return false;
+        }
+        
         return true;
       });
 
@@ -1859,7 +1869,9 @@ function bindEvents() {
       
       window.__activeTour = intro;
       intro.start();
+      window.__tourStarting = false;
     } catch (err) {
+      window.__tourStarting = false;
       console.error("Tour error:", err);
       if (typeof showToast === 'function') {
         showToast("Error starting tour: " + err.message, "error");
