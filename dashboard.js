@@ -1725,26 +1725,94 @@ function bindEvents() {
     if (e.target === rankingModal) rankingModal.classList.add("hidden");
   });
 
-  // Guide Modal Logic
+  // Guide / Tutorial Walkthrough Logic
   const guideBtn = document.getElementById("guide-btn");
   const guideModal = document.getElementById("guide-modal");
   const closeGuideBtn = document.getElementById("close-guide-modal");
   const startGuideBtn = document.getElementById("guide-get-started-btn");
+  const guideNextBtn = document.getElementById("guide-next-btn");
+  const guidePrevBtn = document.getElementById("guide-prev-btn");
+  const guideSkipBtn = document.getElementById("guide-skip-btn");
+  const guideProgressBar = document.getElementById("guide-progress-bar");
+  const guideStepLabel = document.getElementById("guide-step-label");
+  const guideStepName = document.getElementById("guide-step-name");
 
-  guideBtn?.addEventListener("click", () => {
-    guideModal.classList.remove("hidden");
+  const GUIDE_TOTAL_STEPS = 8;
+  const GUIDE_STEP_NAMES = [
+    "Dashboard Overview",
+    "Adding Players",
+    "Setting Up Courts",
+    "Starting Matches",
+    "Custom Match Builder",
+    "Finishing Matches & Stats",
+    "TV Display & Sharing",
+    "End of the Day"
+  ];
+  let guideCurrentStep = 0;
+
+  function updateGuideStep() {
+    // Show/hide step panels
+    document.querySelectorAll(".guide-step").forEach(el => {
+      const idx = parseInt(el.dataset.guideStep, 10);
+      el.classList.toggle("hidden", idx !== guideCurrentStep);
+    });
+
+    // Update progress bar
+    const pct = ((guideCurrentStep + 1) / GUIDE_TOTAL_STEPS) * 100;
+    if (guideProgressBar) guideProgressBar.style.width = pct + "%";
+    if (guideStepLabel) guideStepLabel.textContent = `Step ${guideCurrentStep + 1} of ${GUIDE_TOTAL_STEPS}`;
+    if (guideStepName) guideStepName.textContent = GUIDE_STEP_NAMES[guideCurrentStep] || "";
+
+    // Show/hide Prev button
+    if (guidePrevBtn) {
+      guidePrevBtn.classList.toggle("hidden", guideCurrentStep === 0);
+      guidePrevBtn.disabled = guideCurrentStep === 0;
+    }
+
+    // Show Next or Finish button
+    const isLast = guideCurrentStep === GUIDE_TOTAL_STEPS - 1;
+    if (guideNextBtn) guideNextBtn.classList.toggle("hidden", isLast);
+    if (startGuideBtn) startGuideBtn.classList.toggle("hidden", !isLast);
+    if (guideSkipBtn) guideSkipBtn.classList.toggle("hidden", isLast);
+
+    // Scroll step content to top
+    const scrollContainer = guideModal?.querySelector(".overflow-y-auto");
+    if (scrollContainer) scrollContainer.scrollTop = 0;
+  }
+
+  function openGuide() {
+    guideCurrentStep = 0;
+    updateGuideStep();
+    guideModal?.classList.remove("hidden");
     if (window.innerWidth < 768 && toggleMobileMenu) toggleMobileMenu();
-  });
+  }
 
   const closeGuide = () => {
-    guideModal.classList.add("hidden");
+    guideModal?.classList.add("hidden");
   };
 
+  guideBtn?.addEventListener("click", openGuide);
+
+  guideNextBtn?.addEventListener("click", () => {
+    if (guideCurrentStep < GUIDE_TOTAL_STEPS - 1) {
+      guideCurrentStep++;
+      updateGuideStep();
+    }
+  });
+
+  guidePrevBtn?.addEventListener("click", () => {
+    if (guideCurrentStep > 0) {
+      guideCurrentStep--;
+      updateGuideStep();
+    }
+  });
+
+  guideSkipBtn?.addEventListener("click", closeGuide);
   closeGuideBtn?.addEventListener("click", closeGuide);
   startGuideBtn?.addEventListener("click", closeGuide);
 
   guideModal?.addEventListener("click", (e) => {
-    if (e.target === guideModal) guideModal.classList.add("hidden");
+    if (e.target === guideModal) closeGuide();
   });
 }
 
@@ -2382,16 +2450,53 @@ onAuthStateChanged(auth, async (user) => {
   // Initialize the dashboard
   bootstrap();
 
-  // Show Guide for first time users
+  // Show Guide for first time users or new registrations
+  const isNewRegistration = localStorage.getItem('dq_new_registration');
   const hasSeenGuide = localStorage.getItem('dq_has_seen_guide_' + user.uid);
-  if (!hasSeenGuide) {
+
+  if (isNewRegistration || !hasSeenGuide) {
+    // Consume the new-registration flag so it only triggers once
+    localStorage.removeItem('dq_new_registration');
+    localStorage.setItem('dq_has_seen_guide_' + user.uid, 'true');
+
     setTimeout(() => {
       const guideModal = document.getElementById("guide-modal");
+      const headerTitle = document.getElementById("guide-header-title");
+      const headerSubtitle = document.getElementById("guide-header-subtitle");
+
       if (guideModal) {
+        // Show a personalised welcome for brand-new registrations
+        if (isNewRegistration) {
+          if (headerTitle) headerTitle.textContent = "Welcome aboard! 🎉 Let's get you started";
+          if (headerSubtitle) headerSubtitle.textContent = "Your account is ready! Follow this quick tutorial to learn how to run your first session.";
+        } else {
+          if (headerTitle) headerTitle.textContent = "Welcome to the Queuing System! 🎉";
+          if (headerSubtitle) headerSubtitle.textContent = "Here's everything you need to run your first session.";
+        }
+
+        // Reset to step 1 and open
+        const allSteps = document.querySelectorAll(".guide-step");
+        allSteps.forEach(el => {
+          el.classList.toggle("hidden", el.dataset.guideStep !== "0");
+        });
+        const progressBar = document.getElementById("guide-progress-bar");
+        if (progressBar) progressBar.style.width = "12.5%";
+        const stepLabel = document.getElementById("guide-step-label");
+        if (stepLabel) stepLabel.textContent = "Step 1 of 8";
+        const stepName = document.getElementById("guide-step-name");
+        if (stepName) stepName.textContent = "Dashboard Overview";
+        const nextBtn = document.getElementById("guide-next-btn");
+        const finishBtn = document.getElementById("guide-get-started-btn");
+        const prevBtn = document.getElementById("guide-prev-btn");
+        const skipBtn = document.getElementById("guide-skip-btn");
+        if (nextBtn) nextBtn.classList.remove("hidden");
+        if (finishBtn) finishBtn.classList.add("hidden");
+        if (prevBtn) prevBtn.classList.add("hidden");
+        if (skipBtn) skipBtn.classList.remove("hidden");
+
         guideModal.classList.remove("hidden");
-        localStorage.setItem('dq_has_seen_guide_' + user.uid, 'true');
       }
-    }, 1000);
+    }, 1200);
   }
 });
 

@@ -757,69 +757,314 @@
     </div>
   </div>
 
-  <!-- User Guide Modal -->
+  <!-- User Guide / Tutorial Modal -->
   <div id="guide-modal" class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="glass-card w-full max-w-3xl relative max-h-[90vh] flex flex-col">
-      <button id="close-guide-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
-      <h2 class="text-3xl font-display font-semibold mb-2 text-cyan-400">Welcome to the Queuing System! 🎉</h2>
-      <p class="text-sm text-slate-400 mb-6">Here is your quick step-by-step guide to get your first session running smoothly.</p>
+      <button id="close-guide-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none z-20">&times;</button>
       
-      <div class="overflow-y-auto flex-1 custom-scrollbar text-slate-300 pr-2 space-y-8">
-        
-        <div class="flex gap-4">
-          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-orange flex items-center justify-center text-white font-bold">1</div>
-          <div>
-            <h3 class="text-lg font-semibold text-white mb-1">Add Your Players</h3>
-            <p class="text-sm leading-relaxed">
-              Start by getting players into your system. Click <strong class="text-orange">Import Players</strong> in the left sidebar to quickly paste a list of attendees directly from the Reclub app. For walk-ins, use the <strong class="text-emerald-400">Add Player</strong> button located in the Player Management section at the bottom of the dashboard.
-            </p>
+      <!-- Tutorial Header -->
+      <div class="mb-4">
+        <h2 id="guide-header-title" class="text-3xl font-display font-semibold text-cyan-400">Welcome to the Queuing System! 🎉</h2>
+        <p id="guide-header-subtitle" class="text-sm text-slate-400 mt-1">Here's everything you need to run your first session.</p>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="mb-5">
+        <div class="flex items-center justify-between text-xs text-slate-500 mb-1">
+          <span id="guide-step-label">Step 1 of 8</span>
+          <span id="guide-step-name" class="text-cyan-400 font-semibold"></span>
+        </div>
+        <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div id="guide-progress-bar" class="h-full bg-gradient-to-r from-cyan-500 to-beginner rounded-full transition-all duration-500" style="width: 12.5%"></div>
+        </div>
+      </div>
+
+      <!-- Tutorial Steps Container -->
+      <div class="overflow-y-auto flex-1 custom-scrollbar pr-2">
+
+        <!-- Step 1: Overview -->
+        <div class="guide-step" data-guide-step="0">
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-cyan-500/30">1</div>
+            <div>
+              <h3 class="text-xl font-semibold text-white mb-2">Dashboard Overview</h3>
+              <p class="text-sm text-slate-300 leading-relaxed mb-3">
+                This is your command center! Let's get familiar with the layout:
+              </p>
+              <div class="space-y-3 text-sm text-slate-300">
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">📊</span>
+                  <div><strong class="text-white">Stats Bar (top)</strong> — Shows total waiting players, active matches, available courts, and per-skill queue counts at a glance.</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">🏟️</span>
+                  <div><strong class="text-white">Courts Section</strong> — Live court cards showing who is playing, match timers, and action buttons.</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">📋</span>
+                  <div><strong class="text-white">Queues Section</strong> — Three skill-based queues (Beginner, Intermediate, Advanced) showing upcoming match groups.</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">👥</span>
+                  <div><strong class="text-white">Player Management (bottom)</strong> — Full player table with stats, search, filters, and action buttons.</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">☰</span>
+                  <div><strong class="text-white">Sidebar Menu (left)</strong> — Access Match Log, Rankings, Import, TV Display, Sharing, and this Guide.</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="flex gap-4">
-          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">2</div>
-          <div>
-            <h3 class="text-lg font-semibold text-white mb-1">Set Up Your Courts</h3>
-            <p class="text-sm leading-relaxed">
-              In the "Courts" section at the top, click <strong class="text-white">Add Court</strong> for however many courts you have available. You can assign specific skill levels to each court if you want to restrict them, or leave them as "Any Skill".
-            </p>
+        <!-- Step 2: Adding Players -->
+        <div class="guide-step hidden" data-guide-step="1">
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-orange flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-orange/30">2</div>
+            <div>
+              <h3 class="text-xl font-semibold text-white mb-2">Add Your Players</h3>
+              <p class="text-sm text-slate-300 leading-relaxed mb-3">
+                Get players into the system using any of these three methods:
+              </p>
+              <div class="space-y-3">
+                <div class="bg-orange/10 border border-orange/30 rounded-xl p-4">
+                  <h4 class="text-sm font-bold text-orange mb-1">📥 Method 1: Bulk Import (Recommended for start of day)</h4>
+                  <p class="text-xs text-slate-300">Click <strong class="text-orange">Import Players</strong> in the sidebar → Upload a <code>.xlsx</code> or <code>.csv</code> file with Name, Skill, Gender, and Location columns. You can download a template from that page.</p>
+                </div>
+                <div class="bg-beginner/10 border border-beginner/30 rounded-xl p-4">
+                  <h4 class="text-sm font-bold text-beginner mb-1">📋 Method 2: Paste from Reclub</h4>
+                  <p class="text-xs text-slate-300">On the Import page, click <strong class="text-beginner">Import from Reclub</strong> → paste your numbered participant list directly. The system auto-parses names and optional metadata.</p>
+                </div>
+                <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+                  <h4 class="text-sm font-bold text-blue-400 mb-1">➕ Method 3: Walk-in (Add one-by-one)</h4>
+                  <p class="text-xs text-slate-300">Scroll to Player Management → click <strong class="text-blue-400">Add Player</strong> → fill in Name, Skill Level, Gender, and Location → click Add.</p>
+                </div>
+              </div>
+              <div class="mt-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 text-xs text-yellow-300">
+                ⚠️ <strong>Important:</strong> All newly added players start as <strong>Standby</strong>. Click <strong>"Return to Queue"</strong> next to their name to officially queue them for matches!
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="flex gap-4">
-          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">3</div>
-          <div>
-            <h3 class="text-lg font-semibold text-white mb-1">Generate Matches</h3>
-            <p class="text-sm leading-relaxed">
-              Now that you have players and courts, turn on the <strong class="text-white">Auto-Assign Toggle</strong> to automatically pair up players and fill empty courts continuously. Alternatively, use the <strong class="text-emerald-400">Round Generator</strong> to auto-balance and assign as many matches as possible at once!
-            </p>
+        <!-- Step 3: Setting Up Courts -->
+        <div class="guide-step hidden" data-guide-step="2">
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/30">3</div>
+            <div>
+              <h3 class="text-xl font-semibold text-white mb-2">Set Up Your Courts</h3>
+              <p class="text-sm text-slate-300 leading-relaxed mb-3">
+                Configure your courts to match your venue:
+              </p>
+              <div class="space-y-3 text-sm text-slate-300">
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">1️⃣</span>
+                  <div>In the <strong class="text-white">Courts</strong> section at the top, click <strong class="text-white">+ Add Court</strong> for each court you have.</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">2️⃣</span>
+                  <div>Each court shows its <strong class="text-green-400">Available</strong> or <strong class="text-red-400">In Progress</strong> status, a live timer, and player names.</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">3️⃣</span>
+                  <div>You can assign specific skill levels to restrict who plays on each court, or leave them open for any skill.</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="flex gap-4">
-          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">4</div>
-          <div>
-            <h3 class="text-lg font-semibold text-white mb-1">End Matches & Track Stats</h3>
-            <p class="text-sm leading-relaxed">
-              When a game finishes, click <strong class="text-green-400">End Match</strong> on that court. Select the winning team! The winners will receive a Win on their stats, the losers a Loss, and they will automatically be placed at the bottom of the queue to wait for their next game.
-            </p>
+        <!-- Step 4: Starting Matches -->
+        <div class="guide-step hidden" data-guide-step="3">
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-purple-500/30">4</div>
+            <div>
+              <h3 class="text-xl font-semibold text-white mb-2">Start Matches</h3>
+              <p class="text-sm text-slate-300 leading-relaxed mb-3">
+                Two ways to get games going:
+              </p>
+              <div class="space-y-3">
+                <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+                  <h4 class="text-sm font-bold text-emerald-400 mb-1">⚡ Auto-Assign (Hands-free)</h4>
+                  <p class="text-xs text-slate-300">Toggle on <strong class="text-white">Auto-Assign</strong> in the Courts header. The system will automatically pull the next group of 4 players from the queue and assign them whenever a court is free.</p>
+                </div>
+                <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+                  <h4 class="text-sm font-bold text-emerald-400 mb-1">🎲 Round Generator (Batch mode)</h4>
+                  <p class="text-xs text-slate-300">Click <strong class="text-emerald-400">Generate Round</strong> in the Player Management section → choose a matching mode → the system creates balanced groups and queues them all at once.</p>
+                </div>
+              </div>
+              <div class="mt-3 bg-slate-800/50 border border-slate-700/50 rounded-lg p-3">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">6 Matching Modes Available:</h4>
+                <div class="grid grid-cols-2 gap-2 text-xs text-slate-300">
+                  <div>⚖️ <strong class="text-beginner">Balanced</strong> — By win ratio</div>
+                  <div>🤝 <strong class="text-yellow-400">Social Mix</strong> — Rotate partners</div>
+                  <div>🎯 <strong>Skill Separated</strong> — Same level only</div>
+                  <div>🏆 <strong>Winners/Losers</strong> — Wins play wins</div>
+                  <div>👫 <strong>Mixed Doubles</strong> — Male + Female teams</div>
+                  <div>🔀 <strong class="text-yellow-400">Flex Borrow</strong> — Borrow from Int. pool</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="flex gap-4">
-          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white font-bold">5</div>
-          <div>
-            <h3 class="text-lg font-semibold text-white mb-1">End of the Day</h3>
-            <p class="text-sm leading-relaxed">
-              When the event is over, click <strong class="text-red-400">End Day (Archive All)</strong>. This will clear the queues and save everyone's stats. Tomorrow, you can instantly revive returning players with their historical stats intact!
-            </p>
+        <!-- Step 5: Custom Matches -->
+        <div class="guide-step hidden" data-guide-step="4">
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-orange flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-orange/30">5</div>
+            <div>
+              <h3 class="text-xl font-semibold text-white mb-2">Custom Match Builder</h3>
+              <p class="text-sm text-slate-300 leading-relaxed mb-3">
+                Need full control over who plays with whom? Build a custom match:
+              </p>
+              <div class="space-y-3 text-sm text-slate-300">
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">1️⃣</span>
+                  <div>Click <strong class="text-orange">Configure Match</strong> in the Custom Match panel (Player Management section).</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">2️⃣</span>
+                  <div>Select any 4 players from the dropdowns for <strong class="text-beginner">Team A</strong> and <strong class="text-orange">Team B</strong>.</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">3️⃣</span>
+                  <div>Click <strong class="text-yellow-400">⚖️ Auto-Balance</strong> to let the system suggest the fairest split based on stats.</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">4️⃣</span>
+                  <div>Click <strong class="text-white">Queue Custom Match</strong> — it gets priority and waits for the next available court.</div>
+                </div>
+              </div>
+              <div class="mt-3 bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 text-xs text-purple-300">
+                💡 <strong>Tip:</strong> Custom matches bypass skill restrictions — mix Beginners with Advanced players freely!
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 6: Finishing Matches & Stats -->
+        <div class="guide-step hidden" data-guide-step="5">
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-green-500/30">6</div>
+            <div>
+              <h3 class="text-xl font-semibold text-white mb-2">End Matches & Track Stats</h3>
+              <p class="text-sm text-slate-300 leading-relaxed mb-3">
+                When a game finishes on a court:
+              </p>
+              <div class="space-y-3 text-sm text-slate-300">
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">1️⃣</span>
+                  <div>Click <strong class="text-green-400">End Match</strong> on the court card.</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">2️⃣</span>
+                  <div>A popup asks: <strong class="text-beginner">Team A Wins 🏆</strong>, <strong class="text-orange">Team B Wins 🏆</strong>, or <strong class="text-slate-400">No Winner</strong>.</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">3️⃣</span>
+                  <div>Winners get <strong class="text-green-400">+1 Win</strong>, losers get <strong class="text-red-400">+1 Loss</strong>. Stats are tracked per session and carry over!</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">4️⃣</span>
+                  <div>Players move to <strong class="text-white">Done Playing</strong>. Click <strong class="text-beginner">Return to Queue</strong> when they're ready again — they go to the back of the line.</div>
+                </div>
+              </div>
+              <div class="mt-3 grid grid-cols-2 gap-3">
+                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50 text-center">
+                  <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Player Stats Tracked</p>
+                  <p class="text-xs text-slate-300"><span class="text-purple-400 font-bold">GP</span> · <span class="text-green-400 font-bold">Wins</span> · <span class="text-red-400 font-bold">Losses</span> · <span class="text-blue-400 font-bold">Win %</span></p>
+                </div>
+                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50 text-center">
+                  <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Player Status Flow</p>
+                  <p class="text-xs text-slate-300">Standby → Queued → Playing → Done</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 7: TV Display & Sharing -->
+        <div class="guide-step hidden" data-guide-step="6">
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/30">7</div>
+            <div>
+              <h3 class="text-xl font-semibold text-white mb-2">TV Display & Sharing</h3>
+              <p class="text-sm text-slate-300 leading-relaxed mb-3">
+                Show everyone what's happening on a big screen!
+              </p>
+              <div class="space-y-3 text-sm text-slate-300">
+                <div class="flex items-start gap-3 bg-indigo-500/10 rounded-lg p-3 border border-indigo-500/30">
+                  <span class="text-lg">📺</span>
+                  <div>
+                    <strong class="text-white">TV Display</strong> — Click <strong>View TV Display</strong> in the sidebar. Open this on a TV or large screen at your venue. It shows live courts, upcoming matches, and a daily leaderboard with top 3 players.
+                  </div>
+                </div>
+                <div class="flex items-start gap-3 bg-indigo-500/10 rounded-lg p-3 border border-indigo-500/30">
+                  <span class="text-lg">🔗</span>
+                  <div>
+                    <strong class="text-white">Share TV</strong> — Click <strong>Share TV</strong> in the sidebar to get a <strong class="text-beginner">QR code</strong> and shareable link. Spectators can scan it on their phone to follow along!
+                  </div>
+                </div>
+                <div class="flex items-start gap-3 bg-indigo-500/10 rounded-lg p-3 border border-indigo-500/30">
+                  <span class="text-lg">🏆</span>
+                  <div>
+                    <strong class="text-white">Rankings & Match Log</strong> — Use the sidebar to view the full <strong class="text-yellow-400">Player Ranking</strong> (sorted by Win%) and the complete <strong>Match Log</strong> with pagination.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 8: End of Day -->
+        <div class="guide-step hidden" data-guide-step="7">
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-red-500/30">8</div>
+            <div>
+              <h3 class="text-xl font-semibold text-white mb-2">End of the Day</h3>
+              <p class="text-sm text-slate-300 leading-relaxed mb-3">
+                When the session is over:
+              </p>
+              <div class="space-y-3 text-sm text-slate-300">
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">1️⃣</span>
+                  <div>Scroll to Player Management and click the red <strong class="text-red-400">End Day (Archive All)</strong> button.</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">2️⃣</span>
+                  <div>All players are archived, queues and courts are cleared, but <strong class="text-white">stats are preserved forever</strong>.</div>
+                </div>
+                <div class="flex items-start gap-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <span class="text-lg">3️⃣</span>
+                  <div>Next session, import the same players and their <strong class="text-beginner">historical stats will be restored</strong> automatically!</div>
+                </div>
+              </div>
+              <div class="mt-4 bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4">
+                <h4 class="text-sm font-bold text-cyan-400 mb-2">💡 Quick Tips Before You Start</h4>
+                <ul class="text-xs text-slate-300 space-y-1.5">
+                  <li>• <strong>Mark absent players</strong> — click "Absent" so they don't get called. "Return to Queue" when they're back.</li>
+                  <li>• <strong>Drag and drop</strong> match groups in the Queues section to manually reorder priority.</li>
+                  <li>• <strong>Use the Location field</strong> when adding players to note where they're sitting (makes finding them easy).</li>
+                  <li>• <strong>Install as an app</strong> — this is a PWA! Add it to your home screen for a native app experience.</li>
+                  <li>• <strong>Multiple operators OK</strong> — everything syncs in real-time. Multiple people can manage the queue together.</li>
+                  <li>• You can re-open this guide anytime from the <strong class="text-cyan-400">📖 User Guide</strong> button in the sidebar.</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
 
       </div>
       
-      <div class="pt-6 mt-4 border-t border-slate-700/50 flex justify-end">
-        <button id="guide-get-started-btn" class="btn-primary py-2 px-8 text-base shadow-lg shadow-cyan-500/20">Got it, let's start!</button>
+      <!-- Navigation Buttons -->
+      <div class="pt-5 mt-4 border-t border-slate-700/50 flex items-center justify-between">
+        <button id="guide-prev-btn" class="btn-secondary py-2 px-6 text-sm disabled:opacity-30 disabled:cursor-not-allowed hidden" disabled>← Previous</button>
+        <div class="flex-1"></div>
+        <div class="flex gap-3">
+          <button id="guide-skip-btn" class="text-sm text-slate-500 hover:text-slate-300 transition-colors py-2 px-4">Skip Tutorial</button>
+          <button id="guide-next-btn" class="btn-primary py-2 px-8 text-base shadow-lg shadow-cyan-500/20">Next Step →</button>
+          <button id="guide-get-started-btn" class="btn-primary py-2 px-8 text-base shadow-lg shadow-cyan-500/20 hidden">Got it, let's start! 🚀</button>
+        </div>
       </div>
     </div>
   </div>

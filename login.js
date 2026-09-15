@@ -314,6 +314,9 @@ registerForm.addEventListener('submit', async (e) => {
     // Keep the selected club available during the first redirect. Without this,
     // an earlier Longos preference can briefly (or permanently, if offline) win.
     localStorage.setItem('dq_club_preference', club);
+    // Flag this as a brand-new registration so the dashboard launches the
+    // full tutorial walkthrough on first load.
+    localStorage.setItem('dq_new_registration', 'true');
     resetAttempts();
     await redirectBasedOnRole(user);
   } catch (error) {
