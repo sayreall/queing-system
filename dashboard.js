@@ -1729,124 +1729,133 @@ function bindEvents() {
   const guideBtn = document.getElementById("guide-btn");
   
   window.openGuide = function() {
-    if (window.innerWidth < 768 && typeof toggleMobileMenu === 'function') {
-      // Ensure mobile menu is closed before starting the tour
-      const sidebar = document.getElementById("sidebar");
-      if (sidebar && !sidebar.classList.contains("-translate-x-full")) {
-        toggleMobileMenu();
+    try {
+      if (window.innerWidth < 768 && typeof toggleMobileMenu === 'function') {
+        const sidebar = document.getElementById("sidebar");
+        if (sidebar && !sidebar.classList.contains("-translate-x-full")) {
+          toggleMobileMenu();
+        }
+      }
+      
+      if (typeof introJs === 'undefined') {
+        if (typeof showToast === 'function') showToast("Tour library not loaded yet.", "error");
+        return;
+      }
+
+      const isMobile = window.innerWidth < 768;
+      const intro = introJs();
+      
+      const steps = [
+        {
+          title: 'Welcome to PicklQ! 🎉',
+          intro: 'Let\'s take a quick interactive tour to see how to run your first session.'
+        },
+        {
+          element: document.querySelector('#stats-container'),
+          title: 'Dashboard Stats',
+          intro: 'This top bar gives you a bird\'s-eye view of your session: total waiting players, active matches, available courts, and queue sizes.',
+          position: 'bottom'
+        }
+      ];
+
+      if (isMobile) {
+        steps.push({
+          element: document.querySelector('#open-add-player-modal'),
+          title: 'Add Players',
+          intro: 'Start by getting players into the system here. You can manually add them, or open the Menu to bulk import.',
+          position: 'bottom'
+        });
+      } else {
+        steps.push({
+          element: document.querySelector('#import-players-btn'),
+          title: 'Add Players',
+          intro: 'Start by getting players into the system. You can bulk import via CSV/Excel, paste from Reclub, or manually Add Walk-ins below.',
+          position: 'right'
+        });
+      }
+
+      steps.push(
+        {
+          element: document.querySelector('#courts-container'),
+          title: 'Set Up Courts',
+          intro: 'Click <b>+ Add Court</b> to set up your courts. You can specify skill restrictions (e.g., "Beginner Only") or leave them open.',
+          position: 'bottom'
+        },
+        {
+          element: document.querySelector('#auto-assign-toggle') ? document.querySelector('#auto-assign-toggle').parentElement : null,
+          title: 'Auto-Assign',
+          intro: 'Turn this on for a hands-free experience! The system will automatically pull 4 players from the correct queue and assign them whenever a court opens up.',
+          position: 'bottom'
+        },
+        {
+          element: document.querySelector('#round-generator-panel'),
+          title: 'Round Generator',
+          intro: 'Prefer batch processing? Use the Round Generator to auto-balance and queue matches for ALL standby players at once.',
+          position: 'top'
+        },
+        {
+          element: document.querySelector('#custom-match-panel'),
+          title: 'Custom Matches',
+          intro: 'Need full control? Build custom matchups by selecting any 4 players and skip the standard skill restrictions.',
+          position: 'top'
+        },
+        {
+          element: document.querySelector('#queues-container'),
+          title: 'Manage Queues',
+          intro: 'Matches ready to play appear here. You can manually drag and drop them to reorder their priority.',
+          position: 'top'
+        }
+      );
+
+      if (isMobile) {
+        steps.push({
+          element: document.querySelector('#mobile-menu-btn'),
+          title: 'Menu & TV Display',
+          intro: 'Open this menu to access the Match Log, Rankings, and the TV Display for a big screen view.',
+          position: 'bottom'
+        });
+      } else {
+        steps.push({
+          element: document.querySelector('#view-tv-btn'),
+          title: 'TV Display & Sharing',
+          intro: 'Click here to open a TV-friendly display of live courts and rankings, or use <b>Share TV</b> to let players scan a QR code!',
+          position: 'right'
+        });
+      }
+
+      steps.push({
+        element: document.querySelector('#archive-all'),
+        title: 'End of the Day',
+        intro: 'When the session is over, click this. It clears the queues and courts, but safely stores everyone\'s stats for the next time they play!',
+        position: 'top'
+      });
+
+      // Strictly filter out any steps where the target element was requested but is null
+      const validSteps = steps.filter(step => {
+        if (step.hasOwnProperty('element') && step.element === null) return false;
+        return true;
+      });
+
+      intro.setOptions({
+        steps: validSteps,
+        showProgress: true,
+        showBullets: false,
+        tooltipClass: 'custom-intro-tooltip',
+        highlightClass: 'custom-intro-highlight',
+        exitOnOverlayClick: true,
+        nextLabel: 'Next &rarr;',
+        prevLabel: '&larr; Back',
+        doneLabel: 'Got it! 🚀',
+        scrollPadding: 80
+      });
+      
+      intro.start();
+    } catch (err) {
+      console.error("Tour error:", err);
+      if (typeof showToast === 'function') {
+        showToast("Error starting tour: " + err.message, "error");
       }
     }
-    
-    if (typeof introJs === 'undefined') {
-      console.warn("introJs is not loaded.");
-      return;
-    }
-
-    const isMobile = window.innerWidth < 768;
-    const intro = introJs();
-    
-    const steps = [
-      {
-        title: 'Welcome to PicklQ! 🎉',
-        intro: 'Let\'s take a quick interactive tour to see how to run your first session.'
-      },
-      {
-        element: document.querySelector('#stats-container'),
-        title: 'Dashboard Stats',
-        intro: 'This top bar gives you a bird\'s-eye view of your session: total waiting players, active matches, available courts, and queue sizes.',
-        position: 'bottom'
-      }
-    ];
-
-    if (isMobile) {
-      steps.push({
-        element: document.querySelector('#open-add-player-modal'),
-        title: 'Add Players',
-        intro: 'Start by getting players into the system here. You can manually add them, or open the Menu to bulk import.',
-        position: 'bottom'
-      });
-    } else {
-      steps.push({
-        element: document.querySelector('#import-players-btn'),
-        title: 'Add Players',
-        intro: 'Start by getting players into the system. You can bulk import via CSV/Excel, paste from Reclub, or manually Add Walk-ins below.',
-        position: 'right'
-      });
-    }
-
-    steps.push(
-      {
-        element: document.querySelector('#courts-container'),
-        title: 'Set Up Courts',
-        intro: 'Click <b>+ Add Court</b> to set up your courts. You can specify skill restrictions (e.g., "Beginner Only") or leave them open.',
-        position: 'bottom'
-      },
-      {
-        element: document.querySelector('#auto-assign-toggle')?.parentElement,
-        title: 'Auto-Assign',
-        intro: 'Turn this on for a hands-free experience! The system will automatically pull 4 players from the correct queue and assign them whenever a court opens up.',
-        position: 'bottom'
-      },
-      {
-        element: document.querySelector('#round-generator-panel'),
-        title: 'Round Generator',
-        intro: 'Prefer batch processing? Use the Round Generator to auto-balance and queue matches for ALL standby players at once.',
-        position: 'top'
-      },
-      {
-        element: document.querySelector('#custom-match-panel'),
-        title: 'Custom Matches',
-        intro: 'Need full control? Build custom matchups by selecting any 4 players and skip the standard skill restrictions.',
-        position: 'top'
-      },
-      {
-        element: document.querySelector('#queues-container'),
-        title: 'Manage Queues',
-        intro: 'Matches ready to play appear here. You can manually drag and drop them to reorder their priority.',
-        position: 'top'
-      }
-    );
-
-    if (isMobile) {
-      steps.push({
-        element: document.querySelector('#mobile-menu-btn'),
-        title: 'Menu & TV Display',
-        intro: 'Open this menu to access the Match Log, Rankings, and the TV Display for a big screen view.',
-        position: 'bottom'
-      });
-    } else {
-      steps.push({
-        element: document.querySelector('#view-tv-btn'),
-        title: 'TV Display & Sharing',
-        intro: 'Click here to open a TV-friendly display of live courts and rankings, or use <b>Share TV</b> to let players scan a QR code!',
-        position: 'right'
-      });
-    }
-
-    steps.push({
-      element: document.querySelector('#archive-all'),
-      title: 'End of the Day',
-      intro: 'When the session is over, click this. It clears the queues and courts, but safely stores everyone\'s stats for the next time they play!',
-      position: 'top'
-    });
-
-    // Filter out any steps where the target element doesn't exist to prevent crashes
-    const validSteps = steps.filter(step => !step.element || document.body.contains(step.element));
-
-    intro.setOptions({
-      steps: validSteps,
-      showProgress: true,
-      showBullets: false,
-      tooltipClass: 'custom-intro-tooltip',
-      highlightClass: 'custom-intro-highlight',
-      exitOnOverlayClick: true,
-      nextLabel: 'Next &rarr;',
-      prevLabel: '&larr; Back',
-      doneLabel: 'Got it! 🚀',
-      scrollPadding: 80
-    });
-    
-    intro.start();
   };
 
   guideBtn?.addEventListener("click", window.openGuide);
