@@ -1737,20 +1737,25 @@ function bindEvents() {
         window.__activeTour.exit(true);
       }
 
+      let delay = 10;
       if (window.innerWidth < 768 && typeof toggleMobileMenu === 'function') {
         const sidebar = document.getElementById("sidebar");
         if (sidebar && !sidebar.classList.contains("-translate-x-full")) {
           toggleMobileMenu();
+          delay = 350; // Wait for the sidebar animation to finish
         }
       }
       
-      if (typeof introJs === 'undefined') {
-        if (typeof showToast === 'function') showToast("Tour library not loaded yet.", "error");
-        return;
-      }
+      setTimeout(() => {
+        try {
+          if (typeof introJs === 'undefined') {
+            if (typeof showToast === 'function') showToast("Tour library not loaded yet.", "error");
+            window.__tourStarting = false;
+            return;
+          }
 
-      const isMobile = window.innerWidth < 768;
-      const intro = introJs();
+          const isMobile = window.innerWidth < 768;
+          const intro = introJs();
       
       const steps = [
         {
@@ -1870,12 +1875,17 @@ function bindEvents() {
       window.__activeTour = intro;
       intro.start();
       window.__tourStarting = false;
+        } catch (innerErr) {
+          window.__tourStarting = false;
+          console.error("Tour error:", innerErr);
+          if (typeof showToast === 'function') {
+            showToast("Error starting tour: " + innerErr.message, "error");
+          }
+        }
+      }, delay);
     } catch (err) {
       window.__tourStarting = false;
-      console.error("Tour error:", err);
-      if (typeof showToast === 'function') {
-        showToast("Error starting tour: " + err.message, "error");
-      }
+      console.error("Tour wrapper error:", err);
     }
   };
 

@@ -763,7 +763,10 @@ body {
 }
 
 /* Fix CSS Stacking Contexts trapping elements under the overlay */
-.introjs-fixParent {
+.introjs-fixParent,
+body.introjs-open .glass-card,
+body.introjs-open .glass-subcard,
+body.introjs-open #sidebar {
   z-index: auto !important;
   opacity: 1 !important;
   transform: none !important;
