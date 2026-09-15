@@ -1730,6 +1730,10 @@ function bindEvents() {
   
   window.openGuide = function() {
     try {
+      if (window.__activeTour) {
+        window.__activeTour.exit(true);
+      }
+
       if (window.innerWidth < 768 && typeof toggleMobileMenu === 'function') {
         const sidebar = document.getElementById("sidebar");
         if (sidebar && !sidebar.classList.contains("-translate-x-full")) {
@@ -1843,12 +1847,17 @@ function bindEvents() {
         tooltipClass: 'custom-intro-tooltip',
         highlightClass: 'custom-intro-highlight',
         exitOnOverlayClick: true,
-        nextLabel: 'Next &rarr;',
-        prevLabel: '&larr; Back',
+        disableInteraction: true,
+        nextLabel: 'Next →',
+        prevLabel: '← Back',
         doneLabel: 'Got it! 🚀',
         scrollPadding: 80
       });
       
+      intro.onexit(() => { window.__activeTour = null; });
+      intro.oncomplete(() => { window.__activeTour = null; });
+      
+      window.__activeTour = intro;
       intro.start();
     } catch (err) {
       console.error("Tour error:", err);
