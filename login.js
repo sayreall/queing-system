@@ -354,11 +354,20 @@ function friendlyError(code) {
 
 // ─── Auth state change ─────────────────────────────────────────────────────
 onAuthStateChanged(auth, (user) => {
-  // Hide splash screen once auth state is resolved
+  // Hide splash screen smoothly once auth state is resolved
   const splash = document.getElementById('splash-screen');
-  if (splash) {
-    splash.classList.add('splash-hidden');
-    splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+  if (splash && !splash.classList.contains('splash-skip')) {
+    const minDisplayMs = 800;
+    const splashStart = window.__splashStart || Date.now();
+    const elapsed = Date.now() - splashStart;
+    const delay = Math.max(0, minDisplayMs - elapsed);
+
+    setTimeout(() => {
+      splash.classList.add('splash-hidden');
+      splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+    }, delay);
+  } else if (splash) {
+    splash.remove();
   }
 
   if (user && !registrationInProgress) {

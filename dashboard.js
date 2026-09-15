@@ -1725,95 +1725,92 @@ function bindEvents() {
     if (e.target === rankingModal) rankingModal.classList.add("hidden");
   });
 
-  // Guide / Tutorial Walkthrough Logic
+  // Interactive Tour Logic (Intro.js)
   const guideBtn = document.getElementById("guide-btn");
-  const guideModal = document.getElementById("guide-modal");
-  const closeGuideBtn = document.getElementById("close-guide-modal");
-  const startGuideBtn = document.getElementById("guide-get-started-btn");
-  const guideNextBtn = document.getElementById("guide-next-btn");
-  const guidePrevBtn = document.getElementById("guide-prev-btn");
-  const guideSkipBtn = document.getElementById("guide-skip-btn");
-  const guideProgressBar = document.getElementById("guide-progress-bar");
-  const guideStepLabel = document.getElementById("guide-step-label");
-  const guideStepName = document.getElementById("guide-step-name");
-
-  const GUIDE_TOTAL_STEPS = 8;
-  const GUIDE_STEP_NAMES = [
-    "Dashboard Overview",
-    "Adding Players",
-    "Setting Up Courts",
-    "Starting Matches",
-    "Custom Match Builder",
-    "Finishing Matches & Stats",
-    "TV Display & Sharing",
-    "End of the Day"
-  ];
-  let guideCurrentStep = 0;
-
-  function updateGuideStep() {
-    // Show/hide step panels
-    document.querySelectorAll(".guide-step").forEach(el => {
-      const idx = parseInt(el.dataset.guideStep, 10);
-      el.classList.toggle("hidden", idx !== guideCurrentStep);
-    });
-
-    // Update progress bar
-    const pct = ((guideCurrentStep + 1) / GUIDE_TOTAL_STEPS) * 100;
-    if (guideProgressBar) guideProgressBar.style.width = pct + "%";
-    if (guideStepLabel) guideStepLabel.textContent = `Step ${guideCurrentStep + 1} of ${GUIDE_TOTAL_STEPS}`;
-    if (guideStepName) guideStepName.textContent = GUIDE_STEP_NAMES[guideCurrentStep] || "";
-
-    // Show/hide Prev button
-    if (guidePrevBtn) {
-      guidePrevBtn.classList.toggle("hidden", guideCurrentStep === 0);
-      guidePrevBtn.disabled = guideCurrentStep === 0;
+  
+  window.openGuide = function() {
+    if (window.innerWidth < 768 && toggleMobileMenu) toggleMobileMenu();
+    
+    if (typeof introJs === 'undefined') {
+      console.warn("introJs is not loaded.");
+      return;
     }
 
-    // Show Next or Finish button
-    const isLast = guideCurrentStep === GUIDE_TOTAL_STEPS - 1;
-    if (guideNextBtn) guideNextBtn.classList.toggle("hidden", isLast);
-    if (startGuideBtn) startGuideBtn.classList.toggle("hidden", !isLast);
-    if (guideSkipBtn) guideSkipBtn.classList.toggle("hidden", isLast);
-
-    // Scroll step content to top
-    const scrollContainer = guideModal?.querySelector(".overflow-y-auto");
-    if (scrollContainer) scrollContainer.scrollTop = 0;
-  }
-
-  function openGuide() {
-    guideCurrentStep = 0;
-    updateGuideStep();
-    guideModal?.classList.remove("hidden");
-    if (window.innerWidth < 768 && toggleMobileMenu) toggleMobileMenu();
-  }
-
-  const closeGuide = () => {
-    guideModal?.classList.add("hidden");
+    const intro = introJs();
+    intro.setOptions({
+      showProgress: true,
+      showBullets: false,
+      tooltipClass: 'custom-intro-tooltip',
+      highlightClass: 'custom-intro-highlight',
+      exitOnOverlayClick: true,
+      nextLabel: 'Next &rarr;',
+      prevLabel: '&larr; Back',
+      doneLabel: 'Got it! 🚀',
+      steps: [
+        {
+          title: 'Welcome to PicklQ! 🎉',
+          intro: 'Let\'s take a quick interactive tour to see how to run your first session.'
+        },
+        {
+          element: document.querySelector('#stats-container'),
+          title: 'Dashboard Stats',
+          intro: 'This top bar gives you a bird\'s-eye view of your session: total waiting players, active matches, available courts, and queue sizes.',
+          position: 'bottom'
+        },
+        {
+          element: document.querySelector('#import-players-btn'),
+          title: 'Add Players',
+          intro: 'Start by getting players into the system. You can bulk import via CSV/Excel, paste from Reclub, or manually Add Walk-ins below.',
+          position: 'right'
+        },
+        {
+          element: document.querySelector('#courts-container'),
+          title: 'Set Up Courts',
+          intro: 'Click <b>+ Add Court</b> to set up your courts. You can specify skill restrictions (e.g., "Beginner Only") or leave them open.',
+          position: 'top'
+        },
+        {
+          element: document.querySelector('#auto-assign-toggle')?.parentElement,
+          title: 'Auto-Assign',
+          intro: 'Turn this on for a hands-free experience! The system will automatically pull 4 players from the correct queue and assign them whenever a court opens up.',
+          position: 'left'
+        },
+        {
+          element: document.querySelector('#round-generator-panel'),
+          title: 'Round Generator',
+          intro: 'Prefer batch processing? Use the Round Generator to auto-balance and queue matches for ALL standby players at once using 6 different matching modes.',
+          position: 'right'
+        },
+        {
+          element: document.querySelector('#custom-match-panel'),
+          title: 'Custom Matches',
+          intro: 'Need full control? Build custom matchups by selecting any 4 players and skip the standard skill restrictions.',
+          position: 'right'
+        },
+        {
+          element: document.querySelector('#queues-container'),
+          title: 'Manage Queues',
+          intro: 'Matches ready to play appear here. You can manually drag and drop them to reorder their priority.',
+          position: 'top'
+        },
+        {
+          element: document.querySelector('#view-tv-btn'),
+          title: 'TV Display & Sharing',
+          intro: 'Click here to open a TV-friendly display of live courts and rankings, or use <b>Share TV</b> to let players scan a QR code!',
+          position: 'right'
+        },
+        {
+          element: document.querySelector('#archive-all'),
+          title: 'End of the Day',
+          intro: 'When the session is over, click this. It clears the queues and courts, but safely stores everyone\'s stats for the next time they play!',
+          position: 'left'
+        }
+      ]
+    });
+    intro.start();
   };
 
-  guideBtn?.addEventListener("click", openGuide);
-
-  guideNextBtn?.addEventListener("click", () => {
-    if (guideCurrentStep < GUIDE_TOTAL_STEPS - 1) {
-      guideCurrentStep++;
-      updateGuideStep();
-    }
-  });
-
-  guidePrevBtn?.addEventListener("click", () => {
-    if (guideCurrentStep > 0) {
-      guideCurrentStep--;
-      updateGuideStep();
-    }
-  });
-
-  guideSkipBtn?.addEventListener("click", closeGuide);
-  closeGuideBtn?.addEventListener("click", closeGuide);
-  startGuideBtn?.addEventListener("click", closeGuide);
-
-  guideModal?.addEventListener("click", (e) => {
-    if (e.target === guideModal) closeGuide();
-  });
+  guideBtn?.addEventListener("click", window.openGuide);
 }
 
 async function bootstrap() {
@@ -2411,11 +2408,21 @@ function bindMatchLogEvents() {
 
 // Protect the route
 onAuthStateChanged(auth, async (user) => {
-  // Dismiss splash screen once auth is resolved
+  // Dismiss splash screen smoothly once auth is resolved
   const splash = document.getElementById('splash-screen');
-  if (splash) {
-    splash.classList.add('splash-hidden');
-    splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+  if (splash && !splash.classList.contains('splash-skip')) {
+    // Ensure the splash shows for a minimum time so entrance animations play
+    const minDisplayMs = 800;
+    const splashStart = window.__splashStart || Date.now();
+    const elapsed = Date.now() - splashStart;
+    const delay = Math.max(0, minDisplayMs - elapsed);
+
+    setTimeout(() => {
+      splash.classList.add('splash-hidden');
+      splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+    }, delay);
+  } else if (splash) {
+    splash.remove();
   }
 
   if (!user) {
@@ -2460,41 +2467,8 @@ onAuthStateChanged(auth, async (user) => {
     localStorage.setItem('dq_has_seen_guide_' + user.uid, 'true');
 
     setTimeout(() => {
-      const guideModal = document.getElementById("guide-modal");
-      const headerTitle = document.getElementById("guide-header-title");
-      const headerSubtitle = document.getElementById("guide-header-subtitle");
-
-      if (guideModal) {
-        // Show a personalised welcome for brand-new registrations
-        if (isNewRegistration) {
-          if (headerTitle) headerTitle.textContent = "Welcome aboard! 🎉 Let's get you started";
-          if (headerSubtitle) headerSubtitle.textContent = "Your account is ready! Follow this quick tutorial to learn how to run your first session.";
-        } else {
-          if (headerTitle) headerTitle.textContent = "Welcome to the Queuing System! 🎉";
-          if (headerSubtitle) headerSubtitle.textContent = "Here's everything you need to run your first session.";
-        }
-
-        // Reset to step 1 and open
-        const allSteps = document.querySelectorAll(".guide-step");
-        allSteps.forEach(el => {
-          el.classList.toggle("hidden", el.dataset.guideStep !== "0");
-        });
-        const progressBar = document.getElementById("guide-progress-bar");
-        if (progressBar) progressBar.style.width = "12.5%";
-        const stepLabel = document.getElementById("guide-step-label");
-        if (stepLabel) stepLabel.textContent = "Step 1 of 8";
-        const stepName = document.getElementById("guide-step-name");
-        if (stepName) stepName.textContent = "Dashboard Overview";
-        const nextBtn = document.getElementById("guide-next-btn");
-        const finishBtn = document.getElementById("guide-get-started-btn");
-        const prevBtn = document.getElementById("guide-prev-btn");
-        const skipBtn = document.getElementById("guide-skip-btn");
-        if (nextBtn) nextBtn.classList.remove("hidden");
-        if (finishBtn) finishBtn.classList.add("hidden");
-        if (prevBtn) prevBtn.classList.add("hidden");
-        if (skipBtn) skipBtn.classList.remove("hidden");
-
-        guideModal.classList.remove("hidden");
+      if (typeof window.openGuide === 'function') {
+        window.openGuide();
       }
     }, 1200);
   }

@@ -94,6 +94,18 @@
     </div>
     <div class="splash-spinner"></div>
   </div>
+  <script>
+    (function() {
+      var splash = document.getElementById('splash-screen');
+      if (!splash) return;
+      if (sessionStorage.getItem('dq_splash_shown')) {
+        splash.classList.add('splash-skip');
+      } else {
+        sessionStorage.setItem('dq_splash_shown', '1');
+        window.__splashStart = Date.now();
+      }
+    })();
+  </script>
 
   <div class="page-bg"></div>
 

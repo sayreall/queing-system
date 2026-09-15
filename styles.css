@@ -615,13 +615,44 @@ body {
     radial-gradient(circle at 20% 15%, rgba(31, 207, 177, 0.18), transparent 40%),
     radial-gradient(circle at 80% 80%, rgba(232, 90, 26, 0.14), transparent 40%),
     var(--bg-base);
-  transition: opacity 0.55s ease, visibility 0.55s ease;
+  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+              filter 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+              visibility 0.7s;
 }
 
+/* Entrance animation for splash content */
+#splash-screen > * {
+  animation: splashFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+#splash-screen > *:nth-child(1) { animation-delay: 0.1s; }
+#splash-screen > *:nth-child(2) { animation-delay: 0.25s; }
+#splash-screen > *:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes splashFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Smooth dismiss — scale up, blur out, fade */
 #splash-screen.splash-hidden {
   opacity: 0;
+  transform: scale(1.04);
+  filter: blur(8px);
   visibility: hidden;
   pointer-events: none;
+}
+
+/* Skip splash entirely for internal navigations */
+#splash-screen.splash-skip {
+  display: none !important;
 }
 
 .splash-logo {
@@ -659,6 +690,12 @@ body {
   text-align: center;
   line-height: 1.15;
   margin-bottom: 2px;
+  background: linear-gradient(90deg, #F5C42A 0%, #fff 45%, #F5C42A 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: splashShimmer 2.5s ease-in-out infinite;
 }
 
 .splash-subtitle {
@@ -691,6 +728,11 @@ body {
   50%       { transform: scale(1.06); filter: drop-shadow(0 0 36px rgba(245, 196, 42, 0.55)); }
 }
 
+@keyframes splashShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
 /* Extra-small screens (< 360px) */
 @media (max-width: 360px) {
   #splash-screen {
@@ -713,3 +755,77 @@ body {
     height: 32px;
   }
 }
+
+/* ===== Intro.js Overrides ===== */
+.introjs-overlay {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(4px);
+}
+.custom-intro-tooltip {
+  background: rgba(15, 61, 61, 0.95) !important;
+  border: 1px solid rgba(31, 207, 177, 0.3) !important;
+  border-radius: 16px !important;
+  color: #F2E8D5 !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5) !important;
+  font-family: "Plus Jakarta Sans", sans-serif !important;
+  max-width: 350px !important;
+}
+.introjs-arrow.top {
+  border-bottom-color: rgba(15, 61, 61, 0.95) !important;
+}
+.introjs-arrow.bottom {
+  border-top-color: rgba(15, 61, 61, 0.95) !important;
+}
+.introjs-arrow.left {
+  border-right-color: rgba(15, 61, 61, 0.95) !important;
+}
+.introjs-arrow.right {
+  border-left-color: rgba(15, 61, 61, 0.95) !important;
+}
+.introjs-tooltip-title {
+  font-family: "Rajdhani", sans-serif !important;
+  color: #1fcfb1 !important;
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+}
+.introjs-tooltiptext {
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+  color: #a8c4be !important;
+}
+.introjs-bullets ul li a {
+  background: rgba(255,255,255,0.2) !important;
+}
+.introjs-bullets ul li a.active {
+  background: #1fcfb1 !important;
+}
+.introjs-button {
+  background: transparent !important;
+  border: 1px solid rgba(31, 207, 177, 0.4) !important;
+  color: #1fcfb1 !important;
+  text-shadow: none !important;
+  border-radius: 999px !important;
+  padding: 6px 14px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+.introjs-button:hover {
+  background: rgba(31, 207, 177, 0.15) !important;
+  color: #1fcfb1 !important;
+}
+.introjs-nextbutton, .introjs-donebutton {
+  background: linear-gradient(135deg, #E85A1A, #c44510) !important;
+  border: none !important;
+  color: white !important;
+}
+.introjs-nextbutton:hover, .introjs-donebutton:hover {
+  background: linear-gradient(135deg, #ff6b25, #d95115) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(232, 90, 26, 0.4) !important;
+}
+.custom-intro-highlight {
+  box-shadow: 0 0 0 4px rgba(31, 207, 177, 0.4), 0 0 16px rgba(31, 207, 177, 0.2) !important;
+  border-radius: 12px !important;
+}
+
