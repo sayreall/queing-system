@@ -768,7 +768,13 @@ body {
   color: #F2E8D5 !important;
   box-shadow: 0 20px 40px rgba(0,0,0,0.5) !important;
   font-family: "Plus Jakarta Sans", sans-serif !important;
-  max-width: 350px !important;
+  width: max-content !important;
+  max-width: 90vw !important;
+}
+@media (min-width: 768px) {
+  .custom-intro-tooltip {
+    max-width: 350px !important;
+  }
 }
 .introjs-arrow.top {
   border-bottom-color: rgba(15, 61, 61, 0.95) !important;

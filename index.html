@@ -96,15 +96,11 @@
   <div class="page-bg"></div>
 
   <!-- Mobile Overlay -->
-  <div id="mobile-overlay" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-40 hidden md:hidden backdrop-blur-sm transition-opacity opacity-0"></div>
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="w-64 bg-slate-900/95 border-r border-slate-800/60 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] fixed inset-y-0 left-0 z-40 transform -translate-x-full md:relative md:translate-x-0 md:w-20 lg:w-64 shadow-2xl md:shadow-none backdrop-blur-xl">
-    <!-- Header -->
-    <div class="p-4 flex items-center border-b border-slate-800/60 h-[72px] md:h-[88px]">
-      <button id="close-sidebar-btn" class="md:hidden mr-3 text-slate-400 hover:text-white transition-colors">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-      </button>
+  <aside id="sidebar" class="absolute md:relative top-0 left-0 w-64 md:w-16 -translate-x-full md:translate-x-0 transition-all duration-300 flex flex-col bg-panel border-r border-slate-700/50 h-screen z-50 flex-shrink-0 overflow-hidden" style="background: rgba(15, 61, 61, 0.95);">
+    <div class="h-[88px] flex items-center px-3 border-b border-slate-700/50 cursor-pointer flex-shrink-0 hover:bg-slate-800/50 transition-colors" id="sidebar-toggle" style="padding-left: 0.6rem;">
       <img src="deuce-game-logo.png" alt="Logo" class="sidebar-logo w-11 h-11 rounded-full object-cover flex-shrink-0" onerror="this.style.display='none'" />
       <span class="ml-4 font-display font-semibold text-lg text-white whitespace-nowrap md:opacity-0 transition-opacity duration-300 sidebar-text block">Menu</span>
     </div>
@@ -235,7 +231,7 @@
 
         <div id="pending-matches-container"></div>
 
-        <div class="grid gap-4">
+        <div class="grid gap-4" id="queues-container">
           <div class="glass-card" data-skill-card="beginner">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
