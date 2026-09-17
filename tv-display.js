@@ -255,10 +255,16 @@ function renderUpcomingMatches() {
     }
   }
   
-  if (upcomingMatchesHTML.length > 0) {
-    container.innerHTML = upcomingMatchesHTML.join("");
+  const newHTML = upcomingMatchesHTML.length > 0 
+    ? upcomingMatchesHTML.join("") 
+    : `<div class="col-span-full glass-card text-center text-slate-400 py-8">No players waiting for a match</div>`;
+  
+  if (window.morphdom) {
+    const temp = container.cloneNode(false);
+    temp.innerHTML = newHTML;
+    morphdom(container, temp, { childrenOnly: true });
   } else {
-    container.innerHTML = `<div class="col-span-full glass-card text-center text-slate-400 py-8">No players waiting for a match</div>`;
+    container.innerHTML = newHTML;
   }
 }
 
@@ -309,10 +315,11 @@ function renderLeaderboards() {
   // Full Rankings
   const fullContainer = document.getElementById("full-rankings-container");
   if (fullContainer) {
+    let newHTML = "";
     if (ranked.length === 0) {
-      fullContainer.innerHTML = `<div class="col-span-full text-slate-500 text-center py-4">No active players</div>`;
+      newHTML = `<div class="col-span-full text-slate-500 text-center py-4">No active players</div>`;
     } else {
-      fullContainer.innerHTML = ranked.map((player, index) => {
+      newHTML = ranked.map((player, index) => {
         const rank = index + 1;
         const rankColor = rank === 1 ? "text-gold" : rank === 2 ? "text-slate-300" : rank === 3 ? "text-amber-600" : "text-slate-500";
         
@@ -329,6 +336,14 @@ function renderLeaderboards() {
           </div>
         `;
       }).join("");
+    }
+    
+    if (window.morphdom) {
+      const temp = fullContainer.cloneNode(false);
+      temp.innerHTML = newHTML;
+      morphdom(fullContainer, temp, { childrenOnly: true });
+    } else {
+      fullContainer.innerHTML = newHTML;
     }
   }
 }

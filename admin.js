@@ -1,4 +1,4 @@
-﻿import { 
+import { 
   auth, 
   db, 
   signOut, 
@@ -69,76 +69,100 @@ function loadUsers() {
   const usersQuery = query(getTenantCollection('users'));
   
   onSnapshot(usersQuery, (snapshot) => {
-    usersTableBody.innerHTML = '';
+    let newHTML = '';
     
     if (snapshot.empty) {
-      usersTableBody.innerHTML = '<tr><td colspan="5" class="py-4 px-4 text-center text-slate-500">No users found.</td></tr>';
-      return;
+      newHTML = '<tr><td colspan="5" class="py-4 px-4 text-center text-slate-500">No users found.</td></tr>';
+    } else {
+      snapshot.forEach((userDoc) => {
+        const userData = userDoc.data();
+        let dateString = "Unknown";
+        if (userData.createdAt) {
+           if (typeof userData.createdAt.toDate === 'function') {
+               dateString = userData.createdAt.toDate().toLocaleString();
+           }
+        }
+
+        newHTML += `
+          <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition-colors">
+            <td class="py-3 px-4 font-semibold">${userData.name || 'N/A'}</td>
+            <td class="py-3 px-4 text-slate-300">${userData.email}</td>
+            <td class="py-3 px-4">
+              <select class="input-field text-xs py-1 px-2 h-auto role-select" data-uid="${userDoc.id}">
+                <option value="pending" ${userData.role === 'pending' ? 'selected' : ''}>Pending / Disabled</option>
+                <option value="queuing_master" ${userData.role === 'queuing_master' ? 'selected' : ''}>Queuing Master</option>
+                <option value="admin" ${userData.role === 'admin' ? 'selected' : ''}>Admin</option>
+              </select>
+            </td>
+            <td class="py-3 px-4 text-slate-400 text-sm">${dateString}</td>
+            <td class="py-3 px-4 text-right">
+              <button class="btn-primary text-xs px-3 py-1.5 save-role-btn" data-uid="${userDoc.id}" disabled>Saved</button>
+            </td>
+          </tr>
+        `;
+      });
     }
 
-    snapshot.forEach((userDoc) => {
-      const userData = userDoc.data();
-      const tr = document.createElement('tr');
-      tr.className = "border-b border-slate-800/60 hover:bg-slate-800/30 transition-colors";
-      
-      let dateString = "Unknown";
-      if (userData.createdAt) {
-         if (typeof userData.createdAt.toDate === 'function') {
-             dateString = userData.createdAt.toDate().toLocaleString();
-         }
-      }
-
-      tr.innerHTML = `
-        <td class="py-3 px-4 font-semibold">${userData.name || 'N/A'}</td>
-        <td class="py-3 px-4 text-slate-300">${userData.email}</td>
-        <td class="py-3 px-4">
-          <select class="input-field text-xs py-1 px-2 h-auto role-select" data-uid="${userDoc.id}">
-            <option value="pending" ${userData.role === 'pending' ? 'selected' : ''}>Pending / Disabled</option>
-            <option value="queuing_master" ${userData.role === 'queuing_master' ? 'selected' : ''}>Queuing Master</option>
-            <option value="admin" ${userData.role === 'admin' ? 'selected' : ''}>Admin</option>
-          </select>
-        </td>
-        <td class="py-3 px-4 text-slate-400 text-sm">${dateString}</td>
-        <td class="py-3 px-4 text-right">
-          <button class="btn-primary text-xs px-3 py-1.5 save-role-btn" data-uid="${userDoc.id}" disabled>Saved</button>
-        </td>
-      `;
-      usersTableBody.appendChild(tr);
-    });
-
-    // Add event listeners to dropdowns and save buttons
-    document.querySelectorAll('.role-select').forEach(select => {
-      select.addEventListener('change', (e) => {
-        const uid = e.target.getAttribute('data-uid');
-        const saveBtn = document.querySelector(`.save-role-btn[data-uid="${uid}"]`);
-        saveBtn.disabled = false;
-        saveBtn.textContent = "Save";
-        saveBtn.style.background = "linear-gradient(135deg, rgba(245, 196, 42, 0.9), rgba(217, 119, 6, 0.9))"; // Gold color for unsaved
-      });
-    });
-
-    document.querySelectorAll('.save-role-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const uid = e.target.getAttribute('data-uid');
-        const select = document.querySelector(`.role-select[data-uid="${uid}"]`);
-        const newRole = select.value;
-        
-        btn.textContent = "Saving...";
-        
-        try {
-          await updateDoc(getTenantDoc('users', uid), { role: newRole });
-          showToast(`User role updated to ${newRole}`);
-          btn.disabled = true;
-          btn.textContent = "Saved";
-          btn.style.background = ""; // Reset to primary gradient
-        } catch (error) {
-          showToast(`Error updating role: ${error.message}`, "error");
-          btn.textContent = "Error";
+    if (window.morphdom) {
+      const temp = usersTableBody.cloneNode(false);
+      temp.innerHTML = newHTML;
+      morphdom(usersTableBody, temp, {
+        childrenOnly: true,
+        onBeforeElUpdated: function(fromEl, toEl) {
+          if (fromEl.tagName === 'INPUT' || fromEl.tagName === 'SELECT' || fromEl.tagName === 'TEXTAREA') {
+            toEl.value = fromEl.value;
+          }
+          if (fromEl.tagName === 'BUTTON' && fromEl.classList.contains('save-role-btn')) {
+            toEl.disabled = fromEl.disabled;
+            toEl.textContent = fromEl.textContent;
+            toEl.style.background = fromEl.style.background;
+          }
+          return true;
         }
       });
-    });
+    } else {
+      usersTableBody.innerHTML = newHTML;
+    }
+
   }, (error) => {
     console.error("Error loading users:", error);
     showToast("Error loading users.", "error");
   });
 }
+
+// Use event delegation for dropdowns and save buttons
+usersTableBody.addEventListener('change', (e) => {
+  if (e.target.classList.contains('role-select')) {
+    const uid = e.target.getAttribute('data-uid');
+    const saveBtn = document.querySelector(`.save-role-btn[data-uid="${uid}"]`);
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save";
+      saveBtn.style.background = "linear-gradient(135deg, rgba(245, 196, 42, 0.9), rgba(217, 119, 6, 0.9))"; // Gold color for unsaved
+    }
+  }
+});
+
+usersTableBody.addEventListener('click', async (e) => {
+  if (e.target.classList.contains('save-role-btn')) {
+    const btn = e.target;
+    const uid = btn.getAttribute('data-uid');
+    const select = document.querySelector(`.role-select[data-uid="${uid}"]`);
+    if (!select) return;
+    
+    const newRole = select.value;
+    btn.textContent = "Saving...";
+    
+    try {
+      await updateDoc(getTenantDoc('users', uid), { role: newRole });
+      showToast(`User role updated to ${newRole}`);
+      btn.disabled = true;
+      btn.textContent = "Saved";
+      btn.style.background = ""; // Reset to primary gradient
+    } catch (error) {
+      showToast(`Error updating role: ${error.message}`, "error");
+      btn.textContent = "Error";
+    }
+  }
+});
+

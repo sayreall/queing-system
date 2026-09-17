@@ -31,6 +31,52 @@ import { startAutoLogout, stopAutoLogout } from "./auto-logout.js";
 
 const AVG_MATCH_MINUTES = 15;
 
+function getMorphOpts() {
+  return {
+    childrenOnly: true,
+    onBeforeElUpdated: function(fromEl, toEl) {
+      if (fromEl.classList && (fromEl.classList.contains('sortable-ghost') || fromEl.classList.contains('sortable-drag') || fromEl.classList.contains('sortable-fallback'))) {
+        return false;
+      }
+      if (fromEl._sortable) {
+        toEl._sortable = fromEl._sortable;
+      }
+      if (fromEl.dataset && fromEl.dataset.sortableAttached) {
+        toEl.dataset.sortableAttached = fromEl.dataset.sortableAttached;
+      }
+      if (fromEl.tagName === 'INPUT' || fromEl.tagName === 'SELECT' || fromEl.tagName === 'TEXTAREA') {
+        if (fromEl.type !== 'checkbox' && fromEl.type !== 'radio') {
+          toEl.value = fromEl.value;
+        } else {
+          toEl.checked = fromEl.checked;
+        }
+      }
+      return true;
+    }
+  };
+}
+
+window.smoothUpdateHTML = function(container, html) {
+  if (window.morphdom) {
+    const temp = container.cloneNode(false);
+    temp.innerHTML = html;
+    morphdom(container, temp, getMorphOpts());
+  } else {
+    container.innerHTML = html;
+  }
+};
+
+window.smoothUpdateNode = function(container, node) {
+  if (window.morphdom) {
+    const temp = container.cloneNode(false);
+    if (node) temp.appendChild(node);
+    morphdom(container, temp, getMorphOpts());
+  } else {
+    container.innerHTML = "";
+    if (node) container.appendChild(node);
+  }
+};
+
 const state = {
   queues: {},
   courts: [],
@@ -186,10 +232,9 @@ function renderQueues() {
     if (!container) return;
 
     const order = state.queues[skill.key] || [];
-    container.innerHTML = "";
 
     if (!order.length) {
-      container.innerHTML = `<p class="queue-empty text-slate-500 py-4 text-center text-sm border border-dashed border-slate-700/50 rounded-xl mt-4">No players waiting.</p>`;
+      window.smoothUpdateHTML(container, `<p class="queue-empty text-slate-500 py-4 text-center text-sm border border-dashed border-slate-700/50 rounded-xl mt-4">No players waiting.</p>`);
     } else {
       const wrapper = document.createElement("div");
       wrapper.className = "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4 items-start";
@@ -302,7 +347,7 @@ function renderQueues() {
 
         wrapper.appendChild(matchCard);
       });
-      container.appendChild(wrapper);
+      window.smoothUpdateNode(container, wrapper);
     }
 
     const count = order.length;
@@ -351,7 +396,7 @@ function renderCourts() {
     (a.name || a.id).localeCompare(b.name || b.id, undefined, { numeric: true })
   );
 
-  container.innerHTML = courts.map(court => {
+  window.smoothUpdateHTML(container, courts.map(court => {
     const courtInfo = {
       id: court.id,
       name: court.name || court.id.replace(/^court-/, "Court "),
@@ -496,7 +541,7 @@ function renderCourts() {
         <button class="btn-secondary w-full mt-2" data-toggle-court="${cid}">Mark Available</button>
         ${removeCourtButton}
       </div>`;
-  }).join("");
+  }).join(""));;
 }
 
 
@@ -637,9 +682,9 @@ function renderPlayers() {
     if (countEl) countEl.textContent = rows.length;
 
     if (!rows.length) {
-      tbodyElement.innerHTML = `<tr><td class="py-4 text-slate-500 text-center" colspan="12">No ${skillFilterLabel} players.</td></tr>`;
+      window.smoothUpdateHTML(tbodyElement, `<tr><td class="py-4 text-slate-500 text-center" colspan="12">No ${skillFilterLabel} players.</td></tr>`);
     } else {
-      tbodyElement.innerHTML = rows.map(generateRowHTML).join("");
+      window.smoothUpdateHTML(tbodyElement, rows.map(generateRowHTML).join(""));
     }
   };
 
@@ -647,7 +692,7 @@ function renderPlayers() {
   renderTable(elements.playersBodyIntermediate, "count-intermediate", "Intermediate");
   renderTable(elements.playersBodyAdvanced, "count-advanced", "Advanced");
 
-  elements.donePlayersBody.innerHTML = doneRows.length
+  const donePlayersHTML = doneRows.length
     ? doneRows
     .map(
       (player, idx) => `
@@ -711,9 +756,10 @@ function renderPlayers() {
     .join("")
     : `
       <tr>
-        <td class="py-4 text-slate-500" colspan="12">No done-playing players yet.</td>
+        <td class="py-4 text-slate-500 text-center" colspan="12">No done-playing players yet.</td>
       </tr>
     `;
+    window.smoothUpdateHTML(elements.donePlayersBody, donePlayersHTML);
 }
 
 async function handlePlayerActionClick(event) {
