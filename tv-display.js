@@ -413,6 +413,20 @@ async function bootstrap() {
 onAuthStateChanged(auth, (user) => {
   const urlParams = new URLSearchParams(window.location.search);
   const tenantParam = urlParams.get('tenant');
+  const fromParam = urlParams.get('from');
+
+  if (fromParam === 'dashboard') {
+    const backBtnContainer = document.getElementById('back-btn-container');
+    if (backBtnContainer) {
+      backBtnContainer.innerHTML = `
+        <a href="index.html" class="flex items-center gap-2 px-4 py-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-600 rounded-lg text-slate-300 hover:text-white transition-colors text-sm font-semibold">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          Back to Dashboard
+        </a>
+      `;
+    }
+  }
+
   if (user || tenantParam) {
     bootstrap();
   } else {
