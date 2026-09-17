@@ -406,7 +406,9 @@ function renderCourts() {
     const isBuiltInCourt = ["court-1", "court-2", "court-3"].includes(cid);
     const removeCourtButton = isBuiltInCourt
       ? ""
-      : `<button class="btn-secondary w-full mt-2 text-rose-300 border-rose-500/40 hover:border-rose-400" data-remove-court="${cid}">Remove Court</button>`;
+      : `<button class="text-rose-500/50 hover:text-rose-400 transition-colors p-1 flex items-center justify-center" data-remove-court="${cid}" title="Remove Court">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+         </button>`;
 
     if (court.status === "Active") {
       const players = court.players || [];
@@ -454,7 +456,6 @@ function renderCourts() {
           <option value="intermediate" ${courtAllowedSkill === "intermediate" ? "selected" : ""}>Intermediate Only</option>
           <option value="advanced" ${courtAllowedSkill === "advanced" ? "selected" : ""}>Advanced Only</option>
         </select>
-        ${removeCourtButton}
       `;
 
       const selectableQueues = [];
@@ -490,15 +491,18 @@ function renderCourts() {
         `;
         return `
           <div class="glass-card court-card" data-court-id="${cid}">
-            <div class="flex items-center justify-between">
+            <div class="flex items-start justify-between">
               <div>
                 <h3 class="court-title">${courtInfo.name}</h3>
                 ${skillDropdown}
                 ${queueSelect}
               </div>
-              <button class="text-slate-400 hover:text-white text-lg leading-none" data-toggle-court="${cid}" title="Mark Inactive">×</button>
+              <div class="flex items-center gap-1">
+                ${removeCourtButton}
+                <button class="text-slate-400 hover:text-white text-lg leading-none px-1" data-toggle-court="${cid}" title="Mark Inactive">×</button>
+              </div>
             </div>
-            <div class="flex items-center gap-2 text-xs text-slate-400 mb-1">
+            <div class="flex items-center gap-2 text-xs text-slate-400 mb-1 mt-2">
               <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block"></span>
               <span class="text-cyan-300 font-semibold">Manual Queue Selection</span>
               <span>${selectableQueues.length} options ready</span>
@@ -513,12 +517,15 @@ function renderCourts() {
         const pct = Math.round((queued / 4) * 100);
         return `
           <div class="glass-card court-card" data-court-id="${cid}" style="border-style:dashed;border-color:rgba(148,163,184,0.2);">
-            <div class="flex items-center justify-between">
+            <div class="flex items-start justify-between">
               <div>
                 <h3 class="court-title text-slate-400">${courtInfo.name}</h3>
                 ${skillDropdown}
               </div>
-              <button class="text-slate-500 hover:text-white text-lg leading-none" data-toggle-court="${cid}" title="Mark Inactive">×</button>
+              <div class="flex items-center gap-1">
+                ${removeCourtButton}
+                <button class="text-slate-500 hover:text-white text-lg leading-none px-1" data-toggle-court="${cid}" title="Mark Inactive">×</button>
+              </div>
             </div>
             <div class="flex flex-col items-center justify-center py-6 gap-3 text-center">
               <p class="text-slate-400 text-sm">Waiting for players...</p>
@@ -536,10 +543,12 @@ function renderCourts() {
       <div class="glass-card court-card" data-court-id="${cid}" style="opacity:0.5;">
         <div class="flex items-center justify-between">
           <h3 class="court-title text-slate-500">${courtInfo.name}</h3>
-          <span class="text-xs text-slate-600 uppercase tracking-widest">Inactive</span>
+          <div class="flex items-center gap-1">
+            ${removeCourtButton}
+            <span class="text-xs text-slate-600 uppercase tracking-widest ml-1">Inactive</span>
+          </div>
         </div>
         <button class="btn-secondary w-full mt-2" data-toggle-court="${cid}">Mark Available</button>
-        ${removeCourtButton}
       </div>`;
   }).join(""));;
 }
