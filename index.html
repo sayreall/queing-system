@@ -576,6 +576,21 @@
           <p class="text-sm text-slate-400 relative z-10">Balances teams by win ratio. Avoids repeat matchups when possible.</p>
         </label>
 
+        <!-- Fair Play -->
+        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
+          <input type="radio" name="matching_mode" value="fair_play" class="peer sr-only">
+          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all"></div>
+          <div class="flex items-center gap-2 mb-1 relative z-10">
+            <h3 class="text-base font-semibold text-white">Fair Play</h3>
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style="background: rgba(168,85,247,0.2); color: #c084fc;">Equalize</span>
+            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <p class="text-sm text-slate-400 relative z-10">Prioritizes players with the fewest games played so everyone gets equal playing time.</p>
+        </label>
+
+
         <!-- Social Mix -->
         <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
           <input type="radio" name="matching_mode" value="social_mix" class="peer sr-only" checked>

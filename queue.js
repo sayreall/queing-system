@@ -542,6 +542,12 @@ export async function generateNextRound(playersList, mode = "social_mix") {
         const ratioB = (b.wins || 0) / Math.max(1, (b.wins || 0) + (b.losses || 0));
         return ratioB - ratioA;
       });
+    } else if (mode === "fair_play") {
+      players.sort((a, b) => {
+        const gamesA = (a.wins || 0) + (a.losses || 0);
+        const gamesB = (b.wins || 0) + (b.losses || 0);
+        return gamesA - gamesB;
+      });
     } else if (mode === "mixed") {
       const males = players.filter(p => p.gender === "Male");
       const females = players.filter(p => p.gender === "Female");
