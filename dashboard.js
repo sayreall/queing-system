@@ -237,7 +237,7 @@ function renderQueues() {
       window.smoothUpdateHTML(container, `<p class="queue-empty text-slate-500 py-4 text-center text-sm border border-dashed border-slate-700/50 rounded-xl mt-4">No players waiting.</p>`);
     } else {
       const wrapper = document.createElement("div");
-      wrapper.className = "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4 items-start";
+      wrapper.className = "queue-matches-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4 items-start";
       
       const chunks = [];
       for (let i = 0; i < order.length; i += 4) {
@@ -260,8 +260,11 @@ function renderQueues() {
         matchCard.className = `match-card rounded-xl p-2 sm:p-3 ${bgStyles} ${isEditing ? "is-editing" : ""}`;
         matchCard.dataset.matchId = matchId;
         matchCard.innerHTML = `
-          <div class="flex items-center justify-between mb-2 border-b border-slate-700/50 pb-1.5">
-            <h4 class="text-[10px] uppercase tracking-wider font-bold ${headerColor}">${titleText}</h4>
+          <div class="flex items-center justify-between mb-2 border-b border-slate-700/50 pb-1.5 cursor-grab match-card-drag-handle">
+            <div class="flex items-center gap-1.5">
+              <svg class="text-slate-500" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              <h4 class="text-[10px] uppercase tracking-wider font-bold ${headerColor}">${titleText}</h4>
+            </div>
             <div class="flex items-center gap-2">
               <span class="text-[10px] font-semibold ${isComplete ? "text-green-400" : "text-amber-400"}">${chunk.length}/4</span>
               <button class="text-slate-400 hover:text-white px-1 edit-match-btn transition-colors" title="Edit Match">
@@ -308,11 +311,11 @@ function renderQueues() {
 
             item.innerHTML = `
               <div class="flex items-center gap-1 overflow-hidden">
-                <span class="drag-handle text-slate-400 cursor-grab hover:text-white px-0.5 text-xs hidden">⋮⋮</span>
-                <span class="font-semibold text-[11px] truncate max-w-[70px] sm:max-w-[90px]" title="${player ? player.name : "Unknown"}">${player ? player.name : "Unknown"}</span>
+                <span class="drag-handle text-slate-400 cursor-grab hover:text-white px-0.5 text-xs">⋮⋮</span>
+                <span class="font-semibold text-[11px] truncate max-w-[70px] sm:max-w-[90px] cursor-grab" title="${player ? player.name : "Unknown"}">${player ? player.name : "Unknown"}</span>
                 ${resultBadge}
               </div>
-              <div class="queue-actions flex items-center gap-0.5 shrink-0 hidden">
+              <div class="queue-actions flex items-center gap-0.5 shrink-0">
                 <button class="text-slate-300 hover:text-white p-0.5" data-action="skip" title="Skip to bottom">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
                 </button>
@@ -806,16 +809,38 @@ function setupSortable() {
   document.querySelectorAll(".queue-matches-container").forEach((container) => {
     const skillKey = container.dataset.queue;
     
+    // Sortable for match cards (reordering matches)
+    container.querySelectorAll(".queue-matches-grid").forEach((grid) => {
+      if (grid.dataset.sortableAttached) return;
+      grid._sortable = new Sortable(grid, {
+        group: `queue-grid-${skillKey}`,
+        animation: 150,
+        handle: '.match-card-drag-handle',
+        onEnd: async (e) => {
+          const order = [];
+          container.querySelectorAll(".queue-item").forEach((item) => {
+            if (item.dataset.playerId) {
+              order.push(item.dataset.playerId);
+            }
+          });
+          try {
+            await reorderQueue(skillKey, order);
+          } catch (error) {
+            showToast(error.message || "Failed to reorder matches", "error");
+          }
+        },
+      });
+      grid.dataset.sortableAttached = "true";
+    });
+
+    // Sortable for players (reordering within/between matches)
     container.querySelectorAll(".team-list").forEach((list) => {
       if (list.dataset.sortableAttached) return;
-
-      const matchCard = list.closest(".match-card");
-      const isEditing = matchCard && matchCard.classList.contains("is-editing");
 
       list._sortable = new Sortable(list, {
         group: `queue-${skillKey}`, // Allows dragging between match cards in this skill queue
         animation: 150,
-        disabled: !isEditing,
+        handle: '.drag-handle',
         onEnd: async (e) => {
           // Rebuild the entire order array from ALL match cards in this skill's container
           const order = [];
@@ -1280,13 +1305,6 @@ function bindEvents() {
           matchCard.classList.remove("is-editing");
           matchCard.querySelectorAll('.add-player-btn').forEach(btn => btn.style.display = 'none');
         }
-        
-        // Dynamically enable/disable Sortable on this match card's lists
-        matchCard.querySelectorAll(".team-list").forEach(list => {
-          if (list._sortable) {
-            list._sortable.option("disabled", !willBeEditing);
-          }
-        });
       }
       return;
     }
