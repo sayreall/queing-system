@@ -260,9 +260,9 @@ function renderQueues() {
         matchCard.className = `match-card rounded-xl p-2 sm:p-3 ${bgStyles} ${isEditing ? "is-editing" : ""}`;
         matchCard.dataset.matchId = matchId;
         matchCard.innerHTML = `
-          <div class="flex items-center justify-between mb-2 border-b border-slate-700/50 pb-1.5 cursor-grab match-card-drag-handle">
-            <div class="flex items-center gap-1.5">
-              <svg class="text-slate-500" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          <div class="flex items-center justify-between mb-2 border-b border-slate-700/50 pb-1.5 cursor-grab match-card-drag-handle hover:bg-slate-700/30 rounded px-1 -mx-1 transition-colors">
+            <div class="flex items-center gap-1.5 pointer-events-none">
+              <svg class="${headerColor}" opacity="0.7" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5v14"/><path d="M15 5v14"/></svg>
               <h4 class="text-[10px] uppercase tracking-wider font-bold ${headerColor}">${titleText}</h4>
             </div>
             <div class="flex items-center gap-2">
@@ -811,7 +811,7 @@ function setupSortable() {
     
     // Sortable for match cards (reordering matches)
     container.querySelectorAll(".queue-matches-grid").forEach((grid) => {
-      if (grid.dataset.sortableAttached) return;
+      if (grid._sortable) return;
       grid._sortable = new Sortable(grid, {
         group: `queue-grid-${skillKey}`,
         animation: 150,
@@ -830,12 +830,11 @@ function setupSortable() {
           }
         },
       });
-      grid.dataset.sortableAttached = "true";
     });
 
     // Sortable for players (reordering within/between matches)
     container.querySelectorAll(".team-list").forEach((list) => {
-      if (list.dataset.sortableAttached) return;
+      if (list._sortable) return;
 
       list._sortable = new Sortable(list, {
         group: `queue-${skillKey}`, // Allows dragging between match cards in this skill queue
@@ -858,8 +857,6 @@ function setupSortable() {
           }
         },
       });
-
-      list.dataset.sortableAttached = "true";
     });
   });
 }
