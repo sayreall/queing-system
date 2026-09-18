@@ -816,6 +816,9 @@ function setupSortable() {
         group: `queue-grid-${skillKey}`,
         animation: 150,
         handle: '.match-card-drag-handle',
+        delay: 150,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 3,
         onEnd: async (e) => {
           const order = [];
           container.querySelectorAll(".queue-item").forEach((item) => {
@@ -840,6 +843,9 @@ function setupSortable() {
         group: `queue-${skillKey}`, // Allows dragging between match cards in this skill queue
         animation: 150,
         handle: '.drag-handle',
+        delay: 150,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 3,
         onEnd: async (e) => {
           // Rebuild the entire order array from ALL match cards in this skill's container
           const order = [];
@@ -851,7 +857,6 @@ function setupSortable() {
           
           try {
             await reorderQueue(skillKey, order);
-            // We don't necessarily need to toast on every drag, but we can
           } catch (error) {
             showToast(error.message || "Failed to reorder queue", "error");
           }
