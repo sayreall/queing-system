@@ -315,7 +315,7 @@ function renderQueues() {
                 <span class="font-semibold text-[11px] truncate max-w-[70px] sm:max-w-[90px] cursor-grab" title="${player ? player.name : "Unknown"}">${player ? player.name : "Unknown"}</span>
                 ${resultBadge}
               </div>
-              <div class="queue-actions flex items-center gap-0.5 shrink-0">
+              <div class="queue-actions hidden items-center gap-0.5 shrink-0">
                 <button class="text-slate-300 hover:text-white p-0.5" data-action="skip" title="Skip to bottom">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
                 </button>

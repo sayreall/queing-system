@@ -48,7 +48,12 @@ export function skillLabelFromKey(key) {
 }
 
 export function normalizeName(name) {
-  return name.trim().replace(/\s+/g, " ");
+  return name.trim().replace(/\s+/g, " ")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 export function getQueueDocRef(skillKey) {
@@ -75,7 +80,7 @@ export async function addPlayer({ name, skill, gender, location }) {
   const trimmedName = normalizeName(name || "");
   const normalizedSkill = normalizeSkill(skill || "");
   const playerGender = gender || "Unspecified";
-  const playerLocation = (location || "").trim();
+  const playerLocation = normalizeName(location || "");
 
   if (!trimmedName) throw new Error("Player name is required.");
   if (!normalizedSkill) throw new Error("Skill level is invalid.");
@@ -145,10 +150,10 @@ export async function addPlayersBulk(entries) {
   });
 
   entries.forEach((entry) => {
-    const trimmedName = (entry.name || "").trim();
+    const trimmedName = normalizeName(entry.name || "");
     const normalizedSkill = normalizeSkill(entry.skill || "");
     const playerGender = entry.gender || "Unspecified";
-    const playerLocation = (entry.location || entry.Location || "").trim();
+    const playerLocation = normalizeName(entry.location || entry.Location || "");
     if (!trimmedName || !normalizedSkill) return;
 
     const nameLower = trimmedName.toLowerCase();

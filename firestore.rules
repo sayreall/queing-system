@@ -2,8 +2,17 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Only allow reads and writes within a specific tenant (user) folder
+    match /users/{tenantId}/{document=**} {
+      // Anyone can read public tenant data (for tv.html share link)
+      allow read: if true;
+      // Only the authenticated owner of the tenant can write data
+      allow write: if request.auth != null && request.auth.uid == tenantId;
+    }
+    
+    // Deny access to everything else by default
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }
