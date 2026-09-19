@@ -76,11 +76,12 @@ export async function ensureQueuesExist() {
   );
 }
 
-export async function addPlayer({ name, skill, gender, location }) {
+export async function addPlayer({ name, skill, gender, location, practicePartner }) {
   const trimmedName = normalizeName(name || "");
   const normalizedSkill = normalizeSkill(skill || "");
   const playerGender = gender || "Unspecified";
   const playerLocation = normalizeName(location || "");
+  const playerPracticePartner = practicePartner || null;
 
   if (!trimmedName) throw new Error("Player name is required.");
   if (!normalizedSkill) throw new Error("Skill level is invalid.");
@@ -330,6 +331,34 @@ export async function updatePlayerGender(playerId, newGender) {
   await updateDoc(playerRef, {
     gender: newGender || "Unspecified",
     updatedAt: serverTimestamp(),
+  });
+}
+
+export async function updatePlayerPracticePartner(playerId, partnerId) {
+  const playerRef = getTenantDoc("players", playerId);
+  await runTransaction(db, async (tx) => {
+    const playerSnap = await tx.get(playerRef);
+    if (!playerSnap.exists()) return;
+    
+    const player = playerSnap.data();
+    const oldPartnerId = player.practicePartner;
+    
+    if (oldPartnerId && oldPartnerId !== partnerId) {
+      const oldPartnerRef = getTenantDoc("players", oldPartnerId);
+      const oldPartnerSnap = await tx.get(oldPartnerRef);
+      if (oldPartnerSnap.exists() && oldPartnerSnap.data().practicePartner === playerId) {
+        tx.update(oldPartnerRef, { practicePartner: null, updatedAt: serverTimestamp() });
+      }
+    }
+
+    if (partnerId) {
+       const newPartnerRef = getTenantDoc("players", partnerId);
+       const newPartnerSnap = await tx.get(newPartnerRef);
+       if (newPartnerSnap.exists()) {
+           tx.update(newPartnerRef, { practicePartner: playerId, updatedAt: serverTimestamp() });
+       }
+    }
+    tx.update(playerRef, { practicePartner: partnerId || null, updatedAt: serverTimestamp() });
   });
 }
 
@@ -595,7 +624,47 @@ export async function generateNextRound(playersList, mode = "social_mix") {
     const paddedReady = padToMultipleOf4(readyPlayers);
     const paddedPlaying = padToMultipleOf4(playingPlayers);
     
-    players.splice(0, players.length, ...paddedReady, ...paddedPlaying);
+    function pairUpAndFlatten(group) {
+        let pairs = [];
+        let singles = [];
+        let usedIndices = new Set();
+        for(let i = 0; i < group.length; i++) {
+           if (usedIndices.has(i)) continue;
+           let p1 = group[i];
+           usedIndices.add(i);
+           let partnerIdx = -1;
+           if (p1.practicePartner) {
+              for (let j = i + 1; j < group.length; j++) {
+                 if (!usedIndices.has(j) && group[j].id === p1.practicePartner) {
+                    partnerIdx = j;
+                    break;
+                 }
+              }
+           }
+           if (partnerIdx !== -1) {
+              pairs.push([p1, group[partnerIdx]]);
+              usedIndices.add(partnerIdx);
+           } else {
+              singles.push(p1);
+           }
+        }
+        
+        let finalArr = [];
+        while(pairs.length >= 2) {
+           finalArr.push(...pairs.pop(), ...pairs.pop());
+        }
+        while(pairs.length === 1 && singles.length >= 2) {
+           finalArr.push(...pairs.pop(), singles.pop(), singles.pop());
+        }
+        while(singles.length >= 4) {
+           finalArr.push(singles.pop(), singles.pop(), singles.pop(), singles.pop());
+        }
+        if (pairs.length > 0) finalArr.push(...pairs[0]);
+        while (singles.length > 0) finalArr.push(singles.pop());
+        return finalArr;
+    }
+    
+    players.splice(0, players.length, ...pairUpAndFlatten(paddedReady), ...pairUpAndFlatten(paddedPlaying));
     const newOrder = players.map(p => p.id);
 
     const queueRef = getQueueDocRef(skill);

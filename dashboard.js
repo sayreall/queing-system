@@ -9,6 +9,7 @@ import {
   markPlayerAbsent,
   updatePlayerSkill,
   updatePlayerGender,
+  updatePlayerPracticePartner,
   removePlayer,
   archiveAllPlayers,
   generateNextRound,
@@ -663,6 +664,12 @@ function renderPlayers() {
             ).join("")}
           </select>
         </td>
+        <td>
+          <select class="input-field max-w-[110px] text-xs py-1" data-player-partner="${player.id}">
+             <option value="">None</option>
+             ${Array.from(state.players.values()).filter(p => p.id !== player.id && p.status !== 'Archived').map(p => `<option value="${p.id}" ${player.practicePartner === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+          </select>
+        </td>
         <td class="sticky right-0 py-3 pl-4 text-right" style="background:rgba(12,50,50,0.98);">
           <div class="flex flex-nowrap justify-end gap-1">
             <button
@@ -754,6 +761,12 @@ function renderPlayers() {
                   player.skill === skill.label ? "selected" : ""
                 }>${skill.label}</option>`
             ).join("")}
+          </select>
+        </td>
+        <td>
+          <select class="input-field max-w-[110px] text-xs py-1" data-player-partner="${player.id}">
+             <option value="">None</option>
+             ${Array.from(state.players.values()).filter(p => p.id !== player.id && p.status !== 'Archived').map(p => `<option value="${p.id}" ${player.practicePartner === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
           </select>
         </td>
         <td class="sticky right-0 py-3 pl-4 text-right" style="background:rgba(12,50,50,0.98);">
@@ -1129,12 +1142,16 @@ function bindEvents() {
     event.preventDefault();
     try {
       const genderSelect = document.getElementById("player-gender");
-      await addPlayer({
+      const partnerSelect = document.getElementById("player-practice-partner");
+      const newPlayerId = await addPlayer({
         name: elements.nameInput.value,
         skill: elements.skillSelect.value,
         gender: genderSelect ? genderSelect.value : "",
         location: elements.locationInput ? elements.locationInput.value.trim() : "",
       });
+      if (partnerSelect && partnerSelect.value) {
+        await updatePlayerPracticePartner(newPlayerId, partnerSelect.value);
+      }
       elements.nameInput.value = "";
       elements.skillSelect.value = "";
       if (genderSelect) genderSelect.value = "";
@@ -1155,6 +1172,14 @@ function bindEvents() {
 
   if (openAddPlayerBtn && addPlayerModal) {
     openAddPlayerBtn.addEventListener("click", () => {
+      const partnerSelect = document.getElementById("player-practice-partner");
+      if (partnerSelect) {
+        partnerSelect.innerHTML = `<option value="">None</option>` +
+          Array.from(state.players.values())
+            .filter(p => p.status !== 'Archived')
+            .map(p => `<option value="${p.id}">${p.name}</option>`)
+            .join('');
+      }
       addPlayerModal.classList.remove("hidden");
       elements.nameInput?.focus();
     });
@@ -1463,6 +1488,17 @@ function bindEvents() {
           showToast("Error updating gender", "error");
         }
       }
+
+      if (event.target.dataset.playerPartner !== undefined) {
+        const playerId = event.target.dataset.playerPartner;
+        const partnerId = event.target.value;
+        try {
+          await updatePlayerPracticePartner(playerId, partnerId);
+          showToast("Practice partner updated");
+        } catch (err) {
+          showToast("Error updating partner", "error");
+        }
+      }
     });
 
     body.addEventListener("click", handlePlayerActionClick);
@@ -1487,6 +1523,16 @@ function bindEvents() {
         showToast("Player gender updated");
       } catch (err) {
         showToast("Error updating gender", "error");
+      }
+    }
+    if (event.target.dataset.playerPartner !== undefined) {
+      const playerId = event.target.dataset.playerPartner;
+      const partnerId = event.target.value;
+      try {
+        await updatePlayerPracticePartner(playerId, partnerId);
+        showToast("Practice partner updated");
+      } catch (err) {
+        showToast("Error updating partner", "error");
       }
     }
   });
