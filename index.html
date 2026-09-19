@@ -351,7 +351,6 @@
                     <th class="text-red-400">L</th>
                     <th class="text-blue-400">Win %</th>
                     <th>Skill</th>
-                    <th>Partner</th>
                     <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
                   </tr>
                 </thead>
@@ -383,7 +382,6 @@
                     <th class="text-red-400">L</th>
                     <th class="text-blue-400">Win %</th>
                     <th>Skill</th>
-                    <th>Partner</th>
                     <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
                   </tr>
                 </thead>
@@ -415,7 +413,6 @@
                     <th class="text-red-400">L</th>
                     <th class="text-blue-400">Win %</th>
                     <th>Skill</th>
-                    <th>Partner</th>
                     <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
                   </tr>
                 </thead>
@@ -446,7 +443,6 @@
                   <th class="text-red-400">L</th>
                   <th class="text-blue-400">Win %</th>
                   <th>Skill</th>
-                  <th>Partner</th>
                   <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
                 </tr>
               </thead>
@@ -705,6 +701,28 @@
       </div>
 
       <button id="launch-custom-match" class="btn-primary w-full py-3 text-sm">Queue Custom Match</button>
+    </div>
+  </div>
+
+  <!-- Partner Modal -->
+  <div id="partner-modal"
+    class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="glass-card w-full max-w-sm relative">
+      <button id="close-partner-modal"
+        class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+      <h2 class="text-2xl font-display font-semibold mb-2">Set Fixed Partner</h2>
+      <p class="text-sm text-slate-400 mb-6">Select a fixed partner for <span id="partner-modal-player-name" class="font-bold text-white"></span>.</p>
+      
+      <form id="partner-form" class="space-y-4">
+        <input type="hidden" id="partner-modal-player-id" />
+        <div>
+          <label class="block text-sm text-slate-400 mb-1">Partner</label>
+          <select id="partner-modal-select" class="input-field w-full">
+            <option value="">None</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary w-full py-3 mt-4 text-sm">Save Partner</button>
+      </form>
     </div>
   </div>
 

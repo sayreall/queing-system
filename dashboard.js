@@ -619,7 +619,12 @@ function renderPlayers() {
       <tr class="border-t border-slate-800/60">
         <td class="py-3 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
         <td class="font-semibold">
-          ${player.name}
+          <div class="flex items-center flex-wrap gap-2">
+            <span>${player.name}</span>
+            ${player.practicePartner && state.players.get(player.practicePartner)
+              ? `<span class="text-[10px] px-1.5 py-0.5 rounded border border-purple-400/40 text-purple-300 bg-purple-500/10 align-middle" title="Fixed Partner">🔗 ${state.players.get(player.practicePartner).name}</span>`
+              : ''}
+          </div>
           ${court1ActivePlayers.has(player.id)
             ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-cyan-400/40 text-cyan-300 bg-cyan-500/10 align-middle">C1 Now</span>'
             : court1LastPlayers.has(player.id)
@@ -664,14 +669,9 @@ function renderPlayers() {
             ).join("")}
           </select>
         </td>
-        <td>
-          <select class="input-field max-w-[110px] text-xs py-1" data-player-partner="${player.id}">
-             <option value="">None</option>
-             ${Array.from(state.players.values()).filter(p => p.id !== player.id && p.status !== 'Archived').map(p => `<option value="${p.id}" ${player.practicePartner === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
-          </select>
-        </td>
         <td class="sticky right-0 py-3 pl-4 text-right" style="background:rgba(12,50,50,0.98);">
           <div class="flex flex-nowrap justify-end gap-1">
+            <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" data-player-setup-partner="${player.id}">🔗 Partner</button>
             <button
               class="btn-secondary text-xs px-2 py-1 whitespace-nowrap ${player.status === "Playing" || player.status === "Stacked" ? "opacity-50 cursor-not-allowed" : ""}"
               data-player-absent="${player.id}"
@@ -729,6 +729,22 @@ function renderPlayers() {
             : court2LastPlayers.has(player.id)
             ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C2 Last</span>'
             : ''}
+          <div class="flex items-center flex-wrap gap-2">
+            <span>${player.name}</span>
+            ${player.practicePartner && state.players.get(player.practicePartner)
+              ? `<span class="text-[10px] px-1.5 py-0.5 rounded border border-purple-400/40 text-purple-300 bg-purple-500/10 align-middle" title="Fixed Partner">🔗 ${state.players.get(player.practicePartner).name}</span>`
+              : ''}
+          </div>
+          ${court1ActivePlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-cyan-400/40 text-cyan-300 bg-cyan-500/10 align-middle">C1 Now</span>'
+            : court1LastPlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C1 Last</span>'
+            : ''}
+          ${court2ActivePlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-cyan-400/40 text-cyan-300 bg-cyan-500/10 align-middle">C2 Now</span>'
+            : court2LastPlayers.has(player.id)
+            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C2 Last</span>'
+            : ''}
           ${court3ActivePlayers.has(player.id)
             ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-cyan-400/40 text-cyan-300 bg-cyan-500/10 align-middle">C3 Now</span>'
             : court3LastPlayers.has(player.id)
@@ -763,14 +779,9 @@ function renderPlayers() {
             ).join("")}
           </select>
         </td>
-        <td>
-          <select class="input-field max-w-[110px] text-xs py-1" data-player-partner="${player.id}">
-             <option value="">None</option>
-             ${Array.from(state.players.values()).filter(p => p.id !== player.id && p.status !== 'Archived').map(p => `<option value="${p.id}" ${player.practicePartner === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
-          </select>
-        </td>
         <td class="sticky right-0 py-3 pl-4 text-right" style="background:rgba(12,50,50,0.98);">
           <div class="flex flex-nowrap justify-end gap-1">
+            <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" data-player-setup-partner="${player.id}">🔗 Partner</button>
             <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" data-player-absent="${player.id}">Return</button>
             <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" style="border-color: rgba(248,113,113,0.4); color:#fca5a5;" data-player-remove="${player.id}">✕</button>
           </div>
@@ -790,6 +801,13 @@ function renderPlayers() {
 async function handlePlayerActionClick(event) {
   const absent = event.target.getAttribute("data-player-absent");
   const remove = event.target.getAttribute("data-player-remove");
+  const setupPartner = event.target.getAttribute("data-player-setup-partner");
+  
+  if (setupPartner) {
+    openPartnerModal(setupPartner);
+    return;
+  }
+  
   if (!absent && !remove) return;
 
   try {
@@ -1031,6 +1049,31 @@ function startTimerLoop() {
 
 let _pendingAddSlotInfo = null;
 
+function openPartnerModal(playerId) {
+  const player = state.players.get(playerId);
+  if (!player) return;
+
+  const modal = document.getElementById("partner-modal");
+  const select = document.getElementById("partner-modal-select");
+  const nameEl = document.getElementById("partner-modal-player-name");
+  const idInput = document.getElementById("partner-modal-player-id");
+
+  nameEl.textContent = player.name;
+  idInput.value = playerId;
+
+  const options = [`<option value="">None</option>`];
+  Array.from(state.players.values())
+    .filter(p => p.id !== playerId && p.status !== 'Archived')
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .forEach(p => {
+      const selected = player.practicePartner === p.id ? "selected" : "";
+      options.push(`<option value="${p.id}" ${selected}>${p.name}</option>`);
+    });
+
+  select.innerHTML = options.join("");
+  modal.classList.remove("hidden");
+}
+
 function openAddPlayerModal(queueKey, matchIndex, slotIndex) {
   _pendingAddSlotInfo = { queueKey, matchIndex, slotIndex };
   const modal = document.getElementById("add-to-match-modal");
@@ -1138,6 +1181,33 @@ async function confirmFinishMatch(winnerTeam) {
 }
 
 function bindEvents() {
+  const partnerModal = document.getElementById("partner-modal");
+  const closePartnerBtn = document.getElementById("close-partner-modal");
+  const partnerForm = document.getElementById("partner-form");
+
+  if (closePartnerBtn && partnerModal) {
+    closePartnerBtn.addEventListener("click", () => partnerModal.classList.add("hidden"));
+  }
+  if (partnerModal) {
+    partnerModal.addEventListener("click", (e) => {
+      if (e.target === partnerModal) partnerModal.classList.add("hidden");
+    });
+  }
+  if (partnerForm) {
+    partnerForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const playerId = document.getElementById("partner-modal-player-id").value;
+      const partnerId = document.getElementById("partner-modal-select").value;
+      try {
+        await updatePlayerPracticePartner(playerId, partnerId);
+        showToast("Practice partner updated");
+        partnerModal.classList.add("hidden");
+      } catch (err) {
+        showToast("Error updating partner", "error");
+      }
+    });
+  }
+
   elements.addForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
@@ -1489,16 +1559,7 @@ function bindEvents() {
         }
       }
 
-      if (event.target.dataset.playerPartner !== undefined) {
-        const playerId = event.target.dataset.playerPartner;
-        const partnerId = event.target.value;
-        try {
-          await updatePlayerPracticePartner(playerId, partnerId);
-          showToast("Practice partner updated");
-        } catch (err) {
-          showToast("Error updating partner", "error");
-        }
-      }
+
     });
 
     body.addEventListener("click", handlePlayerActionClick);
@@ -1525,16 +1586,7 @@ function bindEvents() {
         showToast("Error updating gender", "error");
       }
     }
-    if (event.target.dataset.playerPartner !== undefined) {
-      const playerId = event.target.dataset.playerPartner;
-      const partnerId = event.target.value;
-      try {
-        await updatePlayerPracticePartner(playerId, partnerId);
-        showToast("Practice partner updated");
-      } catch (err) {
-        showToast("Error updating partner", "error");
-      }
-    }
+
   });
 
   document.body.addEventListener("change", async (event) => {
