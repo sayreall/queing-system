@@ -718,17 +718,6 @@ function renderPlayers() {
       <tr class="border-t border-slate-800/60">
         <td class="py-3 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
         <td class="font-semibold">
-          ${player.name}
-          ${court1ActivePlayers.has(player.id)
-            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-cyan-400/40 text-cyan-300 bg-cyan-500/10 align-middle">C1 Now</span>'
-            : court1LastPlayers.has(player.id)
-            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C1 Last</span>'
-            : ''}
-          ${court2ActivePlayers.has(player.id)
-            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-cyan-400/40 text-cyan-300 bg-cyan-500/10 align-middle">C2 Now</span>'
-            : court2LastPlayers.has(player.id)
-            ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded border border-amber-400/40 text-amber-300 bg-amber-500/10 align-middle">C2 Last</span>'
-            : ''}
           <div class="flex items-center flex-wrap gap-2">
             <span>${player.name}</span>
             ${player.practicePartner && state.players.get(player.practicePartner)
