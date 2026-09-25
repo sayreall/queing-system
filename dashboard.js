@@ -12,6 +12,7 @@ import {
   updatePlayerPracticePartner,
   removePlayer,
   archiveAllPlayers,
+  archiveSinglePlayer,
   generateNextRound,
 } from "./queue.js";
 import {
@@ -578,24 +579,22 @@ function renderPlayers() {
     .filter((player) => {
       if (state.filter.startsWith("Archived")) {
         if (player.status !== "Archived") return false;
-        
         if (state.filter !== "Archived") {
           const targetDate = state.filter.split("Archived:")[1];
-          let pDate = "";
-          if (player.updatedAt) {
+          // Use dedicated archivedDate field first; fallback to updatedAt parsing
+          const pDate = player.archivedDate || (() => {
+            if (!player.updatedAt) return "";
             let d;
             if (typeof player.updatedAt.toDate === 'function') d = player.updatedAt.toDate();
             else if (player.updatedAt.seconds) d = new Date(player.updatedAt.seconds * 1000);
             else d = new Date(player.updatedAt);
-            if (!isNaN(d.getTime())) pDate = d.toLocaleDateString();
-          }
+            return !isNaN(d.getTime()) ? d.toLocaleDateString() : "";
+          })();
           if (pDate !== targetDate) return false;
         }
-        
         return player.name.toLowerCase().includes(state.search.toLowerCase());
       }
       if (player.status === "Archived") return false;
-
       const matchFilter = state.filter === "All" || player.skill === state.filter;
       const matchSearch = player.name.toLowerCase().includes(state.search.toLowerCase());
       return matchFilter && matchSearch;
@@ -774,9 +773,10 @@ function renderPlayers() {
         </td>
         <td class="sticky right-0 py-3 pl-4 text-right" style="background:rgba(12,50,50,0.98);">
           <div class="flex flex-nowrap justify-end gap-1">
-            <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" data-player-setup-partner="${player.id}">🔗 Partner</button>
+            <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" data-player-setup-partner="${player.id}">&#x1F517; Partner</button>
             <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" data-player-absent="${player.id}">Return</button>
-            <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" style="border-color: rgba(248,113,113,0.4); color:#fca5a5;" data-player-remove="${player.id}">✕</button>
+            <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" style="border-color: rgba(251,191,36,0.4); color:#fbbf24;" data-player-done="${player.id}">Done Playing</button>
+            <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap" style="border-color: rgba(248,113,113,0.4); color:#fca5a5;" data-player-remove="${player.id}">&#x2715;</button>
           </div>
         </td>
       </tr>
@@ -794,6 +794,7 @@ function renderPlayers() {
 async function handlePlayerActionClick(event) {
   const absent = event.target.getAttribute("data-player-absent");
   const remove = event.target.getAttribute("data-player-remove");
+  const done = event.target.getAttribute("data-player-done");
   const setupPartner = event.target.getAttribute("data-player-setup-partner");
   
   if (setupPartner) {
@@ -801,9 +802,13 @@ async function handlePlayerActionClick(event) {
     return;
   }
   
-  if (!absent && !remove) return;
+  if (!absent && !remove && !done) return;
 
   try {
+    if (done) {
+      await archiveSinglePlayer(done);
+      showToast("Player archived as Done Playing.");
+    }
     if (absent) {
       const player = state.players.get(absent);
       if (player?.status === "Playing" || player?.status === "Stacked") {
@@ -2244,13 +2249,18 @@ async function bootstrap() {
     // Dynamically rebuild player filter with archive dates
     const archiveDates = new Set();
     players.forEach(p => {
-      if (p.status === "Archived" && p.updatedAt) {
-        let dateObj;
-        if (typeof p.updatedAt.toDate === 'function') dateObj = p.updatedAt.toDate();
-        else if (p.updatedAt.seconds) dateObj = new Date(p.updatedAt.seconds * 1000);
-        else dateObj = new Date(p.updatedAt);
-        if (!isNaN(dateObj.getTime())) {
-          archiveDates.add(dateObj.toLocaleDateString());
+      if (p.status === "Archived") {
+        // Prefer the dedicated archivedDate string field; fallback to updatedAt parsing
+        if (p.archivedDate) {
+          archiveDates.add(p.archivedDate);
+        } else if (p.updatedAt) {
+          let dateObj;
+          if (typeof p.updatedAt.toDate === 'function') dateObj = p.updatedAt.toDate();
+          else if (p.updatedAt.seconds) dateObj = new Date(p.updatedAt.seconds * 1000);
+          else dateObj = new Date(p.updatedAt);
+          if (!isNaN(dateObj.getTime())) {
+            archiveDates.add(dateObj.toLocaleDateString());
+          }
         }
       }
     });

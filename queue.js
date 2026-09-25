@@ -234,15 +234,51 @@ export async function removePlayer(playerId) {
   });
 }
 
+export async function archiveSinglePlayer(playerId) {
+  const playerRef = getTenantDoc("players", playerId);
+  const now = serverTimestamp();
+  const archivedDate = new Date().toLocaleDateString();
+
+  await runTransaction(db, async (tx) => {
+    const playerSnap = await tx.get(playerRef);
+    if (!playerSnap.exists()) return;
+
+    const player = playerSnap.data();
+    const skillKey = skillKeyFromLabel(player.skill);
+    const queueRef = getQueueDocRef(skillKey);
+    const queueSnap = await tx.get(queueRef);
+
+    // Remove player from their skill queue
+    if (queueSnap.exists()) {
+      const order = queueSnap.data().order || [];
+      let filtered = order.map((id) => id === playerId ? "EMPTY" : id);
+      while (filtered.length > 0 && filtered[filtered.length - 1] === "EMPTY") {
+        filtered.pop();
+      }
+      tx.set(queueRef, { skill: player.skill, order: filtered, updatedAt: now }, { merge: true });
+    }
+
+    // Archive the player but keep their name/stats; add archivedDate for date-filtering
+    tx.set(playerRef, {
+      status: "Archived",
+      currentMatchId: null,
+      archivedDate,
+      updatedAt: now,
+    }, { merge: true });
+  });
+}
+
 export async function archiveAllPlayers(playersList) {
   const batch = writeBatch(db);
   const now = serverTimestamp();
+  const archivedDate = new Date().toLocaleDateString();
 
   playersList.forEach((player) => {
     if (player.status !== "Archived") {
       batch.update(getTenantDoc("players", player.id), {
         status: "Archived",
         currentMatchId: null,
+        archivedDate,
         wins: 0,
         losses: 0,
         lastResult: null,
@@ -250,8 +286,9 @@ export async function archiveAllPlayers(playersList) {
         updatedAt: now,
       });
     } else {
-      // Even if they are already archived, ensure their stats are zeroed out for the next day
+      // Even if they are already archived, reset stats for the next day and update archivedDate
       batch.update(getTenantDoc("players", player.id), {
+        archivedDate,
         wins: 0,
         losses: 0,
         lastResult: null,
