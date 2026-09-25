@@ -837,9 +837,10 @@
       
       <div class="flex items-center gap-4 mb-4">
         <p class="text-sm text-slate-400 flex-1">View players archived by date.</p>
-        <select id="archive-date-select" class="input-field text-sm py-1.5 px-3 min-w-[150px]">
-          <option value="">Select Date</option>
-        </select>
+        <div class="flex items-center gap-2">
+          <input type="date" id="archive-date-input" class="input-field text-sm py-1.5 px-3 min-w-[150px]">
+          <button id="clear-archive-date-btn" class="btn-secondary text-xs px-2 py-1.5 hover:text-white" title="Clear Date Filter">&#x2715;</button>
+        </div>
       </div>
       
       <div class="overflow-y-auto overflow-x-auto flex-1 border border-slate-700/50 rounded-lg custom-scrollbar bg-slate-900/40">
