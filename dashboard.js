@@ -90,6 +90,10 @@ const state = {
   filter: "All",
   automationLock: false,
   editingMatches: new Set(),
+  autoRound: false,
+  autoRoundMode: localStorage.getItem("dq_auto_round_mode") || "winners_losers",
+  prevCourtStatuses: {}, // tracks { courtId: "Active" | "Available" | "Inactive" }
+  autoRoundLock: false,
   ready: {
     queues: false,
     courts: false,
@@ -1375,6 +1379,10 @@ function bindEvents() {
     confirmMatchingModeBtn?.addEventListener("click", async () => {
       const selectedMode = document.querySelector('input[name="matching_mode"]:checked')?.value || 'social_mix';
       
+      // Persist chosen mode for Auto Round to reuse
+      state.autoRoundMode = selectedMode;
+      localStorage.setItem("dq_auto_round_mode", selectedMode);
+
       try {
         confirmMatchingModeBtn.disabled = true;
         confirmMatchingModeBtn.innerHTML = "Generating...";
@@ -1389,6 +1397,56 @@ function bindEvents() {
       }
     });
   }
+
+  // ── Auto Round toggle button ──────────────────────────────────────────────
+  const autoRoundBtn = document.getElementById("auto-round-btn");
+  const autoRoundModeLabel = document.getElementById("auto-round-mode-label");
+
+  function updateAutoRoundBtn() {
+    if (!autoRoundBtn) return;
+    if (state.autoRound) {
+      autoRoundBtn.innerHTML = "&#x23F9; Stop Auto Round";
+      autoRoundBtn.style.background = "rgba(239,68,68,0.15)";
+      autoRoundBtn.style.borderColor = "rgba(239,68,68,0.5)";
+      autoRoundBtn.style.color = "#fca5a5";
+    } else {
+      autoRoundBtn.innerHTML = "&#x1F504; Prefer Auto Round";
+      autoRoundBtn.style.background = "";
+      autoRoundBtn.style.borderColor = "";
+      autoRoundBtn.style.color = "";
+    }
+    if (autoRoundModeLabel) {
+      const modeNames = {
+        winners_losers: "Winners/Losers",
+        social_mix: "Social Mix",
+        balanced: "Balanced",
+        fair_play: "Fair Play",
+        mixed: "Mixed Doubles",
+        flex_borrow: "Flex Borrow",
+        skill_separated: "Skill Separated",
+      };
+      autoRoundModeLabel.textContent = state.autoRound
+        ? `Mode: ${modeNames[state.autoRoundMode] || state.autoRoundMode}`
+        : "";
+    }
+  }
+
+  autoRoundBtn?.addEventListener("click", () => {
+    state.autoRound = !state.autoRound;
+    localStorage.setItem("dq_auto_round", state.autoRound ? "1" : "0");
+    updateAutoRoundBtn();
+    if (state.autoRound) {
+      showToast("Auto Round ON — generates new round when a court finishes.");
+    } else {
+      showToast("Auto Round disabled.");
+    }
+  });
+
+  // Restore auto-round toggle from localStorage
+  if (localStorage.getItem("dq_auto_round") === "1") {
+    state.autoRound = true;
+  }
+  updateAutoRoundBtn();
 
   document.body.addEventListener("click", async (event) => {
     const editBtn = event.target.closest(".edit-match-btn");
@@ -2111,6 +2169,43 @@ async function bootstrap() {
     }
   }
 
+  // ── Auto Round: triggers when any individual court finishes ──────────────
+  async function checkAutoRound(prevStatuses, newCourts) {
+    if (!state.autoRound) return;
+    if (state.autoRoundLock) return;
+    if (!state.ready.players) return;
+
+    // Detect which courts just transitioned from Active → Available
+    const justFinished = newCourts.filter(c => {
+      const prev = prevStatuses[c.id];
+      return prev === "Active" && c.status === "Available";
+    });
+
+    if (justFinished.length === 0) return;
+
+    // Don't auto-round if queues already have enough players waiting
+    // (means someone already generated a round manually)
+    const totalWaiting = Object.values(state.queues)
+      .reduce((sum, q) => sum + q.filter(id => id && id !== "EMPTY").length, 0);
+
+    if (totalWaiting >= 4) return; // already has a queue ready, skip
+
+    state.autoRoundLock = true;
+    try {
+      const players = Array.from(state.players.values());
+      const mode = state.autoRoundMode || "winners_losers";
+      await generateNextRound(players, mode);
+      showToast("Auto round generated! (Mode: " + (state.autoRoundMode || "winners_losers") + ")");
+
+      // Let auto-assign pick it up naturally
+      setTimeout(() => checkAutoAssign(), 500);
+    } catch (err) {
+      console.warn("Auto round skipped:", err.message);
+    } finally {
+      state.autoRoundLock = false;
+    }
+  }
+
   listenToQueues((queues) => {
     state.queues = queues;
     state.ready.queues = true;
@@ -2123,13 +2218,24 @@ async function bootstrap() {
   });
 
   listenToCourts((courts) => {
+    const prevStatuses = { ...state.prevCourtStatuses };
+
+    // Update state first
     state.courts = courts;
     state.ready.courts = true;
+
+    // Snapshot new statuses for next comparison
+    state.prevCourtStatuses = {};
+    courts.forEach(c => { state.prevCourtStatuses[c.id] = c.status; });
+
     renderCourts();
     renderStats();
     renderNextMatch();
     cacheState();
     checkAutoAssign();
+
+    // Check if any court just finished → trigger auto round
+    checkAutoRound(prevStatuses, courts);
   });
 
   listenToPlayers((players) => {
