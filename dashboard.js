@@ -1966,6 +1966,72 @@ function bindEvents() {
     if (e.target === rankingModal) rankingModal.classList.add("hidden");
   });
 
+  // Archive Players Modal Logic
+  const viewArchiveBtn = document.getElementById("view-archive-btn");
+  const archiveModal = document.getElementById("archive-modal");
+  const closeArchiveBtn = document.getElementById("close-archive-modal");
+  const archiveDateSelect = document.getElementById("archive-date-select");
+  const archiveTbody = document.getElementById("archive-tbody");
+
+  function renderArchiveModal() {
+    // Collect unique archived dates
+    const dates = new Set();
+    state.players.forEach(p => {
+      if (p.status === "Archived" && p.archivedDate) dates.add(p.archivedDate);
+    });
+
+    const sortedDates = Array.from(dates).sort((a, b) => new Date(b) - new Date(a));
+    const currentVal = archiveDateSelect.value;
+    
+    archiveDateSelect.innerHTML = '<option value="">All Dates</option>' + sortedDates.map(date => 
+      `<option value="${date}" ${date === currentVal ? "selected" : ""}>${date}</option>`
+    ).join("");
+    
+    // Default to newest date if none selected and dates exist
+    if (!archiveDateSelect.value && sortedDates.length > 0) {
+      archiveDateSelect.value = sortedDates[0];
+    }
+    
+    const selectedDate = archiveDateSelect.value;
+    
+    const archivedPlayers = Array.from(state.players.values()).filter(p => {
+      if (p.status !== "Archived") return false;
+      if (selectedDate && p.archivedDate !== selectedDate) return false;
+      return true;
+    });
+
+    archiveTbody.innerHTML = archivedPlayers.length > 0 ? archivedPlayers.map((player, idx) => `
+      <tr class="border-t border-slate-800/60 hover:bg-slate-800/30 transition-colors">
+        <td class="py-3 px-4 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
+        <td class="py-3 px-4 font-semibold text-white">${player.name}</td>
+        <td class="py-3 px-4">
+          <span class="text-xs px-2 py-1 rounded border border-slate-700 bg-slate-800">${player.skill || "—"}</span>
+        </td>
+        <td class="py-3 px-4 text-center text-green-400 font-semibold">${player.wins || 0}</td>
+        <td class="py-3 px-4 text-center text-red-400 font-semibold">${player.losses || 0}</td>
+        <td class="py-3 px-4 text-slate-400 text-sm">${player.archivedDate || "—"}</td>
+      </tr>
+    `).join("") : `<tr><td colspan="6" class="py-6 text-center text-slate-500">No archived players found for this date.</td></tr>`;
+  }
+
+  viewArchiveBtn?.addEventListener("click", () => {
+    renderArchiveModal();
+    archiveModal.classList.remove("hidden");
+    if (window.innerWidth < 768 && toggleMobileMenu) toggleMobileMenu();
+  });
+
+  closeArchiveBtn?.addEventListener("click", () => {
+    archiveModal.classList.add("hidden");
+  });
+
+  archiveModal?.addEventListener("click", (e) => {
+    if (e.target === archiveModal) archiveModal.classList.add("hidden");
+  });
+
+  archiveDateSelect?.addEventListener("change", () => {
+    renderArchiveModal();
+  });
+
   // Interactive Tour Logic (Intro.js)
   const guideBtn = document.getElementById("guide-btn");
   
