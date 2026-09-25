@@ -1970,54 +1970,66 @@ function bindEvents() {
   const viewArchiveBtn = document.getElementById("view-archive-btn");
   const archiveModal = document.getElementById("archive-modal");
   const closeArchiveBtn = document.getElementById("close-archive-modal");
-  const archiveDateSelect = document.getElementById("archive-date-select");
+  const archiveDateInput = document.getElementById("archive-date-input");
+  const clearArchiveDateBtn = document.getElementById("clear-archive-date-btn");
   const archiveTbody = document.getElementById("archive-tbody");
 
-  function renderArchiveModal() {
-    // Collect unique archived dates
-    const dates = new Set();
-    state.players.forEach(p => {
-      if (p.status === "Archived" && p.archivedDate) dates.add(p.archivedDate);
-    });
+  function toYMD(dateStr) {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 
-    const sortedDates = Array.from(dates).sort((a, b) => new Date(b) - new Date(a));
-    const currentVal = archiveDateSelect.value;
-    
-    archiveDateSelect.innerHTML = '<option value="">All Dates</option>' + sortedDates.map(date => 
-      `<option value="${date}" ${date === currentVal ? "selected" : ""}>${date}</option>`
-    ).join("");
-    
-    // Default to newest date if none selected and dates exist
-    if (!archiveDateSelect.value && sortedDates.length > 0) {
-      archiveDateSelect.value = sortedDates[0];
+  function datesMatch(ymdStr, localStr) {
+    if (!ymdStr || !localStr) return false;
+    return toYMD(localStr) === ymdStr;
+  }
+
+  function renderArchiveModal() {
+    // Collect unique archived dates to default to newest if blank
+    if (archiveDateInput && !archiveDateInput.value) {
+      const dates = new Set();
+      state.players.forEach(p => {
+        if (p.status === "Archived" && p.archivedDate) dates.add(p.archivedDate);
+      });
+      const sortedDates = Array.from(dates).sort((a, b) => new Date(b) - new Date(a));
+      if (sortedDates.length > 0) {
+        archiveDateInput.value = toYMD(sortedDates[0]);
+      }
     }
     
-    const selectedDate = archiveDateSelect.value;
+    const selectedYMD = archiveDateInput ? archiveDateInput.value : "";
     
     const archivedPlayers = Array.from(state.players.values()).filter(p => {
       if (p.status !== "Archived") return false;
-      if (selectedDate && p.archivedDate !== selectedDate) return false;
+      if (selectedYMD && !datesMatch(selectedYMD, p.archivedDate)) return false;
       return true;
     });
 
-    archiveTbody.innerHTML = archivedPlayers.length > 0 ? archivedPlayers.map((player, idx) => `
-      <tr class="border-t border-slate-800/60 hover:bg-slate-800/30 transition-colors">
-        <td class="py-3 px-4 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
-        <td class="py-3 px-4 font-semibold text-white">${player.name}</td>
-        <td class="py-3 px-4">
-          <span class="text-xs px-2 py-1 rounded border border-slate-700 bg-slate-800">${player.skill || "—"}</span>
-        </td>
-        <td class="py-3 px-4 text-center text-green-400 font-semibold">${player.wins || 0}</td>
-        <td class="py-3 px-4 text-center text-red-400 font-semibold">${player.losses || 0}</td>
-        <td class="py-3 px-4 text-slate-400 text-sm">${player.archivedDate || "—"}</td>
-      </tr>
-    `).join("") : `<tr><td colspan="6" class="py-6 text-center text-slate-500">No archived players found for this date.</td></tr>`;
+    if (archiveTbody) {
+      archiveTbody.innerHTML = archivedPlayers.length > 0 ? archivedPlayers.map((player, idx) => `
+        <tr class="border-t border-slate-800/60 hover:bg-slate-800/30 transition-colors">
+          <td class="py-3 px-4 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
+          <td class="py-3 px-4 font-semibold text-white">${player.name}</td>
+          <td class="py-3 px-4">
+            <span class="text-xs px-2 py-1 rounded border border-slate-700 bg-slate-800">${player.skill || "—"}</span>
+          </td>
+          <td class="py-3 px-4 text-center text-green-400 font-semibold">${player.wins || 0}</td>
+          <td class="py-3 px-4 text-center text-red-400 font-semibold">${player.losses || 0}</td>
+          <td class="py-3 px-4 text-slate-400 text-sm">${player.archivedDate || "—"}</td>
+        </tr>
+      `).join("") : `<tr><td colspan="6" class="py-6 text-center text-slate-500">No archived players found for this date.</td></tr>`;
+    }
   }
 
   viewArchiveBtn?.addEventListener("click", () => {
     renderArchiveModal();
     archiveModal.classList.remove("hidden");
-    if (window.innerWidth < 768 && toggleMobileMenu) toggleMobileMenu();
+    if (window.innerWidth < 768 && typeof toggleMobileMenu === 'function') toggleMobileMenu();
   });
 
   closeArchiveBtn?.addEventListener("click", () => {
@@ -2028,7 +2040,12 @@ function bindEvents() {
     if (e.target === archiveModal) archiveModal.classList.add("hidden");
   });
 
-  archiveDateSelect?.addEventListener("change", () => {
+  archiveDateInput?.addEventListener("change", () => {
+    renderArchiveModal();
+  });
+  
+  clearArchiveDateBtn?.addEventListener("click", () => {
+    if (archiveDateInput) archiveDateInput.value = "";
     renderArchiveModal();
   });
 
