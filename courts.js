@@ -175,7 +175,7 @@ export async function assignMatchToCourt(courtId, skillKey) {
 
     const cleanOrder = [];   // valid player IDs in queue order (can contain duplicates for filling empty slots)
     for (const id of orderRaw) {
-      if (playerDataMap.has(id)) {
+      if (id === "EMPTY" || playerDataMap.has(id)) {
         cleanOrder.push(id);
       }
     }
@@ -192,6 +192,10 @@ export async function assignMatchToCourt(courtId, skillKey) {
 
     // ── Take exactly the top 4 players in the exact queue order ─────────────
     const selectedIds = cleanOrder.slice(0, 4);
+
+    if (selectedIds.includes("EMPTY")) {
+      throw new Error("Cannot start match: the match card is missing players.");
+    }
 
     const anyBusy = selectedIds.some(id => {
       const p = playerDataMap.get(id);

@@ -219,7 +219,10 @@ export async function removePlayer(playerId) {
 
     if (queueSnap.exists()) {
       const order = queueSnap.data().order || [];
-      const filtered = order.filter((id) => id !== playerId);
+      let filtered = order.map((id) => id === playerId ? "EMPTY" : id);
+      while (filtered.length > 0 && filtered[filtered.length - 1] === "EMPTY") {
+        filtered.pop();
+      }
       tx.set(
         queueRef,
         { skill: player.skill, order: filtered, updatedAt: serverTimestamp() },
@@ -306,7 +309,10 @@ export async function updatePlayerSkill(playerId, newSkill) {
 
     if (currentSnap.exists()) {
       const order = currentSnap.data().order || [];
-      const filtered = order.filter((id) => id !== playerId);
+      let filtered = order.map((id) => id === playerId ? "EMPTY" : id);
+      while (filtered.length > 0 && filtered[filtered.length - 1] === "EMPTY") {
+        filtered.pop();
+      }
       tx.set(
         currentQueueRef,
         { skill: player.skill, order: filtered, updatedAt: serverTimestamp() },
@@ -384,7 +390,10 @@ export async function markPlayerAbsent(playerId, absent) {
     let updated = order;
 
     if (absent) {
-      updated = order.filter((id) => id !== playerId);
+      updated = order.map((id) => id === playerId ? "EMPTY" : id);
+      while (updated.length > 0 && updated[updated.length - 1] === "EMPTY") {
+        updated.pop();
+      }
       tx.update(playerRef, {
         status: "Absent",
         updatedAt: serverTimestamp(),
@@ -422,7 +431,7 @@ export async function skipPlayer(playerId) {
 
     if (!order.includes(playerId)) return;
 
-    const filtered = order.filter((id) => id !== playerId);
+    const filtered = order.map((id) => id === playerId ? "EMPTY" : id);
     filtered.push(playerId);
 
     tx.set(

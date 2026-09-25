@@ -221,7 +221,7 @@ function renderStats() {
   document.querySelector('[data-stat="courts"]').textContent = availableCourts;
 
   SKILLS.forEach((skill) => {
-    const count = (state.queues[skill.key] || []).length;
+    const count = (state.queues[skill.key] || []).filter(id => id !== "EMPTY").length;
     const pill = document.querySelector(`[data-queue-count="${skill.key}"]`);
     if (pill) pill.textContent = `${skill.label} ${count}`;
   });
@@ -251,7 +251,7 @@ function renderQueues() {
         const isEditing = state.editingMatches && state.editingMatches.has(matchId);
         
         const isUpNext = index === 0;
-        const isComplete = chunk.length === 4;
+        const isComplete = chunk.length === 4 && chunk.every(id => id && id !== "EMPTY");
         const titleText = isUpNext ? "Up Next" : `Match ${index + 1}`;
         const headerColor = isUpNext ? "text-emerald-400" : "text-slate-400";
         const bgStyles = isUpNext 
@@ -298,7 +298,7 @@ function renderQueues() {
           const playerId = chunk[i];
           const item = document.createElement("li");
 
-          if (playerId) {
+          if (playerId && playerId !== "EMPTY") {
             const player = state.players.get(playerId);
             item.className = "queue-item bg-slate-800 hover:bg-slate-700 transition-colors border border-slate-600/50 p-1 rounded flex items-center justify-between min-h-[28px] cursor-grab";
             item.dataset.playerId = playerId;
@@ -354,7 +354,7 @@ function renderQueues() {
       window.smoothUpdateNode(container, wrapper);
     }
 
-    const count = order.length;
+    const count = order.filter(id => id !== "EMPTY").length;
     const wait = Math.max(0, Math.ceil(count / 4) * AVG_MATCH_MINUTES);
     const countEl = document.querySelector(`[data-queue-total="${skill.key}"]`);
     const waitEl = document.querySelector(`[data-queue-wait="${skill.key}"]`);
@@ -384,7 +384,7 @@ function renderCourts() {
   const queueOptions = SKILLS.map(skill => ({
     key: skill.key,
     label: skill.label,
-    count: (state.queues[skill.key] || []).length,
+    count: (state.queues[skill.key] || []).filter(id => id !== "EMPTY").length,
   })).filter(q => q.count >= 4);
   queueOptions.sort((a, b) => {
     const aA = activeTally[a.label] || 0, bA = activeTally[b.label] || 0;
@@ -392,7 +392,7 @@ function renderCourts() {
     return b.count - a.count;
   });
   const bestQueue = hasPending ? { key: "custom", label: "Custom", count: state.pendingMatches.length * 4 } : (queueOptions[0] || null);
-  const totalQueued = SKILLS.reduce((s, sk) => s + (state.queues[sk.key] || []).length, 0);
+  const totalQueued = SKILLS.reduce((s, sk) => s + (state.queues[sk.key] || []).filter(id => id !== "EMPTY").length, 0);
 
   const nameFor = id => (id && state.players.get(id)?.name) || "--";
 
@@ -473,7 +473,7 @@ function renderCourts() {
       SKILLS
         .filter(skill => courtAllowedSkill === null || courtAllowedSkill === "any" || skill.key === courtAllowedSkill)
         .forEach((skill) => {
-          const count = (state.queues[skill.key] || []).length;
+          const count = (state.queues[skill.key] || []).filter(id => id !== "EMPTY").length;
           if (count >= 4) {
             selectableQueues.push({
               key: skill.key,
@@ -485,7 +485,7 @@ function renderCourts() {
 
       const courtQueuedTotal = (courtAllowedSkill === null || courtAllowedSkill === "any")
         ? totalQueued
-        : (state.queues[courtAllowedSkill] || []).length;
+        : (state.queues[courtAllowedSkill] || []).filter(id => id !== "EMPTY").length;
 
       if (selectableQueues.length) {
         const queueSelect = `
@@ -844,8 +844,14 @@ function setupSortable() {
           container.querySelectorAll(".queue-item").forEach((item) => {
             if (item.dataset.playerId) {
               order.push(item.dataset.playerId);
+            } else if (item.dataset.action === "open-add-player-modal") {
+              order.push("EMPTY");
             }
           });
+          // Clean trailing EMPTYs
+          while (order.length > 0 && order[order.length - 1] === "EMPTY") {
+            order.pop();
+          }
           try {
             await reorderQueue(skillKey, order);
           } catch (error) {
@@ -946,7 +952,7 @@ async function maybeAutoAssignMatches() {
           return {
             key: skill.key,
             label: skill.label,
-            length: (state.queues[skill.key] || []).length - deducted,
+            length: (state.queues[skill.key] || []).filter(id => id !== "EMPTY").length - deducted,
             isCustom: false
           };
         }).filter((queue) => queue.length >= 4);
@@ -1112,15 +1118,24 @@ async function confirmAddPlayer(playerId) {
   const newOrder = [...order];
   const existingIdx = newOrder.indexOf(playerId);
   if (existingIdx !== -1) {
-    newOrder.splice(existingIdx, 1);
+    newOrder[existingIdx] = "EMPTY";
   }
   
-  let finalTargetIndex = targetIndex;
-  if (existingIdx !== -1 && existingIdx < targetIndex) {
-    finalTargetIndex -= 1;
+  if (newOrder[targetIndex] === "EMPTY" || newOrder[targetIndex] === undefined) {
+    newOrder[targetIndex] = playerId;
+  } else {
+    // Determine actual splice index ignoring trailing EMPTYs? No, just splice.
+    let finalTargetIndex = targetIndex;
+    if (existingIdx !== -1 && existingIdx < targetIndex) {
+      finalTargetIndex -= 1;
+    }
+    newOrder.splice(finalTargetIndex, 0, playerId);
   }
   
-  newOrder.splice(finalTargetIndex, 0, playerId);
+  // Clean up trailing EMPTYs just in case
+  while (newOrder.length > 0 && newOrder[newOrder.length - 1] === "EMPTY") {
+    newOrder.pop();
+  }
   
   try {
     await reorderQueue(queueKey, newOrder);
