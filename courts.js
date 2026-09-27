@@ -242,6 +242,7 @@ export async function replaceActiveCourtPlayer(courtId, slotIndex, newPlayerId) 
   const now = serverTimestamp();
 
   await runTransaction(db, async (tx) => {
+    // --- PHASE 1: ALL READS ---
     const courtSnap = await tx.get(courtRef);
     if (!courtSnap.exists()) throw new Error("Court not found");
     const court = courtSnap.data();
@@ -257,7 +258,52 @@ export async function replaceActiveCourtPlayer(courtId, slotIndex, newPlayerId) 
     
     const existingIdx = players.indexOf(newPlayerId);
     
+    let oldPlayerSnap = null;
+    let oldQueueSnap = null;
+    let oldQueueRef = null;
+    let newPlayerSnap = null;
+    let newQueueSnap = null;
+    let newQueueRef = null;
+    
+    const SKILLS = [
+      { label: "Beginner", key: "beginner" },
+      { label: "Intermediate", key: "intermediate" },
+      { label: "Advanced", key: "advanced" }
+    ];
+
+    if (existingIdx === -1) {
+      const newPlayerRef = getTenantDoc("players", newPlayerId);
+      newPlayerSnap = await tx.get(newPlayerRef);
+      if (newPlayerSnap.exists() && newPlayerSnap.data().status === "Playing") {
+         throw new Error("Cannot add a player who is already playing on another court.");
+      }
+      
+      if (oldPlayerId) {
+        const oldPlayerRef = getTenantDoc("players", oldPlayerId);
+        oldPlayerSnap = await tx.get(oldPlayerRef);
+        if (oldPlayerSnap.exists()) {
+           const pData = oldPlayerSnap.data();
+           const match = SKILLS.find(s => s.label === pData.skill);
+           if (match) {
+              oldQueueRef = getTenantDoc("queues", match.key);
+              oldQueueSnap = await tx.get(oldQueueRef);
+           }
+        }
+      }
+      
+      if (newPlayerSnap.exists()) {
+         const pData = newPlayerSnap.data();
+         const match = SKILLS.find(s => s.label === pData.skill);
+         if (match) {
+            newQueueRef = getTenantDoc("queues", match.key);
+            newQueueSnap = await tx.get(newQueueRef);
+         }
+      }
+    }
+    
+    // --- PHASE 2: ALL WRITES ---
     if (existingIdx !== -1) {
+      // Swapping two players on the same court
       players[slotIndex] = newPlayerId;
       players[existingIdx] = oldPlayerId;
       
@@ -267,11 +313,7 @@ export async function replaceActiveCourtPlayer(courtId, slotIndex, newPlayerId) 
       const matchRef = getTenantDoc("matches", court.matchId);
       tx.set(matchRef, { players, teamA, teamB, updatedAt: now }, { merge: true });
     } else {
-      const newPlayerSnap = await tx.get(getTenantDoc("players", newPlayerId));
-      if (newPlayerSnap.exists() && newPlayerSnap.data().status === "Playing") {
-         throw new Error("Cannot add a player who is already playing on another court.");
-      }
-      
+      // Replacing oldPlayer with newPlayer
       players[slotIndex] = newPlayerId;
       const teamA = players.slice(0, 2);
       const teamB = players.slice(2, 4);
@@ -284,22 +326,14 @@ export async function replaceActiveCourtPlayer(courtId, slotIndex, newPlayerId) 
         const oldPlayerRef = getTenantDoc("players", oldPlayerId);
         tx.set(oldPlayerRef, { status: "Waiting", currentMatchId: null, updatedAt: now }, { merge: true });
         
-        const oldPlayerSnap = await tx.get(oldPlayerRef);
-        if (oldPlayerSnap.exists()) {
-           const pData = oldPlayerSnap.data();
-           const SKILLS = [{ label: "Beginner", key: "beginner" }, { label: "Intermediate", key: "intermediate" }, { label: "Advanced", key: "advanced" }];
-           const match = SKILLS.find(s => s.label === pData.skill);
-           if (match) {
-              const qRef = getTenantDoc("queues", match.key);
-              const qSnap = await tx.get(qRef);
-              const order = qSnap.exists() ? qSnap.data().order || [] : [];
-              if (!order.includes(oldPlayerId)) {
-                 const emptyIdx = order.indexOf("EMPTY");
-                 const updated = [...order];
-                 if (emptyIdx !== -1) updated[emptyIdx] = oldPlayerId;
-                 else updated.push(oldPlayerId);
-                 tx.set(qRef, { order: updated, updatedAt: now }, { merge: true });
-              }
+        if (oldQueueSnap && oldQueueRef) {
+           const order = oldQueueSnap.exists() ? oldQueueSnap.data().order || [] : [];
+           if (!order.includes(oldPlayerId)) {
+              const emptyIdx = order.indexOf("EMPTY");
+              const updated = [...order];
+              if (emptyIdx !== -1) updated[emptyIdx] = oldPlayerId;
+              else updated.push(oldPlayerId);
+              tx.set(oldQueueRef, { order: updated, updatedAt: now }, { merge: true });
            }
         }
       }
@@ -307,20 +341,13 @@ export async function replaceActiveCourtPlayer(courtId, slotIndex, newPlayerId) 
       const newPlayerRef = getTenantDoc("players", newPlayerId);
       tx.set(newPlayerRef, { status: "Playing", currentMatchId: court.matchId, updatedAt: now }, { merge: true });
       
-      if (newPlayerSnap.exists()) {
-         const pData = newPlayerSnap.data();
-         const SKILLS = [{ label: "Beginner", key: "beginner" }, { label: "Intermediate", key: "intermediate" }, { label: "Advanced", key: "advanced" }];
-         const match = SKILLS.find(s => s.label === pData.skill);
-         if (match) {
-            const qRef = getTenantDoc("queues", match.key);
-            const qSnap = await tx.get(qRef);
-            if (qSnap.exists()) {
-               const order = qSnap.data().order || [];
-               if (order.includes(newPlayerId)) {
-                  const filtered = order.map(id => id === newPlayerId ? "EMPTY" : id);
-                  while (filtered.length > 0 && filtered[filtered.length - 1] === "EMPTY") filtered.pop();
-                  tx.set(qRef, { order: filtered, updatedAt: now }, { merge: true });
-               }
+      if (newQueueSnap && newQueueRef) {
+         if (newQueueSnap.exists()) {
+            const order = newQueueSnap.data().order || [];
+            if (order.includes(newPlayerId)) {
+               const filtered = order.map(id => id === newPlayerId ? "EMPTY" : id);
+               while (filtered.length > 0 && filtered[filtered.length - 1] === "EMPTY") filtered.pop();
+               tx.set(newQueueRef, { order: filtered, updatedAt: now }, { merge: true });
             }
          }
       }
