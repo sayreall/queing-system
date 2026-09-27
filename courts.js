@@ -237,6 +237,97 @@ export async function assignMatchToCourt(courtId, skillKey) {
   return matchRef.id;
 }
 
+export async function replaceActiveCourtPlayer(courtId, slotIndex, newPlayerId) {
+  const courtRef = getTenantDoc("courts", courtId);
+  const now = serverTimestamp();
+
+  await runTransaction(db, async (tx) => {
+    const courtSnap = await tx.get(courtRef);
+    if (!courtSnap.exists()) throw new Error("Court not found");
+    const court = courtSnap.data();
+    
+    if (court.status !== "Active" || !court.matchId) {
+      throw new Error("Court is not active.");
+    }
+    
+    const players = [...(court.players || [])];
+    const oldPlayerId = players[slotIndex];
+    
+    if (oldPlayerId === newPlayerId) return;
+    
+    const existingIdx = players.indexOf(newPlayerId);
+    
+    if (existingIdx !== -1) {
+      players[slotIndex] = newPlayerId;
+      players[existingIdx] = oldPlayerId;
+      
+      const teamA = players.slice(0, 2);
+      const teamB = players.slice(2, 4);
+      tx.set(courtRef, { players, updatedAt: now }, { merge: true });
+      const matchRef = getTenantDoc("matches", court.matchId);
+      tx.set(matchRef, { players, teamA, teamB, updatedAt: now }, { merge: true });
+    } else {
+      const newPlayerSnap = await tx.get(getTenantDoc("players", newPlayerId));
+      if (newPlayerSnap.exists() && newPlayerSnap.data().status === "Playing") {
+         throw new Error("Cannot add a player who is already playing on another court.");
+      }
+      
+      players[slotIndex] = newPlayerId;
+      const teamA = players.slice(0, 2);
+      const teamB = players.slice(2, 4);
+      
+      tx.set(courtRef, { players, updatedAt: now }, { merge: true });
+      const matchRef = getTenantDoc("matches", court.matchId);
+      tx.set(matchRef, { players, teamA, teamB, updatedAt: now }, { merge: true });
+      
+      if (oldPlayerId) {
+        const oldPlayerRef = getTenantDoc("players", oldPlayerId);
+        tx.set(oldPlayerRef, { status: "Waiting", currentMatchId: null, updatedAt: now }, { merge: true });
+        
+        const oldPlayerSnap = await tx.get(oldPlayerRef);
+        if (oldPlayerSnap.exists()) {
+           const pData = oldPlayerSnap.data();
+           const SKILLS = [{ label: "Beginner", key: "beginner" }, { label: "Intermediate", key: "intermediate" }, { label: "Advanced", key: "advanced" }];
+           const match = SKILLS.find(s => s.label === pData.skill);
+           if (match) {
+              const qRef = getTenantDoc("queues", match.key);
+              const qSnap = await tx.get(qRef);
+              const order = qSnap.exists() ? qSnap.data().order || [] : [];
+              if (!order.includes(oldPlayerId)) {
+                 const emptyIdx = order.indexOf("EMPTY");
+                 const updated = [...order];
+                 if (emptyIdx !== -1) updated[emptyIdx] = oldPlayerId;
+                 else updated.push(oldPlayerId);
+                 tx.set(qRef, { order: updated, updatedAt: now }, { merge: true });
+              }
+           }
+        }
+      }
+      
+      const newPlayerRef = getTenantDoc("players", newPlayerId);
+      tx.set(newPlayerRef, { status: "Playing", currentMatchId: court.matchId, updatedAt: now }, { merge: true });
+      
+      if (newPlayerSnap.exists()) {
+         const pData = newPlayerSnap.data();
+         const SKILLS = [{ label: "Beginner", key: "beginner" }, { label: "Intermediate", key: "intermediate" }, { label: "Advanced", key: "advanced" }];
+         const match = SKILLS.find(s => s.label === pData.skill);
+         if (match) {
+            const qRef = getTenantDoc("queues", match.key);
+            const qSnap = await tx.get(qRef);
+            if (qSnap.exists()) {
+               const order = qSnap.data().order || [];
+               if (order.includes(newPlayerId)) {
+                  const filtered = order.map(id => id === newPlayerId ? "EMPTY" : id);
+                  while (filtered.length > 0 && filtered[filtered.length - 1] === "EMPTY") filtered.pop();
+                  tx.set(qRef, { order: filtered, updatedAt: now }, { merge: true });
+               }
+            }
+         }
+      }
+    }
+  });
+}
+
 
 export async function toggleCourtStatus(courtId) {
   const courtRef = getTenantDoc("courts", courtId);

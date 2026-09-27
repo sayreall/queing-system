@@ -24,6 +24,7 @@ import {
   updateCourtAllowedSkill,
   addCourt,
   removeCourt,
+  replaceActiveCourtPlayer
 } from "./courts.js";
 import { 
   db, collection, query, where, orderBy, limit, onSnapshot,
@@ -435,13 +436,13 @@ function renderCourts() {
           <div class="team-grid mt-2">
             <div class="team-card" style="border-color:rgba(56,189,248,0.3);background:rgba(56,189,248,0.07);">
               <p class="team-label text-cyan-400">Team A</p>
-              <p class="team-player mt-2">${nameFor(teamAIds[0])}</p>
-              <p class="team-player">${nameFor(teamAIds[1])}</p>
+              <p class="team-player mt-2 flex justify-between items-center group"><span>${nameFor(teamAIds[0])}</span><button class="text-slate-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100" data-replace-active="${cid}" data-slot="0" title="Change Player"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button></p>
+              <p class="team-player flex justify-between items-center group"><span>${nameFor(teamAIds[1])}</span><button class="text-slate-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100" data-replace-active="${cid}" data-slot="1" title="Change Player"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button></p>
             </div>
             <div class="team-card" style="border-color:rgba(251,113,133,0.3);background:rgba(251,113,133,0.07);">
               <p class="team-label text-rose-400">Team B</p>
-              <p class="team-player mt-2">${nameFor(teamBIds[0])}</p>
-              <p class="team-player">${nameFor(teamBIds[1])}</p>
+              <p class="team-player mt-2 flex justify-between items-center group"><span>${nameFor(teamBIds[0])}</span><button class="text-slate-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100" data-replace-active="${cid}" data-slot="2" title="Change Player"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button></p>
+              <p class="team-player flex justify-between items-center group"><span>${nameFor(teamBIds[1])}</span><button class="text-slate-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100" data-replace-active="${cid}" data-slot="3" title="Change Player"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button></p>
             </div>
           </div>
           <div class="grid grid-cols-2 gap-2 mt-1">
@@ -618,6 +619,21 @@ function renderPlayers() {
     countEl.textContent = `(${allActive.length} active${archivedCount ? `, ${archivedCount} archived` : ""})`;
   }
 
+  const getWaitTime = (player) => {
+    if (player.status !== "Standby" && player.status !== "Waiting") return "";
+    let d;
+    if (player.updatedAt) {
+      if (typeof player.updatedAt.toDate === 'function') d = player.updatedAt.toDate();
+      else if (player.updatedAt.seconds) d = new Date(player.updatedAt.seconds * 1000);
+      else d = new Date(player.updatedAt);
+    }
+    if (d && !isNaN(d.getTime())) {
+      const diffMins = Math.floor((Date.now() - d.getTime()) / 60000);
+      return diffMins > 0 ? `<br><span class="text-[10px] text-slate-400">(${diffMins}m)</span>` : `<br><span class="text-[10px] text-slate-400">(just now)</span>`;
+    }
+    return "";
+  };
+
   const generateRowHTML = (player, idx) => `
       <tr class="border-t border-slate-800/60">
         <td class="py-3 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
@@ -652,7 +668,7 @@ function renderPlayers() {
           </select>
         </td>
         <td class="text-slate-300 text-sm">${player.location || "—"}</td>
-        <td>${player.status}</td>
+        <td class="whitespace-nowrap text-center">${player.status}${getWaitTime(player)}</td>
         <td>
           ${player.lastResult === 'Win' ? '<span class="text-xs font-semibold px-2 py-1 bg-green-500/20 text-green-400 rounded-md border border-green-500/30">Won</span>' : ''}
           ${player.lastResult === 'Loss' ? '<span class="text-xs font-semibold px-2 py-1 bg-red-500/20 text-red-400 rounded-md border border-red-500/30">Lost</span>' : ''}
@@ -751,7 +767,7 @@ function renderPlayers() {
           </select>
         </td>
         <td class="text-slate-300 text-sm">${player.location || "—"}</td>
-        <td>${player.status}</td>
+        <td class="whitespace-nowrap text-center">${player.status}${getWaitTime(player)}</td>
         <td>
           ${player.lastResult === 'Win' ? '<span class="text-xs font-semibold px-2 py-1 bg-green-500/20 text-green-400 rounded-md border border-green-500/30">Won</span>' : ''}
           ${player.lastResult === 'Loss' ? '<span class="text-xs font-semibold px-2 py-1 bg-red-500/20 text-red-400 rounded-md border border-red-500/30">Lost</span>' : ''}
@@ -1078,8 +1094,8 @@ function openPartnerModal(playerId) {
   modal.classList.remove("hidden");
 }
 
-function openAddPlayerModal(queueKey, matchIndex, slotIndex) {
-  _pendingAddSlotInfo = { queueKey, matchIndex, slotIndex };
+function openAddPlayerModal(queueKey, matchIndex, slotIndex, courtId = null) {
+  _pendingAddSlotInfo = { queueKey, matchIndex, slotIndex, courtId };
   const modal = document.getElementById("add-to-match-modal");
   const list = document.getElementById("add-to-match-list");
   const search = document.getElementById("add-to-match-search");
@@ -1119,7 +1135,21 @@ function openAddPlayerModal(queueKey, matchIndex, slotIndex) {
 
 async function confirmAddPlayer(playerId) {
   if (!_pendingAddSlotInfo) return;
-  const { queueKey, matchIndex, slotIndex } = _pendingAddSlotInfo;
+  const { queueKey, matchIndex, slotIndex, courtId } = _pendingAddSlotInfo;
+  
+  if (courtId) {
+    try {
+      await replaceActiveCourtPlayer(courtId, slotIndex, playerId);
+      showToast("Player updated in active match!");
+    } catch (error) {
+      console.error("Failed to replace player", error);
+      showToast(error.message || "Failed to replace player", "error");
+    } finally {
+      document.getElementById("add-to-match-modal").classList.add("hidden");
+      _pendingAddSlotInfo = null;
+    }
+    return;
+  }
   
   const order = state.queues[queueKey] || [];
   const targetIndex = (matchIndex * 4) + slotIndex;
@@ -1528,6 +1558,14 @@ function bindEvents() {
         console.error("Finish court failed", error);
         showToast(formatFirebaseError(error), "error");
       }
+      return;
+    }
+
+    const replaceActiveBtn = event.target.closest("[data-replace-active]");
+    if (replaceActiveBtn) {
+      const courtId = replaceActiveBtn.dataset.replaceActive;
+      const slotIndex = parseInt(replaceActiveBtn.dataset.slot, 10);
+      openAddPlayerModal(null, null, slotIndex, courtId);
       return;
     }
 
