@@ -1148,6 +1148,7 @@ async function confirmAddPlayer(playerId) {
   
   try {
     await reorderQueue(queueKey, newOrder);
+    await markPlayerAbsent(playerId, false);
     showToast("Player added to match!");
   } catch (error) {
     console.error("Failed to add player", error);

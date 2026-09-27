@@ -437,7 +437,13 @@ export async function markPlayerAbsent(playerId, absent) {
       });
     } else {
       if (!order.includes(playerId)) {
-        updated = order.concat(playerId);
+        const emptyIdx = order.indexOf("EMPTY");
+        if (emptyIdx !== -1) {
+          updated = [...order];
+          updated[emptyIdx] = playerId;
+        } else {
+          updated = order.concat(playerId);
+        }
       }
       tx.update(playerRef, {
         status: "Waiting",
