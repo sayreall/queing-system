@@ -607,10 +607,10 @@ function renderPlayers() {
 
   const doneRows = state.filter.startsWith("Archived")
     ? []
-    : filteredRows.filter((player) => player.status === "Standby");
+    : filteredRows.filter((player) => player.status === "Standby" || player.status === "Absent");
   const activeRows = state.filter.startsWith("Archived")
     ? filteredRows
-    : filteredRows.filter((player) => player.status !== "Standby");
+    : filteredRows.filter((player) => player.status !== "Standby" && player.status !== "Absent");
 
   // Update total players count badge
   const countEl = document.getElementById("total-players-count");
@@ -620,7 +620,7 @@ function renderPlayers() {
   }
 
   const getWaitTime = (player) => {
-    if (player.status !== "Standby" && player.status !== "Waiting") return "";
+    if (player.status !== "Standby" && player.status !== "Waiting" && player.status !== "Absent") return "";
     let d;
     if (player.updatedAt) {
       if (typeof player.updatedAt.toDate === 'function') d = player.updatedAt.toDate();
