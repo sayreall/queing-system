@@ -2031,16 +2031,8 @@ function bindEvents() {
   }
 
   function renderArchiveModal() {
-    // Collect unique archived dates to default to newest if blank
     if (archiveDateInput && !archiveDateInput.value) {
-      const dates = new Set();
-      state.players.forEach(p => {
-        if (p.status === "Archived" && p.archivedDate) dates.add(p.archivedDate);
-      });
-      const sortedDates = Array.from(dates).sort((a, b) => new Date(b) - new Date(a));
-      if (sortedDates.length > 0) {
-        archiveDateInput.value = toYMD(sortedDates[0]);
-      }
+      archiveDateInput.value = toYMD(new Date());
     }
     
     const selectedYMD = archiveDateInput ? archiveDateInput.value : "";
