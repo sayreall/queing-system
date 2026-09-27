@@ -896,6 +896,8 @@ function setupSortable() {
         filter: 'button, .add-player-btn',
         preventOnFilter: false,
         delay: 150,
+        swap: true,
+        swapClass: 'bg-slate-700/80',
         delayOnTouchOnly: true,
         touchStartThreshold: 3,
         onEnd: async (e) => {
