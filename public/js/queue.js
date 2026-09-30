@@ -177,7 +177,7 @@ export async function addPlayer({ name, skill, gender, location, practicePartner
   return playerRef.id;
 }
 
-export async function addPlayersBulk(entries) {
+export async function addPlayersBulk(entries, addToQueue = false) {
   const now = serverTimestamp();
   const batch = writeBatch(db);
 
@@ -186,6 +186,14 @@ export async function addPlayersBulk(entries) {
   allPlayersSnap.forEach(snap => {
     existingMap.set(snap.data().nameLower, snap);
   });
+
+  const queuesToUpdate = {};
+  if (addToQueue) {
+    const allQueuesSnap = await getDocs(getTenantCollection("queues"));
+    allQueuesSnap.forEach(snap => {
+      queuesToUpdate[snap.id] = snap.data().order || [];
+    });
+  }
 
   entries.forEach((entry) => {
     const trimmedName = normalizeName(entry.name || "");
@@ -211,15 +219,17 @@ export async function addPlayersBulk(entries) {
     } else {
       playerRef = getTenantDoc("players");
       // Add to existingMap so duplicates in the same bulk import don't crash
-      existingMap.set(nameLower, { ref: playerRef, data: () => ({ status: "Standby" }) });
+      existingMap.set(nameLower, { ref: playerRef, data: () => ({ status: addToQueue ? "Waiting" : "Standby" }) });
     }
+
+    const initialStatus = addToQueue ? "Waiting" : "Standby";
 
     if (isRevive) {
       batch.set(playerRef, {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Standby",
+        status: initialStatus,
         playedWith: {},
         updatedAt: now,
       }, { merge: true });
@@ -230,14 +240,26 @@ export async function addPlayersBulk(entries) {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
-        status: "Standby",
+        status: initialStatus,
         playedWith: {},
         currentMatchId: null,
         createdAt: now,
         updatedAt: now,
       });
     }
+
+    if (addToQueue) {
+      const skillKey = skillKeyFromLabel(normalizedSkill);
+      if (!queuesToUpdate[skillKey]) queuesToUpdate[skillKey] = [];
+      queuesToUpdate[skillKey].push(playerRef.id);
+    }
   });
+
+  if (addToQueue) {
+    for (const [skillKey, order] of Object.entries(queuesToUpdate)) {
+      batch.set(getQueueDocRef(skillKey), { skill: skillLabelFromKey(skillKey), order, updatedAt: now }, { merge: true });
+    }
+  }
 
   await batch.commit();
 }

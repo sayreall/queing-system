@@ -41,7 +41,7 @@
   </script>
   <link rel="stylesheet" href="css/styles.css" />
   <script>
-    (function() {
+    (function () {
       const club = localStorage.getItem("dq_club_preference");
       if (club === "longos") {
         document.title = "Longos Pickleball Club";
@@ -72,7 +72,9 @@
       }
     })();
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css">
   <link rel="stylesheet" href="css/styles.css">
   <script src="multi-club.js"></script>
@@ -81,7 +83,8 @@
 <body class="min-h-screen bg-ink font-body flex overflow-x-hidden" style="color:#F2E8D5;">
   <!-- Splash / Loading Screen -->
   <div id="splash-screen">
-    <img src="assets/images/logologinpage-transparent.png" alt="PicklQ Logo" class="splash-logo" onerror="this.style.display='none'" />
+    <img src="assets/images/logologinpage-transparent.png" alt="PicklQ Logo" class="splash-logo"
+      onerror="this.style.display='none'" />
     <div>
       <p class="splash-title">PicklQ</p>
       <p class="splash-subtitle">Queuing System</p>
@@ -91,7 +94,7 @@
   <script>
     // Only show the splash on a fresh new browser/tab session.
     // Internal page navigations (login→dashboard, import→dashboard, etc.) skip it.
-    (function() {
+    (function () {
       var splash = document.getElementById('splash-screen');
       if (!splash) return;
       if (sessionStorage.getItem('dq_splash_shown')) {
@@ -106,56 +109,120 @@
   <div class="page-bg"></div>
 
   <!-- Mobile Overlay -->
-  <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-40 hidden md:hidden backdrop-blur-sm transition-opacity opacity-0"></div>
+  <div id="sidebar-overlay"
+    class="fixed inset-0 bg-black/60 z-40 hidden md:hidden backdrop-blur-sm transition-opacity opacity-0"></div>
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="fixed top-0 left-0 w-64 md:w-16 -translate-x-full md:translate-x-0 transition-all duration-300 flex flex-col bg-panel border-r border-slate-700/50 h-screen z-50 flex-shrink-0 overflow-hidden" style="background: rgba(15, 61, 61, 0.95);">
-    <div class="h-[88px] flex items-center px-3 border-b border-slate-700/50 cursor-pointer flex-shrink-0 hover:bg-slate-800/50 transition-colors" id="sidebar-toggle" style="padding-left: 0.6rem;">
-      <img src="assets/images/logologinpage-transparent.png" alt="Logo" class="sidebar-logo w-11 h-11 rounded-full object-cover flex-shrink-0" onerror="this.style.display='none'" />
-      <span class="ml-4 font-display font-semibold text-lg text-white whitespace-nowrap md:opacity-0 transition-opacity duration-300 sidebar-text block">Menu</span>
+  <aside id="sidebar"
+    class="fixed top-0 left-0 w-64 md:w-16 -translate-x-full md:translate-x-0 transition-all duration-300 flex flex-col bg-panel border-r border-slate-700/50 h-screen z-50 flex-shrink-0 overflow-hidden"
+    style="background: rgba(15, 61, 61, 0.95);">
+    <div
+      class="h-[88px] flex items-center px-3 border-b border-slate-700/50 cursor-pointer flex-shrink-0 hover:bg-slate-800/50 transition-colors"
+      id="sidebar-toggle" style="padding-left: 0.6rem;">
+      <img src="assets/images/logologinpage-transparent.png" alt="Logo"
+        class="sidebar-logo w-11 h-11 rounded-full object-cover flex-shrink-0" onerror="this.style.display='none'" />
+      <span
+        class="ml-4 font-display font-semibold text-lg text-white whitespace-nowrap md:opacity-0 transition-opacity duration-300 sidebar-text block">Menu</span>
     </div>
-    
+
     <nav class="flex-1 overflow-y-auto py-6 flex flex-col gap-3 px-2 custom-scrollbar">
-      <button id="view-match-log-btn" class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white" title="Match Log">
-        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-        <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">Match Log</span>
+      <button id="view-match-log-btn"
+        class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white"
+        title="Match Log">
+        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+          </path>
+        </svg>
+        <span
+          class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">Match
+          Log</span>
       </button>
 
-      <button id="view-ranking-btn" class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white" title="Ranking">
-        <svg class="w-6 h-6 flex-shrink-0 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-        <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold text-yellow-400 transition-opacity duration-300 pointer-events-none">Ranking</span>
+      <button id="view-ranking-btn"
+        class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white"
+        title="Ranking">
+        <svg class="w-6 h-6 flex-shrink-0 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6">
+          </path>
+        </svg>
+        <span
+          class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold text-yellow-400 transition-opacity duration-300 pointer-events-none">Ranking</span>
       </button>
 
-      <button id="view-archive-btn" class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white" title="Archived Players">
-        <svg class="w-6 h-6 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-        <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">Archived Players</span>
+      <button id="view-archive-btn"
+        class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white"
+        title="Archived Players">
+        <svg class="w-6 h-6 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+        </svg>
+        <span
+          class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">Archived
+          Players</span>
       </button>
 
-      <a href="import.html" id="import-players-btn" class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white" title="Import Players">
-        <svg class="w-6 h-6 flex-shrink-0 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-        <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold text-orange transition-opacity duration-300 pointer-events-none">Import Players</span>
+      <a href="import.html" id="import-players-btn"
+        class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white"
+        title="Import Players">
+        <svg class="w-6 h-6 flex-shrink-0 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        <span
+          class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold text-orange transition-opacity duration-300 pointer-events-none">Import
+          Players</span>
       </a>
 
-      <a href="tv.html?from=dashboard" id="view-tv-btn" class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white" title="View TV Display">
-        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-        <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">View TV Display</span>
+      <a href="tv.html?from=dashboard" id="view-tv-btn"
+        class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white"
+        title="View TV Display">
+        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+          </path>
+        </svg>
+        <span
+          class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">View
+          TV Display</span>
       </a>
 
-      <button id="open-tv-share-btn" class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-beginner hover:text-beginner/80" title="Share TV">
-        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-        <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">Share TV</span>
+      <button id="open-tv-share-btn"
+        class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-beginner hover:text-beginner/80"
+        title="Share TV">
+        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z">
+          </path>
+        </svg>
+        <span
+          class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">Share
+          TV</span>
       </button>
-      
+
       <div class="mt-auto"></div>
 
-      <button id="guide-btn" class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white" title="Interactive Tour">
-        <svg class="w-6 h-6 flex-shrink-0 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-        <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold text-cyan-400 transition-opacity duration-300 pointer-events-none">Interactive Tour</span>
+      <button id="guide-btn"
+        class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white"
+        title="Interactive Tour">
+        <svg class="w-6 h-6 flex-shrink-0 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+          </path>
+        </svg>
+        <span
+          class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold text-cyan-400 transition-opacity duration-300 pointer-events-none">Interactive
+          Tour</span>
       </button>
 
-      <button id="logout-btn" class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-red-500/10 transition-colors text-left text-red-400 hover:text-red-300" title="Logout">
-        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-        <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">Logout</span>
+      <button id="logout-btn"
+        class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-red-500/10 transition-colors text-left text-red-400 hover:text-red-300"
+        title="Logout">
+        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+        <span
+          class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">Logout</span>
       </button>
     </nav>
   </aside>
@@ -163,318 +230,242 @@
   <!-- Main Content Wrapper -->
   <div class="w-full md:pl-16 flex flex-col relative min-h-screen">
 
-  <header class="px-6 py-4 md:px-10 md:py-6">
-    <div class="header-inner">
-      <!-- Brand: logo + title -->
-      <div class="header-brand">
-        <button id="mobile-menu-btn" class="md:hidden mr-2 text-slate-300 hover:text-white p-2 -ml-2 rounded-lg focus:outline-none">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-        </button>
-        <div class="header-title-block">
-          <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Open Play Doubles</p>
-          <h1 class="font-display font-semibold header-title" style="color:#F5C42A;">Deuce Club Queuing System</h1>
+    <header class="px-6 py-4 md:px-10 md:py-6">
+      <div class="header-inner">
+        <!-- Brand: logo + title -->
+        <div class="header-brand">
+          <button id="mobile-menu-btn"
+            class="md:hidden mr-2 text-slate-300 hover:text-white p-2 -ml-2 rounded-lg focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+          <div class="header-title-block">
+            <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Open Play Doubles</p>
+            <h1 class="font-display font-semibold header-title" style="color:#F5C42A;">Deuce Club Queuing System</h1>
+          </div>
         </div>
       </div>
-    </div>
-  </header>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <!-- Intro.js JS -->
-  <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
+    </header>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Intro.js JS -->
+    <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
 
-  <section class="px-6 md:px-10">
-    <div id="stats-container" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-      <div class="stat-card" id="stat-waiting">
-        <p class="stat-label">Total Waiting Players</p>
-        <p class="stat-value" data-stat="waiting">0</p>
-      </div>
-      <div class="stat-card" id="stat-matches">
-        <p class="stat-label">Active Matches</p>
-        <p class="stat-value" data-stat="matches">0</p>
-      </div>
-      <div class="stat-card" id="stat-courts">
-        <p class="stat-label">Available Courts</p>
-        <p class="stat-value" data-stat="courts">0</p>
-      </div>
-      <div class="stat-card" id="stat-queues">
-        <p class="stat-label">Queue Counts</p>
-        <div class="flex flex-wrap gap-2 text-sm text-slate-300">
-          <span class="badge badge-beginner" data-queue-count="beginner">Beginner 0</span>
-          <span class="badge badge-intermediate" data-queue-count="intermediate">Intermediate 0</span>
-          <span class="badge badge-advanced" data-queue-count="advanced">Advanced 0</span>
+    <section class="px-6 md:px-10">
+      <div id="stats-container" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div class="stat-card" id="stat-waiting">
+          <p class="stat-label">Total Waiting Players</p>
+          <p class="stat-value" data-stat="waiting">0</p>
+        </div>
+        <div class="stat-card" id="stat-matches">
+          <p class="stat-label">Active Matches</p>
+          <p class="stat-value" data-stat="matches">0</p>
+        </div>
+        <div class="stat-card" id="stat-courts">
+          <p class="stat-label">Available Courts</p>
+          <p class="stat-value" data-stat="courts">0</p>
+        </div>
+        <div class="stat-card" id="stat-queues">
+          <p class="stat-label">Queue Counts</p>
+          <div class="flex flex-wrap gap-2 text-sm text-slate-300">
+            <span class="badge badge-beginner" data-queue-count="beginner">Beginner 0</span>
+            <span class="badge badge-intermediate" data-queue-count="intermediate">Intermediate 0</span>
+            <span class="badge badge-advanced" data-queue-count="advanced">Advanced 0</span>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <main class="px-6 py-8 md:px-10">
-    <div class="flex flex-col gap-10">
-      <section class="space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-4">
+    <main class="px-6 py-8 md:px-10">
+      <div class="flex flex-col gap-10">
+        <section class="space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-display font-semibold">Courts</h2>
+              <span class="text-sm text-slate-400">Realtime match control</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="add-court-btn" class="btn-secondary flex items-center gap-2 text-sm" title="Add a new court">
+                <svg aria-hidden="true" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Add Court
+              </button>
+              <div class="flex items-center gap-2 bg-slate-800/50 border border-slate-700 px-3 py-1.5 rounded-lg">
+                <span class="text-sm font-semibold text-slate-300">Auto-Assign:</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="auto-assign-toggle" class="sr-only peer">
+                  <div
+                    class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-beginner">
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Next Match Preview -->
+          <div id="next-match-card"></div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start" id="courts-container">
+            <!-- Court cards are dynamically rendered by dashboard.js -->
+          </div>
+        </section>
+
+        <section class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-display font-semibold">Queues</h2>
+            <span class="text-sm text-slate-400">Drag and drop to reorder</span>
+          </div>
+
+          <div id="pending-matches-container"></div>
+
+          <div class="grid gap-4" id="queues-container">
+            <div class="glass-card" data-skill-card="beginner">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 class="queue-title text-beginner">Beginner - Novice Queue</h3>
+                  <p class="queue-meta">
+                    <span data-queue-total="beginner">0 waiting</span>
+                    <span class="mx-2 text-slate-500">|</span>
+                    <span data-queue-wait="beginner">Est wait 0 mins</span>
+                  </p>
+                </div>
+                <span class="skill-pill skill-beginner">Beginner</span>
+              </div>
+              <div class="queue-matches-container" data-queue="beginner" id="queue-beginner">
+                <p
+                  class="queue-empty text-slate-500 py-4 text-center text-sm border border-dashed border-slate-700/50 rounded-xl">
+                  Loading queue...</p>
+              </div>
+            </div>
+
+            <div class="glass-card" data-skill-card="intermediate">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 class="queue-title text-intermediate">Low Intermediate - High Intermediate Queue</h3>
+                  <p class="queue-meta">
+                    <span data-queue-total="intermediate">0 waiting</span>
+                    <span class="mx-2 text-slate-500">|</span>
+                    <span data-queue-wait="intermediate">Est wait 0 mins</span>
+                  </p>
+                </div>
+                <span class="skill-pill skill-intermediate">Intermediate</span>
+              </div>
+              <div class="queue-matches-container" data-queue="intermediate" id="queue-intermediate">
+                <p
+                  class="queue-empty text-slate-500 py-4 text-center text-sm border border-dashed border-slate-700/50 rounded-xl">
+                  Loading queue...</p>
+              </div>
+            </div>
+
+            <div class="glass-card" data-skill-card="advanced">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 class="queue-title text-advanced">Advanced++ Queue</h3>
+                  <p class="queue-meta">
+                    <span data-queue-total="advanced">0 waiting</span>
+                    <span class="mx-2 text-slate-500">|</span>
+                    <span data-queue-wait="advanced">Est wait 0 mins</span>
+                  </p>
+                </div>
+                <span class="skill-pill skill-advanced">Advanced</span>
+              </div>
+              <div class="queue-matches-container" data-queue="advanced" id="queue-advanced">
+                <p
+                  class="queue-empty text-slate-500 py-4 text-center text-sm border border-dashed border-slate-700/50 rounded-xl">
+                  Loading queue...</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+
+    <section class="px-6 pb-10 md:px-10">
+      <div class="glass-card">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 class="text-xl font-display font-semibold">Courts</h2>
-            <span class="text-sm text-slate-400">Realtime match control</span>
+            <h2 class="text-xl font-display font-semibold">Player Management <span id="total-players-count"
+                class="text-slate-400 text-base font-normal ml-2"></span></h2>
+            <p class="text-sm text-slate-400">Add, edit, or manage player availability</p>
           </div>
-          
-          <div class="flex flex-wrap items-center gap-2">
-            <button id="add-court-btn" class="btn-secondary flex items-center gap-2 text-sm" title="Add a new court">
-              <svg aria-hidden="true" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              Add Court
-            </button>
-            <div class="flex items-center gap-2 bg-slate-800/50 border border-slate-700 px-3 py-1.5 rounded-lg">
-              <span class="text-sm font-semibold text-slate-300">Auto-Assign:</span>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="auto-assign-toggle" class="sr-only peer">
-                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-beginner"></div>
-              </label>
-            </div>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center w-full sm:w-auto">
+            <button id="open-add-player-modal" class="btn-primary">Add Player</button>
+            <button id="archive-all" class="btn-secondary"
+              style="border-color: rgba(248, 113, 113, 0.4); color: #fca5a5;">End Day (Archive All)</button>
           </div>
         </div>
 
-        <!-- Next Match Preview -->
-        <div id="next-match-card"></div>
+        <div class="mt-6 grid gap-4 lg:grid-cols-[0.35fr_0.65fr]">
+          <div class="glass-subcard">
+            <label class="text-sm uppercase tracking-[0.2em] text-slate-400">Search</label>
+            <input id="player-search" class="input-field mt-2" placeholder="Search players" />
+            <label class="text-sm uppercase tracking-[0.2em] text-slate-400 mt-4 block">Filter</label>
+            <select id="player-filter" class="input-field mt-2 w-full">
+              <option value="All">All skills</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+              <option value="Archived">Archived Status</option>
+            </select>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start" id="courts-container">
-          <!-- Court cards are dynamically rendered by dashboard.js -->
-        </div>
-      </section>
-
-      <section class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-display font-semibold">Queues</h2>
-          <span class="text-sm text-slate-400">Drag and drop to reorder</span>
-        </div>
-
-        <div id="pending-matches-container"></div>
-
-        <div class="grid gap-4" id="queues-container">
-          <div class="glass-card" data-skill-card="beginner">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 class="queue-title text-beginner">Beginner - Low Intermediate Queue</h3>
-                <p class="queue-meta">
-                  <span data-queue-total="beginner">0 waiting</span>
-                  <span class="mx-2 text-slate-500">|</span>
-                  <span data-queue-wait="beginner">Est wait 0 mins</span>
-                </p>
-              </div>
-              <span class="skill-pill skill-beginner">Beginner</span>
+            <div id="round-generator-panel" class="mt-6 p-4 border rounded-xl"
+              style="border-color:rgba(16,185,129,0.35);background:rgba(16,185,129,0.1);">
+              <h3 class="font-display font-semibold" style="color:#34d399;">Round Generator</h3>
+              <p class="text-xs text-slate-300 mt-1 mb-3">Auto-balance & generate the next round for all standby
+                players.</p>
+              <button id="generate-round-btn"
+                class="w-full text-xs py-2 px-3 rounded font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">Generate
+                Round</button>
+              <button id="auto-round-btn"
+                class="w-full text-xs py-2 px-3 rounded font-bold uppercase tracking-wider btn-secondary mt-2 transition-colors">&#x1F504;
+                Prefer Auto Round</button>
+              <p id="auto-round-mode-label" class="text-[10px] text-slate-400 mt-1 text-center"></p>
             </div>
-            <div class="queue-matches-container" data-queue="beginner" id="queue-beginner">
-              <p class="queue-empty text-slate-500 py-4 text-center text-sm border border-dashed border-slate-700/50 rounded-xl">Loading queue...</p>
-            </div>
-          </div>
 
-          <div class="glass-card" data-skill-card="intermediate">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 class="queue-title text-intermediate">High Intermediate - Advanced Queue</h3>
-                <p class="queue-meta">
-                  <span data-queue-total="intermediate">0 waiting</span>
-                  <span class="mx-2 text-slate-500">|</span>
-                  <span data-queue-wait="intermediate">Est wait 0 mins</span>
-                </p>
-              </div>
-              <span class="skill-pill skill-intermediate">Intermediate</span>
-            </div>
-            <div class="queue-matches-container" data-queue="intermediate" id="queue-intermediate">
-              <p class="queue-empty text-slate-500 py-4 text-center text-sm border border-dashed border-slate-700/50 rounded-xl">Loading queue...</p>
+            <div id="custom-match-panel" class="mt-4 p-4 border rounded-xl"
+              style="border-color:rgba(232,90,26,0.35);background:rgba(232,90,26,0.1);">
+              <h3 class="font-display font-semibold" style="color:#f07840;">Custom Match</h3>
+              <p class="text-xs text-slate-300 mt-1">Configure a match with any 4 players.</p>
+              <button id="start-custom-match-btn" class="btn-primary w-full mt-3">Configure Match</button>
             </div>
           </div>
-
-          <div class="glass-card" data-skill-card="advanced">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 class="queue-title text-advanced">Advanced++ Queue</h3>
-                <p class="queue-meta">
-                  <span data-queue-total="advanced">0 waiting</span>
-                  <span class="mx-2 text-slate-500">|</span>
-                  <span data-queue-wait="advanced">Est wait 0 mins</span>
-                </p>
-              </div>
-              <span class="skill-pill skill-advanced">Advanced</span>
-            </div>
-            <div class="queue-matches-container" data-queue="advanced" id="queue-advanced">
-              <p class="queue-empty text-slate-500 py-4 text-center text-sm border border-dashed border-slate-700/50 rounded-xl">Loading queue...</p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-  </main>
-
-
-  <section class="px-6 pb-10 md:px-10">
-    <div class="glass-card">
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h2 class="text-xl font-display font-semibold">Player Management <span id="total-players-count" class="text-slate-400 text-base font-normal ml-2"></span></h2>
-          <p class="text-sm text-slate-400">Add, edit, or manage player availability</p>
-        </div>
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center w-full sm:w-auto">
-          <button id="open-add-player-modal" class="btn-primary">Add Player</button>
-          <button id="archive-all" class="btn-secondary" style="border-color: rgba(248, 113, 113, 0.4); color: #fca5a5;">End Day (Archive All)</button>
-        </div>
-      </div>
-
-      <div class="mt-6 grid gap-4 lg:grid-cols-[0.35fr_0.65fr]">
-        <div class="glass-subcard">
-          <label class="text-sm uppercase tracking-[0.2em] text-slate-400">Search</label>
-          <input id="player-search" class="input-field mt-2" placeholder="Search players" />
-          <label class="text-sm uppercase tracking-[0.2em] text-slate-400 mt-4 block">Filter</label>
-          <select id="player-filter" class="input-field mt-2 w-full">
-            <option value="All">All skills</option>
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-            <option value="Archived">Archived Status</option>
-          </select>
-
-          <div id="round-generator-panel" class="mt-6 p-4 border rounded-xl"
-            style="border-color:rgba(16,185,129,0.35);background:rgba(16,185,129,0.1);">
-            <h3 class="font-display font-semibold" style="color:#34d399;">Round Generator</h3>
-            <p class="text-xs text-slate-300 mt-1 mb-3">Auto-balance & generate the next round for all standby players.</p>
-            <button id="generate-round-btn" class="w-full text-xs py-2 px-3 rounded font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">Generate Round</button>
-            <button id="auto-round-btn" class="w-full text-xs py-2 px-3 rounded font-bold uppercase tracking-wider btn-secondary mt-2 transition-colors">&#x1F504; Prefer Auto Round</button>
-            <p id="auto-round-mode-label" class="text-[10px] text-slate-400 mt-1 text-center"></p>
-          </div>
-
-          <div id="custom-match-panel" class="mt-4 p-4 border rounded-xl"
-            style="border-color:rgba(232,90,26,0.35);background:rgba(232,90,26,0.1);">
-            <h3 class="font-display font-semibold" style="color:#f07840;">Custom Match</h3>
-            <p class="text-xs text-slate-300 mt-1">Configure a match with any 4 players.</p>
-            <button id="start-custom-match-btn" class="btn-primary w-full mt-3">Configure Match</button>
-          </div>
-        </div>
-        <div class="glass-subcard min-w-0">
-          <!-- Beginner Players -->
-          <div class="mb-6">
-            <div class="flex items-center gap-2 mb-3">
-              <h3 class="text-base font-display font-semibold text-beginner">Beginner Players</h3>
-              <span class="text-xs text-slate-500" id="count-beginner">0</span>
-            </div>
-            <div class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg"><table class="w-full text-sm whitespace-nowrap relative"><thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
-                  <tr>
-                    <th class="py-2 w-8 text-center text-slate-500">#</th>
-                    <th>Player</th>
-                    <th>Gender</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Last Match</th>
-                    <th class="text-purple-400" title="Games Played">GP</th>
-                    <th class="text-green-400">W</th>
-                    <th class="text-red-400">L</th>
-                    <th class="text-blue-400">Win %</th>
-                    <th>Skill</th>
-                    <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="players-body-beginner">
-                  <tr>
-                    <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Intermediate Players -->
-          <div class="mb-6">
-            <div class="flex items-center gap-2 mb-3">
-              <h3 class="text-base font-display font-semibold text-intermediate">Intermediate Players</h3>
-              <span class="text-xs text-slate-500" id="count-intermediate">0</span>
-            </div>
-            <div class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg"><table class="w-full text-sm whitespace-nowrap relative"><thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
-                  <tr>
-                    <th class="py-2 w-8 text-center text-slate-500">#</th>
-                    <th>Player</th>
-                    <th>Gender</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Last Match</th>
-                    <th class="text-purple-400" title="Games Played">GP</th>
-                    <th class="text-green-400">W</th>
-                    <th class="text-red-400">L</th>
-                    <th class="text-blue-400">Win %</th>
-                    <th>Skill</th>
-                    <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="players-body-intermediate">
-                  <tr>
-                    <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Advanced Players -->
-          <div class="mb-4">
-            <div class="flex items-center gap-2 mb-3">
-              <h3 class="text-base font-display font-semibold text-advanced">Advanced Players</h3>
-              <span class="text-xs text-slate-500" id="count-advanced">0</span>
-            </div>
-            <div class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg"><table class="w-full text-sm whitespace-nowrap relative"><thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
-                  <tr>
-                    <th class="py-2 w-8 text-center text-slate-500">#</th>
-                    <th>Player</th>
-                    <th>Gender</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Last Match</th>
-                    <th class="text-purple-400" title="Games Played">GP</th>
-                    <th class="text-green-400">W</th>
-                    <th class="text-red-400">L</th>
-                    <th class="text-blue-400">Win %</th>
-                    <th>Skill</th>
-                    <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="players-body-advanced">
-                  <tr>
-                    <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="mt-6 border-t border-slate-800/60 pt-4" id="done-players-container">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
-              <h3 class="text-base font-display font-semibold">Done Playing</h3>
-              <span class="text-xs text-slate-400">Players already finished their last match</span>
-            </div>
-
+          <div class="glass-subcard min-w-0">
             <!-- Beginner Players -->
             <div class="mb-6">
               <div class="flex items-center gap-2 mb-3">
                 <h3 class="text-base font-display font-semibold text-beginner">Beginner Players</h3>
-                <span class="text-xs text-slate-500" id="count-done-beginner">0</span>
+                <span class="text-xs text-slate-500" id="count-beginner">0</span>
               </div>
-              <div class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg"><table class="w-full text-sm whitespace-nowrap relative"><thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
-                  <tr>
-                    <th class="py-2 w-8 text-center">#</th>
-                    <th>Player</th>
-                    <th>Gender</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Last Match</th>
-                    <th class="text-purple-400" title="Games Played">GP</th>
-                    <th class="text-green-400">W</th>
-                    <th class="text-red-400">L</th>
-                    <th class="text-blue-400">Win %</th>
-                    <th>Skill</th>
-                    <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="done-players-body-beginner">
-                  <tr>
-                    <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
-                  </tr>
-                </tbody>
-              </table>
+              <div
+                class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg">
+                <table class="w-full text-sm whitespace-nowrap relative">
+                  <thead class="text-left text-slate-400 sticky top-0 z-10"
+                    style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+                    <tr>
+                      <th class="py-2 w-8 text-center text-slate-500">#</th>
+                      <th>Player</th>
+                      <th>Gender</th>
+                      <th>Location</th>
+                      <th>Status</th>
+                      <th>Last Match</th>
+                      <th class="text-purple-400" title="Games Played">GP</th>
+                      <th class="text-green-400">W</th>
+                      <th class="text-red-400">L</th>
+                      <th class="text-blue-400">Win %</th>
+                      <th>Skill</th>
+                      <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="players-body-beginner">
+                    <tr>
+                      <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -482,449 +473,627 @@
             <div class="mb-6">
               <div class="flex items-center gap-2 mb-3">
                 <h3 class="text-base font-display font-semibold text-intermediate">Intermediate Players</h3>
-                <span class="text-xs text-slate-500" id="count-done-intermediate">0</span>
+                <span class="text-xs text-slate-500" id="count-intermediate">0</span>
               </div>
-              <div class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg"><table class="w-full text-sm whitespace-nowrap relative"><thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
-                  <tr>
-                    <th class="py-2 w-8 text-center text-slate-500">#</th>
-                    <th>Player</th>
-                    <th>Gender</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Last Match</th>
-                    <th class="text-purple-400" title="Games Played">GP</th>
-                    <th class="text-green-400">W</th>
-                    <th class="text-red-400">L</th>
-                    <th class="text-blue-400">Win %</th>
-                    <th>Skill</th>
-                    <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="done-players-body-intermediate">
-                  <tr>
-                    <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
-                  </tr>
-                </tbody>
-              </table>
+              <div
+                class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg">
+                <table class="w-full text-sm whitespace-nowrap relative">
+                  <thead class="text-left text-slate-400 sticky top-0 z-10"
+                    style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+                    <tr>
+                      <th class="py-2 w-8 text-center text-slate-500">#</th>
+                      <th>Player</th>
+                      <th>Gender</th>
+                      <th>Location</th>
+                      <th>Status</th>
+                      <th>Last Match</th>
+                      <th class="text-purple-400" title="Games Played">GP</th>
+                      <th class="text-green-400">W</th>
+                      <th class="text-red-400">L</th>
+                      <th class="text-blue-400">Win %</th>
+                      <th>Skill</th>
+                      <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="players-body-intermediate">
+                    <tr>
+                      <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
             <!-- Advanced Players -->
-            <div class="mb-6">
+            <div class="mb-4">
               <div class="flex items-center gap-2 mb-3">
                 <h3 class="text-base font-display font-semibold text-advanced">Advanced Players</h3>
-                <span class="text-xs text-slate-500" id="count-done-advanced">0</span>
+                <span class="text-xs text-slate-500" id="count-advanced">0</span>
               </div>
-              <div class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg"><table class="w-full text-sm whitespace-nowrap relative"><thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
-                  <tr>
-                    <th class="py-2 w-8 text-center text-slate-500">#</th>
-                    <th>Player</th>
-                    <th>Gender</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Last Match</th>
-                    <th class="text-purple-400" title="Games Played">GP</th>
-                    <th class="text-green-400">W</th>
-                    <th class="text-red-400">L</th>
-                    <th class="text-blue-400">Win %</th>
-                    <th>Skill</th>
-                    <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="done-players-body-advanced">
-                  <tr>
-                    <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
-                  </tr>
-                </tbody>
-              </table>
+              <div
+                class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg">
+                <table class="w-full text-sm whitespace-nowrap relative">
+                  <thead class="text-left text-slate-400 sticky top-0 z-10"
+                    style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+                    <tr>
+                      <th class="py-2 w-8 text-center text-slate-500">#</th>
+                      <th>Player</th>
+                      <th>Gender</th>
+                      <th>Location</th>
+                      <th>Status</th>
+                      <th>Last Match</th>
+                      <th class="text-purple-400" title="Games Played">GP</th>
+                      <th class="text-green-400">W</th>
+                      <th class="text-red-400">L</th>
+                      <th class="text-blue-400">Win %</th>
+                      <th>Skill</th>
+                      <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="players-body-advanced">
+                    <tr>
+                      <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="mt-6 border-t border-slate-800/60 pt-4" id="done-players-container">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
+                <h3 class="text-base font-display font-semibold">Done Playing</h3>
+                <span class="text-xs text-slate-400">Players already finished their last match</span>
+              </div>
+
+              <!-- Beginner Players -->
+              <div class="mb-6">
+                <div class="flex items-center gap-2 mb-3">
+                  <h3 class="text-base font-display font-semibold text-beginner">Beginner Players</h3>
+                  <span class="text-xs text-slate-500" id="count-done-beginner">0</span>
+                </div>
+                <div
+                  class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg">
+                  <table class="w-full text-sm whitespace-nowrap relative">
+                    <thead class="text-left text-slate-400 sticky top-0 z-10"
+                      style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+                      <tr>
+                        <th class="py-2 w-8 text-center">#</th>
+                        <th>Player</th>
+                        <th>Gender</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Last Match</th>
+                        <th class="text-purple-400" title="Games Played">GP</th>
+                        <th class="text-green-400">W</th>
+                        <th class="text-red-400">L</th>
+                        <th class="text-blue-400">Win %</th>
+                        <th>Skill</th>
+                        <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="done-players-body-beginner">
+                      <tr>
+                        <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Intermediate Players -->
+              <div class="mb-6">
+                <div class="flex items-center gap-2 mb-3">
+                  <h3 class="text-base font-display font-semibold text-intermediate">Intermediate Players</h3>
+                  <span class="text-xs text-slate-500" id="count-done-intermediate">0</span>
+                </div>
+                <div
+                  class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg">
+                  <table class="w-full text-sm whitespace-nowrap relative">
+                    <thead class="text-left text-slate-400 sticky top-0 z-10"
+                      style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+                      <tr>
+                        <th class="py-2 w-8 text-center text-slate-500">#</th>
+                        <th>Player</th>
+                        <th>Gender</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Last Match</th>
+                        <th class="text-purple-400" title="Games Played">GP</th>
+                        <th class="text-green-400">W</th>
+                        <th class="text-red-400">L</th>
+                        <th class="text-blue-400">Win %</th>
+                        <th>Skill</th>
+                        <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="done-players-body-intermediate">
+                      <tr>
+                        <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Advanced Players -->
+              <div class="mb-6">
+                <div class="flex items-center gap-2 mb-3">
+                  <h3 class="text-base font-display font-semibold text-advanced">Advanced Players</h3>
+                  <span class="text-xs text-slate-500" id="count-done-advanced">0</span>
+                </div>
+                <div
+                  class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg">
+                  <table class="w-full text-sm whitespace-nowrap relative">
+                    <thead class="text-left text-slate-400 sticky top-0 z-10"
+                      style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+                      <tr>
+                        <th class="py-2 w-8 text-center text-slate-500">#</th>
+                        <th>Player</th>
+                        <th>Gender</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Last Match</th>
+                        <th class="text-purple-400" title="Games Played">GP</th>
+                        <th class="text-green-400">W</th>
+                        <th class="text-red-400">L</th>
+                        <th class="text-blue-400">Win %</th>
+                        <th>Skill</th>
+                        <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="done-players-body-advanced">
+                      <tr>
+                        <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Match Log Modal -->
-  <div id="match-log-modal"
-    class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="glass-card w-full max-w-5xl relative flex flex-col max-h-[90vh]">
-      <button id="close-match-log-modal"
-        class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5 pr-8">
-        <div>
-          <h2 class="text-xl font-display font-semibold">Match Log</h2>
-          <p class="text-sm text-slate-400">All completed matches — newest first</p>
+    <!-- Match Log Modal -->
+    <div id="match-log-modal"
+      class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-5xl relative flex flex-col max-h-[90vh]">
+        <button id="close-match-log-modal"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5 pr-8">
+          <div>
+            <h2 class="text-xl font-display font-semibold">Match Log</h2>
+            <p class="text-sm text-slate-400">All completed matches — newest first</p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span id="match-log-count" class="text-sm text-slate-500"></span>
+            <button id="match-log-toggle-archived" class="btn-secondary text-xs py-1.5 px-3">Show Archived</button>
+            <button id="match-log-archive-all" class="btn-secondary text-xs py-1.5 px-3"
+              style="border-color:rgba(248,113,113,0.4);color:#fca5a5;">Archive All</button>
+          </div>
         </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <span id="match-log-count" class="text-sm text-slate-500"></span>
-          <button id="match-log-toggle-archived" class="btn-secondary text-xs py-1.5 px-3">Show Archived</button>
-          <button id="match-log-archive-all" class="btn-secondary text-xs py-1.5 px-3"
-            style="border-color:rgba(248,113,113,0.4);color:#fca5a5;">Archive All</button>
+        <div class="overflow-auto border border-slate-700/50 rounded-lg flex-1">
+          <table class="w-full text-sm whitespace-nowrap" id="match-log-table">
+            <thead class="text-left text-slate-400 border-b border-slate-700 sticky top-0 bg-panel z-10">
+              <tr>
+                <th class="py-3 px-4">Time</th>
+                <th class="px-4">Court</th>
+                <th class="px-4">Skill</th>
+                <th class="px-4">Team A</th>
+                <th class="px-4">Team B</th>
+                <th class="px-4">Winner</th>
+                <th class="px-4">Duration</th>
+                <th class="px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="match-log-body">
+              <tr>
+                <td class="py-4 px-4 text-slate-500 text-center" colspan="8">Loading match log...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Pagination -->
+        <div id="match-log-pagination"
+          class="flex items-center justify-between mt-4 pt-4 border-t border-slate-800/60 hidden">
+          <button id="match-log-prev"
+            class="btn-secondary text-xs py-1.5 px-4 disabled:opacity-30 disabled:cursor-not-allowed">← Prev</button>
+          <span id="match-log-page-info" class="text-sm text-slate-400"></span>
+          <button id="match-log-next"
+            class="btn-secondary text-xs py-1.5 px-4 disabled:opacity-30 disabled:cursor-not-allowed">Next →</button>
         </div>
       </div>
-      <div class="overflow-auto border border-slate-700/50 rounded-lg flex-1">
-        <table class="w-full text-sm whitespace-nowrap" id="match-log-table">
-          <thead class="text-left text-slate-400 border-b border-slate-700 sticky top-0 bg-panel z-10">
-            <tr>
-              <th class="py-3 px-4">Time</th>
-              <th class="px-4">Court</th>
-              <th class="px-4">Skill</th>
-              <th class="px-4">Team A</th>
-              <th class="px-4">Team B</th>
-              <th class="px-4">Winner</th>
-              <th class="px-4">Duration</th>
-              <th class="px-4 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody id="match-log-body">
-            <tr>
-              <td class="py-4 px-4 text-slate-500 text-center" colspan="8">Loading match log...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <!-- Pagination -->
-      <div id="match-log-pagination"
-        class="flex items-center justify-between mt-4 pt-4 border-t border-slate-800/60 hidden">
-        <button id="match-log-prev"
-          class="btn-secondary text-xs py-1.5 px-4 disabled:opacity-30 disabled:cursor-not-allowed">← Prev</button>
-        <span id="match-log-page-info" class="text-sm text-slate-400"></span>
-        <button id="match-log-next"
-          class="btn-secondary text-xs py-1.5 px-4 disabled:opacity-30 disabled:cursor-not-allowed">Next →</button>
+    </div>
+
+
+    <!-- Add Player Modal -->
+    <div id="add-player-modal"
+      class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-sm relative">
+        <button id="close-add-player-modal"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+        <h2 class="text-2xl font-display font-semibold mb-2">Add Player</h2>
+        <p class="text-sm text-slate-400 mb-6">Enter the player's details below.</p>
+        <form id="add-player-form" class="space-y-4">
+          <div>
+            <label class="block text-sm text-slate-400 mb-1">Player Name</label>
+            <input type="text" id="player-name" placeholder="John Doe" class="input-field w-full" required />
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1">Skill Level</label>
+            <select id="player-skill" class="input-field w-full" required>
+              <option value="">Select skill level</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1">Gender</label>
+            <select id="player-gender" class="input-field w-full" required>
+              <option value="">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Unspecified">Unspecified</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1">Location (optional)</label>
+            <input type="text" id="player-location" placeholder="e.g. Court 1" class="input-field w-full" />
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1">Practice Partner (optional)</label>
+            <select id="player-practice-partner" class="input-field w-full">
+              <option value="">None</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-primary w-full py-3 mt-4 text-sm">Add Player</button>
+        </form>
       </div>
     </div>
-  </div>
+
+    <div id="matching-mode-modal"
+      class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-xl relative flex flex-col max-h-[90vh]">
+        <button id="close-matching-mode-modal"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+
+        <h2 class="text-2xl font-display font-semibold mb-2">Matching mode</h2>
+        <p class="text-sm text-slate-400 mb-6">Select how the next round should be generated.</p>
+
+        <div class="overflow-y-auto pr-2" id="matching-mode-list">
+
+          <!-- Balanced -->
+          <label
+            class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
+            <input type="radio" name="matching_mode" value="balanced" class="peer sr-only">
+            <div
+              class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all">
+            </div>
+            <div class="flex items-center gap-2 mb-1 relative z-10">
+              <h3 class="text-base font-semibold text-white">Balanced</h3>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                style="background: rgba(31,207,177,0.2); color: #1fcfb1;">Recommended</span>
+              <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p class="text-sm text-slate-400 relative z-10">Balances teams by win ratio. Avoids repeat matchups when
+              possible.</p>
+          </label>
+
+          <!-- Fair Play -->
+          <label
+            class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
+            <input type="radio" name="matching_mode" value="fair_play" class="peer sr-only">
+            <div
+              class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all">
+            </div>
+            <div class="flex items-center gap-2 mb-1 relative z-10">
+              <h3 class="text-base font-semibold text-white">Fair Play</h3>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                style="background: rgba(168,85,247,0.2); color: #c084fc;">Equalize</span>
+              <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p class="text-sm text-slate-400 relative z-10">Prioritizes players with the fewest games played so everyone
+              gets equal playing time.</p>
+          </label>
 
 
-  <!-- Add Player Modal -->
-  <div id="add-player-modal"
-    class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="glass-card w-full max-w-sm relative">
-      <button id="close-add-player-modal"
-        class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
-      <h2 class="text-2xl font-display font-semibold mb-2">Add Player</h2>
-      <p class="text-sm text-slate-400 mb-6">Enter the player's details below.</p>
-      <form id="add-player-form" class="space-y-4">
-        <div>
-          <label class="block text-sm text-slate-400 mb-1">Player Name</label>
-          <input type="text" id="player-name" placeholder="John Doe" class="input-field w-full" required />
+          <!-- Social Mix -->
+          <label
+            class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
+            <input type="radio" name="matching_mode" value="social_mix" class="peer sr-only" checked>
+            <div
+              class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all">
+            </div>
+            <div class="flex items-center gap-2 mb-1 relative z-10">
+              <h3 class="text-base font-semibold text-white">Social Mix</h3>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                style="background: rgba(245,196,42,0.2); color: #F5C42A;">Improved</span>
+              <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p class="text-sm text-slate-400 relative z-10">Rotates partners and opponents as fairly as possible. Stats
+              aren't used.</p>
+          </label>
+
+          <!-- Skill Separated -->
+          <label
+            class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
+            <input type="radio" name="matching_mode" value="skill_separated" class="peer sr-only">
+            <div
+              class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all">
+            </div>
+            <div class="flex items-center gap-2 mb-1 relative z-10">
+              <h3 class="text-base font-semibold text-white">Skill Separated</h3>
+              <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p class="text-sm text-slate-400 relative z-10">Keeps similar skill levels together. May leave a court
+              waiting.</p>
+          </label>
+
+          <!-- Winners / Losers -->
+          <label
+            class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
+            <input type="radio" name="matching_mode" value="winners_losers" class="peer sr-only">
+            <div
+              class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all">
+            </div>
+            <div class="flex items-center gap-2 mb-1 relative z-10">
+              <h3 class="text-base font-semibold text-white">Winners / Losers</h3>
+              <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p class="text-sm text-slate-400 relative z-10">Winners play winners and losers play losers. Rotates between
+              both groups.</p>
+          </label>
+
+          <!-- Mixed Doubles -->
+          <label
+            class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
+            <input type="radio" name="matching_mode" value="mixed" class="peer sr-only">
+            <div
+              class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all">
+            </div>
+            <div class="flex items-center gap-2 mb-1 relative z-10">
+              <h3 class="text-base font-semibold text-white">Mixed Doubles</h3>
+              <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p class="text-sm text-slate-400 relative z-10">Every team has one male and one female player where
+              possible.</p>
+          </label>
+
+          <!-- Flex Borrow from Intermediate -->
+          <label
+            class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-intermediate hover:bg-slate-800/80 mb-3">
+            <input type="radio" name="matching_mode" value="flex_borrow" class="peer sr-only">
+            <div
+              class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-intermediate peer-checked:bg-intermediate/10 pointer-events-none transition-all">
+            </div>
+            <div class="flex items-center gap-2 mb-1 relative z-10">
+              <h3 class="text-base font-semibold text-white">Flex Borrow</h3>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                style="background: rgba(245,196,42,0.2); color: #F5C42A;">Intermediate Pool</span>
+              <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p class="text-sm text-slate-400 relative z-10">If Beginner, Intermediate, or Advanced is short by 1–3
+              players, the system borrows from the Intermediate queue to complete a full group of 4.</p>
+          </label>
         </div>
-        <div>
-          <label class="block text-sm text-slate-400 mb-1">Skill Level</label>
-          <select id="player-skill" class="input-field w-full" required>
-            <option value="">Select skill level</option>
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm text-slate-400 mb-1">Gender</label>
-          <select id="player-gender" class="input-field w-full" required>
-            <option value="">Select gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Unspecified">Unspecified</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm text-slate-400 mb-1">Location (optional)</label>
-          <input type="text" id="player-location" placeholder="e.g. Court 1" class="input-field w-full" />
-        </div>
-        <div>
-          <label class="block text-sm text-slate-400 mb-1">Practice Partner (optional)</label>
-          <select id="player-practice-partner" class="input-field w-full">
-            <option value="">None</option>
-          </select>
-        </div>
-        <button type="submit" class="btn-primary w-full py-3 mt-4 text-sm">Add Player</button>
-      </form>
-    </div>
-  </div>
 
-  <div id="matching-mode-modal"
-    class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="glass-card w-full max-w-xl relative flex flex-col max-h-[90vh]">
-      <button id="close-matching-mode-modal"
-        class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
-      
-      <h2 class="text-2xl font-display font-semibold mb-2">Matching mode</h2>
-      <p class="text-sm text-slate-400 mb-6">Select how the next round should be generated.</p>
-      
-      <div class="overflow-y-auto pr-2" id="matching-mode-list">
-        
-        <!-- Balanced -->
-        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
-          <input type="radio" name="matching_mode" value="balanced" class="peer sr-only">
-          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all"></div>
-          <div class="flex items-center gap-2 mb-1 relative z-10">
-            <h3 class="text-base font-semibold text-white">Balanced</h3>
-            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style="background: rgba(31,207,177,0.2); color: #1fcfb1;">Recommended</span>
-            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <p class="text-sm text-slate-400 relative z-10">Balances teams by win ratio. Avoids repeat matchups when possible.</p>
-        </label>
-
-        <!-- Fair Play -->
-        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
-          <input type="radio" name="matching_mode" value="fair_play" class="peer sr-only">
-          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all"></div>
-          <div class="flex items-center gap-2 mb-1 relative z-10">
-            <h3 class="text-base font-semibold text-white">Fair Play</h3>
-            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style="background: rgba(168,85,247,0.2); color: #c084fc;">Equalize</span>
-            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <p class="text-sm text-slate-400 relative z-10">Prioritizes players with the fewest games played so everyone gets equal playing time.</p>
-        </label>
-
-
-        <!-- Social Mix -->
-        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
-          <input type="radio" name="matching_mode" value="social_mix" class="peer sr-only" checked>
-          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all"></div>
-          <div class="flex items-center gap-2 mb-1 relative z-10">
-            <h3 class="text-base font-semibold text-white">Social Mix</h3>
-            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style="background: rgba(245,196,42,0.2); color: #F5C42A;">Improved</span>
-            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <p class="text-sm text-slate-400 relative z-10">Rotates partners and opponents as fairly as possible. Stats aren't used.</p>
-        </label>
-
-        <!-- Skill Separated -->
-        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
-          <input type="radio" name="matching_mode" value="skill_separated" class="peer sr-only">
-          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all"></div>
-          <div class="flex items-center gap-2 mb-1 relative z-10">
-            <h3 class="text-base font-semibold text-white">Skill Separated</h3>
-            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <p class="text-sm text-slate-400 relative z-10">Keeps similar skill levels together. May leave a court waiting.</p>
-        </label>
-
-        <!-- Winners / Losers -->
-        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
-          <input type="radio" name="matching_mode" value="winners_losers" class="peer sr-only">
-          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all"></div>
-          <div class="flex items-center gap-2 mb-1 relative z-10">
-            <h3 class="text-base font-semibold text-white">Winners / Losers</h3>
-            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <p class="text-sm text-slate-400 relative z-10">Winners play winners and losers play losers. Rotates between both groups.</p>
-        </label>
-
-        <!-- Mixed Doubles -->
-        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
-          <input type="radio" name="matching_mode" value="mixed" class="peer sr-only">
-          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all"></div>
-          <div class="flex items-center gap-2 mb-1 relative z-10">
-            <h3 class="text-base font-semibold text-white">Mixed Doubles</h3>
-            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <p class="text-sm text-slate-400 relative z-10">Every team has one male and one female player where possible.</p>
-        </label>
-
-        <!-- Flex Borrow from Intermediate -->
-        <label class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-intermediate hover:bg-slate-800/80 mb-3">
-          <input type="radio" name="matching_mode" value="flex_borrow" class="peer sr-only">
-          <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-intermediate peer-checked:bg-intermediate/10 pointer-events-none transition-all"></div>
-          <div class="flex items-center gap-2 mb-1 relative z-10">
-            <h3 class="text-base font-semibold text-white">Flex Borrow</h3>
-            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style="background: rgba(245,196,42,0.2); color: #F5C42A;">Intermediate Pool</span>
-            <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <p class="text-sm text-slate-400 relative z-10">If Beginner, Intermediate, or Advanced is short by 1–3 players, the system borrows from the Intermediate queue to complete a full group of 4.</p>
-        </label>
-      </div>
-      
-      <button id="confirm-matching-mode-btn" class="btn-primary w-full py-3 mt-4 text-sm">
-        Generate Matches
-      </button>
-    </div>
-  </div>
-
-  <div id="custom-match-modal"
-    class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="glass-card w-full max-w-lg relative">
-      <button id="close-custom-modal"
-        class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
-      <h2 class="text-2xl font-display font-semibold mb-2">Configure Custom Match</h2>
-      <p class="text-sm text-slate-400 mb-6">Select 4 players to assign to teams. This match will wait for the next
-        available court.</p>
-
-      <div class="grid gap-4 sm:grid-cols-2 mb-4">
-        <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
-          <h3 class="font-semibold mb-3" style="color:#1fcfb1;">Team A</h3>
-          <select id="custom-team-a1" class="input-field w-full mb-2"></select>
-          <select id="custom-team-a2" class="input-field w-full"></select>
-        </div>
-        <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
-          <h3 class="font-semibold mb-3" style="color:#E85A1A;">Team B</h3>
-          <select id="custom-team-b1" class="input-field w-full mb-2"></select>
-          <select id="custom-team-b2" class="input-field w-full"></select>
-        </div>
-      </div>
-      
-      <div class="flex justify-between items-center mb-6">
-        <button id="auto-balance-match" class="btn-secondary text-xs px-3 py-1.5" style="border-color: rgba(234,179,8,0.4); color: #facc15;">⚖️ Auto-Balance</button>
-        <div id="repeat-matchup-warning" class="hidden flex items-center gap-1 text-xs text-rose-400 font-semibold bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20">
-          ⚠️ Repeat Matchup Detected
-        </div>
-      </div>
-
-      <button id="launch-custom-match" class="btn-primary w-full py-3 text-sm">Queue Custom Match</button>
-    </div>
-  </div>
-
-  <!-- Partner Modal -->
-  <div id="partner-modal"
-    class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="glass-card w-full max-w-sm relative">
-      <button id="close-partner-modal"
-        class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
-      <h2 class="text-2xl font-display font-semibold mb-2">Set Fixed Partner</h2>
-      <p class="text-sm text-slate-400 mb-6">Select a fixed partner for <span id="partner-modal-player-name" class="font-bold text-white"></span>.</p>
-      
-      <form id="partner-form" class="space-y-4">
-        <input type="hidden" id="partner-modal-player-id" />
-        <div>
-          <label class="block text-sm text-slate-400 mb-1">Partner</label>
-          <select id="partner-modal-select" class="input-field w-full">
-            <option value="">None</option>
-          </select>
-        </div>
-        <button type="submit" class="btn-primary w-full py-3 mt-4 text-sm">Save Partner</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Winner Selection Modal -->
-  <div id="winner-modal"
-    class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="glass-card w-full max-w-md relative">
-      <button id="winner-modal-close"
-        class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
-      <h2 class="text-2xl font-display font-semibold mb-1">Match Finished!</h2>
-      <p class="text-sm text-slate-400 mb-6">Who won this match?</p>
-
-      <div class="grid gap-4 sm:grid-cols-2 mb-4">
-        <button id="winner-team-a-btn"
-          class="flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all cursor-pointer"
-          style="border-color:rgba(31,207,177,0.4);background:rgba(31,207,177,0.1);">
-          <span class="text-xs uppercase tracking-widest" style="color:#1fcfb1;">Team A Wins 🏆</span>
-          <span id="winner-team-a-names" class="font-semibold text-white text-center">Team A</span>
-        </button>
-        <button id="winner-team-b-btn"
-          class="flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all cursor-pointer"
-          style="border-color:rgba(232,90,26,0.4);background:rgba(232,90,26,0.1);">
-          <span class="text-xs uppercase tracking-widest" style="color:#E85A1A;">Team B Wins 🏆</span>
-          <span id="winner-team-b-names" class="font-semibold text-white text-center">Team B</span>
+        <button id="confirm-matching-mode-btn" class="btn-primary w-full py-3 mt-4 text-sm">
+          Generate Matches
         </button>
       </div>
-      <button id="winner-no-winner-btn" class="btn-secondary w-full text-slate-400">No Winner / Just End Match</button>
     </div>
-  </div>
-  
-  <!-- Share TV Display Modal -->
-  <div id="tv-share-modal" class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="glass-card w-full max-w-sm relative text-center">
-      <button id="close-tv-share-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
-      <h2 class="text-2xl font-display font-semibold mb-2" style="color:#1fcfb1;">Share TV Display</h2>
-      <p class="text-sm text-slate-400 mb-6">Scan this QR code or copy the link to view the Live TV Display for your queue.</p>
-      
-      <div id="tv-qrcode" class="bg-white p-4 rounded-xl inline-block mb-4 shadow-[0_0_20px_rgba(31,207,177,0.3)]"></div>
-      
-      <div class="flex items-center gap-2 w-full mt-2">
-        <input type="text" id="tv-share-link" class="input-field w-full text-sm bg-slate-900/50" readonly />
-        <button id="copy-tv-link-btn" class="btn-primary py-2 px-4 whitespace-nowrap text-sm">Copy</button>
+
+    <div id="custom-match-modal"
+      class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-lg relative">
+        <button id="close-custom-modal"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+        <h2 class="text-2xl font-display font-semibold mb-2">Configure Custom Match</h2>
+        <p class="text-sm text-slate-400 mb-6">Select 4 players to assign to teams. This match will wait for the next
+          available court.</p>
+
+        <div class="grid gap-4 sm:grid-cols-2 mb-4">
+          <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+            <h3 class="font-semibold mb-3" style="color:#1fcfb1;">Team A</h3>
+            <select id="custom-team-a1" class="input-field w-full mb-2"></select>
+            <select id="custom-team-a2" class="input-field w-full"></select>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+            <h3 class="font-semibold mb-3" style="color:#E85A1A;">Team B</h3>
+            <select id="custom-team-b1" class="input-field w-full mb-2"></select>
+            <select id="custom-team-b2" class="input-field w-full"></select>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-6">
+          <button id="auto-balance-match" class="btn-secondary text-xs px-3 py-1.5"
+            style="border-color: rgba(234,179,8,0.4); color: #facc15;">⚖️ Auto-Balance</button>
+          <div id="repeat-matchup-warning"
+            class="hidden flex items-center gap-1 text-xs text-rose-400 font-semibold bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20">
+            ⚠️ Repeat Matchup Detected
+          </div>
+        </div>
+
+        <button id="launch-custom-match" class="btn-primary w-full py-3 text-sm">Queue Custom Match</button>
       </div>
     </div>
-  </div>
 
-  <!-- Custom Confirm Modal -->
-  <div id="confirm-modal" class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="glass-card w-full max-w-sm relative">
-      <h2 class="text-xl font-display font-semibold mb-2" id="confirm-modal-title">Please Confirm</h2>
-      <p class="text-sm text-slate-300 mb-6" id="confirm-modal-message"></p>
-      <div class="flex justify-end gap-3 mt-4">
-        <button id="confirm-modal-cancel" class="btn-secondary py-2 px-4">Cancel</button>
-        <button id="confirm-modal-ok" class="btn-primary py-2 px-6">OK</button>
+    <!-- Partner Modal -->
+    <div id="partner-modal"
+      class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-sm relative">
+        <button id="close-partner-modal"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+        <h2 class="text-2xl font-display font-semibold mb-2">Set Fixed Partner</h2>
+        <p class="text-sm text-slate-400 mb-6">Select a fixed partner for <span id="partner-modal-player-name"
+            class="font-bold text-white"></span>.</p>
+
+        <form id="partner-form" class="space-y-4">
+          <input type="hidden" id="partner-modal-player-id" />
+          <div>
+            <label class="block text-sm text-slate-400 mb-1">Partner</label>
+            <select id="partner-modal-select" class="input-field w-full">
+              <option value="">None</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-primary w-full py-3 mt-4 text-sm">Save Partner</button>
+        </form>
       </div>
     </div>
-  </div>
 
-  <!-- Add Player to Match Modal -->
-  <div id="add-to-match-modal" class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="glass-card w-full max-w-lg relative max-h-[90vh] flex flex-col">
-      <button id="close-add-to-match-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
-      <h2 class="text-xl font-display font-semibold mb-2">Add Player</h2>
-      <p class="text-sm text-slate-400 mb-4">Select a waiting player to fill this slot.</p>
-      <input type="text" id="add-to-match-search" class="input-field mb-4" placeholder="Search players..." />
-      <div class="overflow-y-auto flex-1 border border-slate-700/50 rounded-lg custom-scrollbar p-2 bg-slate-900/40">
-        <ul id="add-to-match-list" class="space-y-2"></ul>
+    <!-- Winner Selection Modal -->
+    <div id="winner-modal"
+      class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-md relative">
+        <button id="winner-modal-close"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+        <h2 class="text-2xl font-display font-semibold mb-1">Match Finished!</h2>
+        <p class="text-sm text-slate-400 mb-6">Who won this match?</p>
+
+        <div class="grid gap-4 sm:grid-cols-2 mb-4">
+          <button id="winner-team-a-btn"
+            class="flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all cursor-pointer"
+            style="border-color:rgba(31,207,177,0.4);background:rgba(31,207,177,0.1);">
+            <span class="text-xs uppercase tracking-widest" style="color:#1fcfb1;">Team A Wins 🏆</span>
+            <span id="winner-team-a-names" class="font-semibold text-white text-center">Team A</span>
+          </button>
+          <button id="winner-team-b-btn"
+            class="flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all cursor-pointer"
+            style="border-color:rgba(232,90,26,0.4);background:rgba(232,90,26,0.1);">
+            <span class="text-xs uppercase tracking-widest" style="color:#E85A1A;">Team B Wins 🏆</span>
+            <span id="winner-team-b-names" class="font-semibold text-white text-center">Team B</span>
+          </button>
+        </div>
+        <button id="winner-no-winner-btn" class="btn-secondary w-full text-slate-400">No Winner / Just End
+          Match</button>
       </div>
     </div>
+
+    <!-- Share TV Display Modal -->
+    <div id="tv-share-modal"
+      class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-sm relative text-center">
+        <button id="close-tv-share-modal"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+        <h2 class="text-2xl font-display font-semibold mb-2" style="color:#1fcfb1;">Share TV Display</h2>
+        <p class="text-sm text-slate-400 mb-6">Scan this QR code or copy the link to view the Live TV Display for your
+          queue.</p>
+
+        <div id="tv-qrcode" class="bg-white p-4 rounded-xl inline-block mb-4 shadow-[0_0_20px_rgba(31,207,177,0.3)]">
+        </div>
+
+        <div class="flex items-center gap-2 w-full mt-2">
+          <input type="text" id="tv-share-link" class="input-field w-full text-sm bg-slate-900/50" readonly />
+          <button id="copy-tv-link-btn" class="btn-primary py-2 px-4 whitespace-nowrap text-sm">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="confirm-modal"
+      class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-sm relative">
+        <h2 class="text-xl font-display font-semibold mb-2" id="confirm-modal-title">Please Confirm</h2>
+        <p class="text-sm text-slate-300 mb-6" id="confirm-modal-message"></p>
+        <div class="flex justify-end gap-3 mt-4">
+          <button id="confirm-modal-cancel" class="btn-secondary py-2 px-4">Cancel</button>
+          <button id="confirm-modal-ok" class="btn-primary py-2 px-6">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Player to Match Modal -->
+    <div id="add-to-match-modal"
+      class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-lg relative max-h-[90vh] flex flex-col">
+        <button id="close-add-to-match-modal"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
+        <h2 class="text-xl font-display font-semibold mb-2">Add Player</h2>
+        <p class="text-sm text-slate-400 mb-4">Select a waiting player to fill this slot.</p>
+        <input type="text" id="add-to-match-search" class="input-field mb-4" placeholder="Search players..." />
+        <div class="overflow-y-auto flex-1 border border-slate-700/50 rounded-lg custom-scrollbar p-2 bg-slate-900/40">
+          <ul id="add-to-match-list" class="space-y-2"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ranking Modal -->
+    <div id="ranking-modal"
+      class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-3xl relative max-h-[90vh] flex flex-col">
+        <button id="close-ranking-modal"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
+        <h2 class="text-2xl font-display font-semibold mb-2" style="color:#F5C42A;">Player Ranking</h2>
+        <p class="text-sm text-slate-400 mb-4">Top players sorted by Win Percentage and Matches Played.</p>
+        <div
+          class="overflow-y-auto overflow-x-auto flex-1 border border-slate-700/50 rounded-lg custom-scrollbar bg-slate-900/40">
+          <table class="w-full text-sm whitespace-nowrap relative">
+            <thead class="text-left text-slate-400 sticky top-0 z-10"
+              style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+              <tr>
+                <th class="py-3 px-4 text-center w-12">Rank</th>
+                <th class="py-3 px-4">Player</th>
+                <th class="py-3 px-4">Skill</th>
+                <th class="py-3 px-4 text-center text-purple-400">GP</th>
+                <th class="py-3 px-4 text-center text-green-400">W</th>
+                <th class="py-3 px-4 text-center text-red-400">L</th>
+                <th class="py-3 px-4 text-center text-blue-400">Win %</th>
+              </tr>
+            </thead>
+            <tbody id="ranking-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <!-- Ranking Modal -->
-  <div id="ranking-modal" class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+  <div id="archive-modal"
+    class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="glass-card w-full max-w-3xl relative max-h-[90vh] flex flex-col">
-      <button id="close-ranking-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
-      <h2 class="text-2xl font-display font-semibold mb-2" style="color:#F5C42A;">Player Ranking</h2>
-      <p class="text-sm text-slate-400 mb-4">Top players sorted by Win Percentage and Matches Played.</p>
-      <div class="overflow-y-auto overflow-x-auto flex-1 border border-slate-700/50 rounded-lg custom-scrollbar bg-slate-900/40">
-        <table class="w-full text-sm whitespace-nowrap relative">
-          <thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
-            <tr>
-              <th class="py-3 px-4 text-center w-12">Rank</th>
-              <th class="py-3 px-4">Player</th>
-              <th class="py-3 px-4">Skill</th>
-              <th class="py-3 px-4 text-center text-purple-400">GP</th>
-              <th class="py-3 px-4 text-center text-green-400">W</th>
-              <th class="py-3 px-4 text-center text-red-400">L</th>
-              <th class="py-3 px-4 text-center text-blue-400">Win %</th>
-            </tr>
-          </thead>
-          <tbody id="ranking-tbody">
-            <!-- Rendered via JS -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  </div>
-
-  <div id="archive-modal" class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="glass-card w-full max-w-3xl relative max-h-[90vh] flex flex-col">
-      <button id="close-archive-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
+      <button id="close-archive-modal"
+        class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
       <h2 class="text-2xl font-display font-semibold mb-2" style="color:#94a3b8;">Archived Players</h2>
-      
+
       <div class="flex items-center gap-4 mb-4">
         <p class="text-sm text-slate-400 flex-1">View players archived by date.</p>
         <div class="flex items-center gap-2">
           <input type="date" id="archive-date-input" class="input-field text-sm py-1.5 px-3 min-w-[150px]">
-          <button id="clear-archive-date-btn" class="btn-secondary text-xs px-2 py-1.5 hover:text-white" title="Clear Date Filter">&#x2715;</button>
+          <button id="clear-archive-date-btn" class="btn-secondary text-xs px-2 py-1.5 hover:text-white"
+            title="Clear Date Filter">&#x2715;</button>
         </div>
       </div>
-      
-      <div class="overflow-y-auto overflow-x-auto flex-1 border border-slate-700/50 rounded-lg custom-scrollbar bg-slate-900/40">
+
+      <div
+        class="overflow-y-auto overflow-x-auto flex-1 border border-slate-700/50 rounded-lg custom-scrollbar bg-slate-900/40">
         <table class="w-full text-sm whitespace-nowrap relative">
-          <thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+          <thead class="text-left text-slate-400 sticky top-0 z-10"
+            style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
             <tr>
               <th class="py-3 px-4 w-12 text-center">#</th>
               <th class="py-3 px-4">Player</th>
@@ -958,8 +1127,3 @@
 </body>
 
 </html>
-
-
-
-
-

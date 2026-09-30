@@ -130,7 +130,8 @@ saveButton.addEventListener("click", async () => {
   const validRows = rows.filter((row) => row.valid);
   if (!validRows.length) return;
 
-  await addPlayersBulk(validRows);
+  const addToQueue = document.getElementById("add-to-queue-checkbox")?.checked || false;
+  await addPlayersBulk(validRows, addToQueue);
   rows = [];
   renderRows();
   fileInput.value = "";
