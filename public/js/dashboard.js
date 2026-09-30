@@ -816,10 +816,12 @@ function renderPlayers() {
 }
 
 async function handlePlayerActionClick(event) {
-  const absent = event.target.getAttribute("data-player-absent");
-  const remove = event.target.getAttribute("data-player-remove");
-  const done = event.target.getAttribute("data-player-done");
-  const setupPartner = event.target.getAttribute("data-player-setup-partner");
+  const btn = event.target.closest('button');
+  if (!btn) return;
+  const absent = btn.getAttribute("data-player-absent");
+  const remove = btn.getAttribute("data-player-remove");
+  const done = btn.getAttribute("data-player-done");
+  const setupPartner = btn.getAttribute("data-player-setup-partner");
   
   if (setupPartner) {
     openPartnerModal(setupPartner);
