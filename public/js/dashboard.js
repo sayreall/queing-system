@@ -569,7 +569,7 @@ function renderCourts() {
 
 
 function renderPlayers() {
-  const allActive = Array.from(state.players.values()).filter(p => p.status !== "Archived");
+  const allActive = Array.from(state.players.values()).filter(p => p.status !== "Archived" && p.status !== "Roster");
   const court1 = state.courts.find((c) => c.id === "court-1");
   const court2 = state.courts.find((c) => c.id === "court-2");
   const court3 = state.courts.find((c) => c.id === "court-3");
@@ -621,7 +621,12 @@ function renderPlayers() {
   const countEl = document.getElementById("total-players-count");
   if (countEl) {
     const archivedCount = Array.from(state.players.values()).filter(p => p.status === "Archived").length;
-    countEl.textContent = `(${allActive.length} active${archivedCount ? `, ${archivedCount} archived` : ""})`;
+    const rosterCount = Array.from(state.players.values()).filter(p => p.status === "Roster").length;
+    const parts = [];
+    if (allActive.length > 0) parts.push(`${allActive.length} active`);
+    if (archivedCount > 0) parts.push(`${archivedCount} archived`);
+    if (rosterCount > 0) parts.push(`${rosterCount} saved`);
+    countEl.textContent = parts.length ? `(${parts.join(", ")})` : "";
   }
 
   const getWaitTime = (player) => {
