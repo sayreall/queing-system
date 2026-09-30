@@ -60,6 +60,14 @@
           document.querySelectorAll(".header-title").forEach(el => el.textContent = "PicklQ Queuing System");
           document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "logologinpage-transparent.png");
         });
+      } else if (club === "balian") {
+        document.title = "Balian Picklers Queuing";
+        window.addEventListener("DOMContentLoaded", () => {
+          document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "balian-pc.jpg");
+          document.querySelectorAll(".splash-title").forEach(el => el.textContent = "Balian Picklers");
+          document.querySelectorAll(".header-title").forEach(el => el.textContent = "Balian Picklers Queuing");
+          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "balian-pc.jpg");
+        });
       }
     })();
   </script>

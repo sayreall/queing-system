@@ -46,6 +46,12 @@
           document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "logologinpage-transparent.png");
           document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "logologinpage-transparent.png");
         });
+      } else if (club === "balian") {
+        document.title = "Admin Dashboard - Balian Picklers Queuing";
+        window.addEventListener("DOMContentLoaded", () => {
+          document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "balian-pc.jpg");
+          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "balian-pc.jpg");
+        });
       }
     })();
   </script>

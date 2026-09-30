@@ -750,7 +750,7 @@ function renderPlayers() {
           <div class="flex items-center flex-wrap gap-2">
             <span>${player.name}</span>
             ${player.practicePartner && state.players.get(player.practicePartner)
-              ? \`<span class="text-[10px] px-1.5 py-0.5 rounded border border-purple-400/40 text-purple-300 bg-purple-500/10 align-middle" title="Fixed Partner">&#x1F517; \${state.players.get(player.practicePartner).name}</span>\`
+              ? `<span class="text-[10px] px-1.5 py-0.5 rounded border border-purple-400/40 text-purple-300 bg-purple-500/10 align-middle" title="Fixed Partner">&#x1F517; ${state.players.get(player.practicePartner).name}</span>`
               : ''}
           </div>
           ${court1ActivePlayers.has(player.id)
@@ -791,9 +791,9 @@ function renderPlayers() {
           <select class="input-field" data-player-skill="${player.id}">
             ${SKILLS.map(
               (skill) =>
-                \`<option value="\${skill.label}" \${
+                `<option value="${skill.label}" ${
                   player.skill === skill.label ? "selected" : ""
-                }>\${skill.label}</option>\`
+                }>${skill.label}</option>`
             ).join("")}
           </select>
         </td>
@@ -806,7 +806,7 @@ function renderPlayers() {
           </div>
         </td>
       </tr>
-      \`).join(""));
+      `).join(""));
     }
   };
 
@@ -2945,7 +2945,7 @@ onAuthStateChanged(auth, async (user) => {
 
     // Always reset an unknown/missing club to Deuce so a prior Longos login
     // cannot leave its branding on this account's dashboard.
-    const userClub = data.club === 'longos' ? 'longos' : 'deuce';
+    const userClub = data.club || 'deuce';
     localStorage.setItem('dq_club_preference', userClub);
     applyClubBranding(userClub);
   } catch (err) {
@@ -3008,6 +3008,14 @@ function applyClubBranding(club) {
     document.querySelectorAll('.header-title').forEach(el => el.textContent = 'PicklQ Queuing System');
     document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
       link.href = 'logologinpage-transparent.png';
+    });
+  } else if (club === 'balian') {
+    document.title = 'Balian Picklers Queuing';
+    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'balian-pc.jpg');
+    document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'Balian Picklers');
+    document.querySelectorAll('.header-title').forEach(el => el.textContent = 'Balian Picklers Queuing');
+    document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
+      link.href = 'balian-pc.jpg';
     });
   } else {
     document.title = 'Deuce Club Queuing System';
