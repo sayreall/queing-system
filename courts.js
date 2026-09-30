@@ -11,7 +11,20 @@ import {
   limit,
   onSnapshot,
   serverTimestamp,
-  runTransaction, getTenantCollection, getTenantDoc} from "./firebase.js";
+  writeBatch, getTenantCollection, getTenantDoc} from "./firebase.js";
+
+// Custom runTransaction that uses writeBatch to enable offline support!
+const runTransaction = async (db, callback) => {
+  const batch = writeBatch(db);
+  const txMock = {
+    get: async (ref) => await getDoc(ref),
+    set: (ref, data, opts) => batch.set(ref, data, opts),
+    update: (ref, data) => batch.update(ref, data),
+    delete: (ref) => batch.delete(ref)
+  };
+  await callback(txMock);
+  await batch.commit();
+};
 import { skillLabelFromKey, getQueueDocRef, skillKeyFromLabel, markPlayerAbsent } from "./queue.js";
 
 export const COURTS = [
