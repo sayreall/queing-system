@@ -37,19 +37,19 @@
       if (club === "longos") {
         document.title = "Admin Dashboard - Longos Pickleball Club";
         window.addEventListener("DOMContentLoaded", () => {
-          document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "logo-lpc.jpg");
+          document.querySelectorAll(".header-logo").forEach(img => img.src = "logo-lpc.jpg");
           document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "logo-lpc.jpg");
         });
-      } else if (club === "guest") {
-        document.title = "Admin Dashboard - PicklQ";
+      } else if (club === "deuce") {
+        document.title = "Admin Dashboard - Deuce Club";
         window.addEventListener("DOMContentLoaded", () => {
-          document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "logologinpage-transparent.png");
-          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "logologinpage-transparent.png");
+          document.querySelectorAll(".header-logo").forEach(img => img.src = "deuce-game-logo.png");
+          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "deuce-game-logo.png");
         });
       } else if (club === "balian") {
         document.title = "Admin Dashboard - Balian Picklers Queuing";
         window.addEventListener("DOMContentLoaded", () => {
-          document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "balian-pc.jpg");
+          document.querySelectorAll(".header-logo").forEach(img => img.src = "balian-pc.jpg");
           document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "balian-pc.jpg");
         });
       }
@@ -63,7 +63,7 @@
   <header class="px-6 py-4 md:px-10 md:py-6">
     <div class="header-inner">
       <div class="header-brand">
-        <img src="deuce-game-logo.png" alt="Logo" class="header-logo" onerror="this.style.display='none'" />
+        <img src="logologinpage-transparent.png" alt="Logo" class="header-logo" onerror="this.style.display='none'" />
         <div class="header-title-block">
           <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Administration</p>
           <h1 class="font-display font-semibold header-title text-beginner">User Management</h1>

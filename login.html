@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -47,13 +48,15 @@
       justify-content: center;
       padding: 4px 0;
     }
+
     /* Scale down reCAPTCHA on very small screens */
     @media (max-width: 360px) {
-      .recaptcha-wrap > div {
+      .recaptcha-wrap>div {
         transform: scale(0.85);
         transform-origin: center;
       }
     }
+
     /* Lockout banner */
     #lockout-banner {
       display: none;
@@ -66,6 +69,7 @@
       font-size: 0.82rem;
       text-align: center;
     }
+
     /* Attempt counter */
     #attempt-counter {
       font-size: 0.75rem;
@@ -74,7 +78,7 @@
       margin-top: 6px;
       display: none;
     }
-    
+
     /* Hide splash screen on mobile for login page */
     @media (max-width: 768px) {
       #splash-screen {
@@ -87,7 +91,8 @@
 <body class="min-h-screen bg-ink font-body flex items-center justify-center p-4" style="color:#F2E8D5;">
   <!-- Splash / Loading Screen -->
   <div id="splash-screen">
-    <img src="logologinpage-transparent.png" alt="PicklQ logo" class="splash-logo login-logo" onerror="this.style.display='none'" />
+    <img src="logologinpage-transparent.png" alt="PicklQ logo" class="splash-logo login-logo"
+      onerror="this.style.display='none'" />
     <div>
       <p class="splash-title">PicklQ</p>
       <p class="splash-subtitle">Queuing System</p>
@@ -95,7 +100,7 @@
     <div class="splash-spinner"></div>
   </div>
   <script>
-    (function() {
+    (function () {
       var splash = document.getElementById('splash-screen');
       if (!splash) return;
       if (sessionStorage.getItem('dq_splash_shown')) {
@@ -111,7 +116,8 @@
 
   <div class="glass-card w-full max-w-md relative z-10 p-8">
     <div class="text-center mb-8">
-      <img src="logologinpage-transparent.png" alt="PicklQ logo" class="login-brand-logo mx-auto mb-4" onerror="this.style.display='none'" />
+      <img src="logologinpage-transparent.png" alt="PicklQ logo" class="login-brand-logo mx-auto mb-4"
+        onerror="this.style.display='none'" />
       <h1 id="auth-title" class="text-2xl font-display font-semibold text-gold">PicklQ Login</h1>
       <p class="text-slate-400 mt-2 text-sm">Sign in to manage queues and courts</p>
     </div>
@@ -128,14 +134,20 @@
       <div>
         <label class="block text-sm text-slate-400 mb-1">Password</label>
         <div class="relative">
-          <input type="password" id="login-password" class="input-field w-full pr-10" autocomplete="current-password" required />
-          <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-200 focus:outline-none toggle-password" data-target="login-password">
+          <input type="password" id="login-password" class="input-field w-full pr-10" autocomplete="current-password"
+            required />
+          <button type="button"
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-200 focus:outline-none toggle-password"
+            data-target="login-password">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <!-- Eye icon -->
-              <path class="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path class="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              <path class="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path class="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               <!-- Eye slash icon (hidden by default) -->
-              <path class="eye-closed hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+              <path class="eye-closed hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
             </svg>
           </button>
         </div>
@@ -160,14 +172,20 @@
       <div>
         <label class="block text-sm text-slate-400 mb-1">Password</label>
         <div class="relative">
-          <input type="password" id="register-password" class="input-field w-full pr-10" autocomplete="new-password" required minlength="6" />
-          <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-200 focus:outline-none toggle-password" data-target="register-password">
+          <input type="password" id="register-password" class="input-field w-full pr-10" autocomplete="new-password"
+            required minlength="6" />
+          <button type="button"
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-200 focus:outline-none toggle-password"
+            data-target="register-password">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <!-- Eye icon -->
-              <path class="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path class="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              <path class="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path class="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               <!-- Eye slash icon (hidden by default) -->
-              <path class="eye-closed hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+              <path class="eye-closed hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
             </svg>
           </button>
         </div>
@@ -182,7 +200,7 @@
         <select id="register-club" class="input-field w-full" required>
           <option value="deuce">Deuce Club</option>
           <option value="longos">Longos Pickleball Club</option>
-          <option value="balian">Balian Picklers Queuing</option>
+          <option value="balian">Balian Picklers Club</option>
           <option value="guest">Guest</option>
         </select>
       </div>
@@ -192,17 +210,21 @@
         <div id="recaptcha-register"></div>
       </div>
 
-      <button type="submit" class="btn-primary w-full py-3 mt-2" style="background: linear-gradient(135deg, rgba(31, 207, 177, 0.9), rgba(13, 148, 136, 0.9));">Register Account</button>
+      <button type="submit" class="btn-primary w-full py-3 mt-2"
+        style="background: linear-gradient(135deg, rgba(31, 207, 177, 0.9), rgba(13, 148, 136, 0.9));">Register
+        Account</button>
     </form>
 
     <div class="mt-6 text-center text-sm">
       <p id="toggle-text" class="text-slate-400">
-        Don't have an account? <button type="button" id="toggle-btn" class="text-beginner hover:underline focus:outline-none">Register here</button>
+        Don't have an account? <button type="button" id="toggle-btn"
+          class="text-beginner hover:underline focus:outline-none">Register here</button>
       </p>
     </div>
 
     <!-- Error Message Display -->
-    <div id="auth-error" class="hidden mt-4 p-3 rounded bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+    <div id="auth-error"
+      class="hidden mt-4 p-3 rounded bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
     </div>
   </div>
 
@@ -217,4 +239,5 @@
     }
   </script>
 </body>
+
 </html>

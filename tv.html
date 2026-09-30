@@ -4,13 +4,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="shortcut icon" href="deuce-game-logo.png">
+  <link rel="shortcut icon" href="logologinpage-transparent.png">
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0a2e2e" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="deuce-game-logo.png">
-  <title>Pickleball TV Display</title>
+  <link rel="apple-touch-icon" href="logologinpage-transparent.png">
+  <title>PicklQ TV Display</title>
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap" />
   <script src="https://cdn.jsdelivr.net/npm/morphdom@2.7.4/dist/morphdom-umd.min.js"></script>
@@ -45,10 +45,10 @@
         window.addEventListener("DOMContentLoaded", () => {
           document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "logo-lpc.jpg");
         });
-      } else if (club === "guest") {
-        document.title = "TV - PicklQ Queuing System";
+      } else if (club === "deuce") {
+        document.title = "TV - Deuce Club Queuing System";
         window.addEventListener("DOMContentLoaded", () => {
-          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "logologinpage-transparent.png");
+          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "deuce-game-logo.png");
         });
       } else if (club === "balian") {
         document.title = "TV - Balian Picklers Queuing";

@@ -3001,13 +3001,16 @@ function applyClubBranding(club) {
     document.querySelectorAll('link[rel="manifest"]').forEach(link => {
       link.href = 'manifest-longos.json';
     });
-  } else if (club === 'guest') {
-    document.title = 'PicklQ Queuing System';
-    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'logologinpage-transparent.png');
-    document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'PicklQ');
-    document.querySelectorAll('.header-title').forEach(el => el.textContent = 'PicklQ Queuing System');
+  } else if (club === 'deuce') {
+    document.title = 'Deuce Club Queuing System';
+    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'deuce-game-logo.png');
+    document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'Deuce Club');
+    document.querySelectorAll('.header-title').forEach(el => el.textContent = 'Deuce Club Queuing System');
     document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
-      link.href = 'logologinpage-transparent.png';
+      link.href = 'deuce-game-logo.png';
+    });
+    document.querySelectorAll('link[rel="manifest"]').forEach(link => {
+      link.href = 'manifest.json';
     });
   } else if (club === 'balian') {
     document.title = 'Balian Picklers Queuing';
@@ -3018,15 +3021,12 @@ function applyClubBranding(club) {
       link.href = 'balian-pc.jpg';
     });
   } else {
-    document.title = 'Deuce Club Queuing System';
-    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'deuce-game-logo.png');
-    document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'Deuce Club');
-    document.querySelectorAll('.header-title').forEach(el => el.textContent = 'Deuce Club Queuing System');
+    document.title = 'PicklQ Queuing System';
+    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'logologinpage-transparent.png');
+    document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'PicklQ');
+    document.querySelectorAll('.header-title').forEach(el => el.textContent = 'PicklQ Queuing System');
     document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
-      link.href = 'deuce-game-logo.png';
-    });
-    document.querySelectorAll('link[rel="manifest"]').forEach(link => {
-      link.href = 'manifest.json';
+      link.href = 'logologinpage-transparent.png';
     });
   }
 }

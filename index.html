@@ -4,13 +4,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="shortcut icon" href="deuce-game-logo.png">
+  <link rel="shortcut icon" href="logologinpage-transparent.png">
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0a2e2e" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="deuce-game-logo.png">
-  <title>Pickleball Doubles Queuing System</title>
+  <link rel="apple-touch-icon" href="logologinpage-transparent.png">
+  <title>PicklQ Queuing System</title>
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap" />
   <script src="https://cdn.jsdelivr.net/npm/morphdom@2.7.4/dist/morphdom-umd.min.js"></script>
@@ -46,24 +46,25 @@
       if (club === "longos") {
         document.title = "Longos Pickleball Club";
         window.addEventListener("DOMContentLoaded", () => {
-          document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "logo-lpc.jpg");
+          document.querySelectorAll(".splash-logo, .sidebar-logo, .header-logo").forEach(img => img.src = "logo-lpc.jpg");
           document.querySelectorAll(".splash-title").forEach(el => el.textContent = "Longos Club");
           document.querySelectorAll(".header-title").forEach(el => el.textContent = "Longos Pickleball Club");
           document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "logo-lpc.jpg");
           document.querySelectorAll("link[rel='manifest']").forEach(link => link.href = "manifest-longos.json");
         });
-      } else if (club === "guest") {
-        document.title = "PicklQ Queuing System";
+      } else if (club === "deuce") {
+        document.title = "Deuce Club Queuing System";
         window.addEventListener("DOMContentLoaded", () => {
-          document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "logologinpage-transparent.png");
-          document.querySelectorAll(".splash-title").forEach(el => el.textContent = "PicklQ");
-          document.querySelectorAll(".header-title").forEach(el => el.textContent = "PicklQ Queuing System");
-          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "logologinpage-transparent.png");
+          document.querySelectorAll(".splash-logo, .sidebar-logo, .header-logo").forEach(img => img.src = "deuce-game-logo.png");
+          document.querySelectorAll(".splash-title").forEach(el => el.textContent = "Deuce Club");
+          document.querySelectorAll(".header-title").forEach(el => el.textContent = "Deuce Club Queuing System");
+          document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "deuce-game-logo.png");
+          document.querySelectorAll("link[rel='manifest']").forEach(link => link.href = "manifest.json");
         });
       } else if (club === "balian") {
         document.title = "Balian Picklers Queuing";
         window.addEventListener("DOMContentLoaded", () => {
-          document.querySelectorAll("img[src='deuce-game-logo.png']").forEach(img => img.src = "balian-pc.jpg");
+          document.querySelectorAll(".splash-logo, .sidebar-logo, .header-logo").forEach(img => img.src = "balian-pc.jpg");
           document.querySelectorAll(".splash-title").forEach(el => el.textContent = "Balian Picklers");
           document.querySelectorAll(".header-title").forEach(el => el.textContent = "Balian Picklers Queuing");
           document.querySelectorAll("link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach(link => link.href = "balian-pc.jpg");
@@ -80,9 +81,9 @@
 <body class="min-h-screen bg-ink font-body flex overflow-x-hidden" style="color:#F2E8D5;">
   <!-- Splash / Loading Screen -->
   <div id="splash-screen">
-    <img src="deuce-game-logo.png" alt="Deuce Club Logo" class="splash-logo" onerror="this.style.display='none'" />
+    <img src="logologinpage-transparent.png" alt="PicklQ Logo" class="splash-logo" onerror="this.style.display='none'" />
     <div>
-      <p class="splash-title">Deuce Club</p>
+      <p class="splash-title">PicklQ</p>
       <p class="splash-subtitle">Queuing System</p>
     </div>
     <div class="splash-spinner"></div>
@@ -110,7 +111,7 @@
   <!-- Sidebar -->
   <aside id="sidebar" class="fixed top-0 left-0 w-64 md:w-16 -translate-x-full md:translate-x-0 transition-all duration-300 flex flex-col bg-panel border-r border-slate-700/50 h-screen z-50 flex-shrink-0 overflow-hidden" style="background: rgba(15, 61, 61, 0.95);">
     <div class="h-[88px] flex items-center px-3 border-b border-slate-700/50 cursor-pointer flex-shrink-0 hover:bg-slate-800/50 transition-colors" id="sidebar-toggle" style="padding-left: 0.6rem;">
-      <img src="deuce-game-logo.png" alt="Logo" class="sidebar-logo w-11 h-11 rounded-full object-cover flex-shrink-0" onerror="this.style.display='none'" />
+      <img src="logologinpage-transparent.png" alt="Logo" class="sidebar-logo w-11 h-11 rounded-full object-cover flex-shrink-0" onerror="this.style.display='none'" />
       <span class="ml-4 font-display font-semibold text-lg text-white whitespace-nowrap md:opacity-0 transition-opacity duration-300 sidebar-text block">Menu</span>
     </div>
     
