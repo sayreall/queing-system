@@ -851,3 +851,4 @@ body.introjs-open #sidebar {
 
 html { scroll-behavior: smooth !important; }
 
+@media (max-width: 768px) { .mobile-icon-only span { display: none; } .mobile-icon-only { padding-left: 6px !important; padding-right: 6px !important; } }
