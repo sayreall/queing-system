@@ -1,4 +1,4 @@
-const CACHE_NAME = "pickleball-queue-v17";
+const CACHE_NAME = "pickleball-queue-v18";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,18 +6,18 @@ const ASSETS = [
   "./login.html",
   "./admin.html",
   "./import.html",
-  "./styles.css",
-  "./dashboard.js",
-  "./queue.js",
-  "./firebase.js",
+  "./css/styles.css",
+  "./js/dashboard.js",
+  "./js/queue.js",
+  "./js/firebase.js",
   "./multi-club.js",
-  "./login.js",
+  "./js/login.js",
   "./manifest.json",
   "./manifest-longos.json",
-  "./deuce-game-logo.png",
-  "./logologinpage-transparent.png",
-  "./logo-lpc.jpg",
-  "./balian-pc.jpg"
+  "./assets/images/deuce-game-logo.png",
+  "./assets/images/logologinpage-transparent.png",
+  "./assets/images/logo-lpc.jpg",
+  "./assets/images/balian-pc.jpg"
 ];
 
 self.addEventListener("install", (event) => {

@@ -4,12 +4,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="shortcut icon" href="logologinpage-transparent.png">
+  <link rel="shortcut icon" href="assets/images/logologinpage-transparent.png">
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0a2e2e" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="logologinpage-transparent.png">
+  <link rel="apple-touch-icon" href="assets/images/logologinpage-transparent.png">
   <title>PicklQ Queuing System</title>
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap" />
@@ -39,7 +39,7 @@
       },
     };
   </script>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="css/styles.css" />
   <script>
     (function() {
       const club = localStorage.getItem("dq_club_preference");
@@ -74,14 +74,14 @@
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/styles.css">
   <script src="multi-club.js"></script>
 </head>
 
 <body class="min-h-screen bg-ink font-body flex overflow-x-hidden" style="color:#F2E8D5;">
   <!-- Splash / Loading Screen -->
   <div id="splash-screen">
-    <img src="logologinpage-transparent.png" alt="PicklQ Logo" class="splash-logo" onerror="this.style.display='none'" />
+    <img src="assets/images/logologinpage-transparent.png" alt="PicklQ Logo" class="splash-logo" onerror="this.style.display='none'" />
     <div>
       <p class="splash-title">PicklQ</p>
       <p class="splash-subtitle">Queuing System</p>
@@ -111,7 +111,7 @@
   <!-- Sidebar -->
   <aside id="sidebar" class="fixed top-0 left-0 w-64 md:w-16 -translate-x-full md:translate-x-0 transition-all duration-300 flex flex-col bg-panel border-r border-slate-700/50 h-screen z-50 flex-shrink-0 overflow-hidden" style="background: rgba(15, 61, 61, 0.95);">
     <div class="h-[88px] flex items-center px-3 border-b border-slate-700/50 cursor-pointer flex-shrink-0 hover:bg-slate-800/50 transition-colors" id="sidebar-toggle" style="padding-left: 0.6rem;">
-      <img src="logologinpage-transparent.png" alt="Logo" class="sidebar-logo w-11 h-11 rounded-full object-cover flex-shrink-0" onerror="this.style.display='none'" />
+      <img src="assets/images/logologinpage-transparent.png" alt="Logo" class="sidebar-logo w-11 h-11 rounded-full object-cover flex-shrink-0" onerror="this.style.display='none'" />
       <span class="ml-4 font-display font-semibold text-lg text-white whitespace-nowrap md:opacity-0 transition-opacity duration-300 sidebar-text block">Menu</span>
     </div>
     
@@ -945,7 +945,7 @@
   <div id="toast-container"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-  <script type="module" src="dashboard.js?v=13"></script>
+  <script type="module" src="js/dashboard.js?v=13"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

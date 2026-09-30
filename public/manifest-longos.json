@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "Longos Pickleball Club",
   "short_name": "Longos PC",
   "description": "Longos Pickleball Queuing System",
@@ -8,13 +8,13 @@
   "theme_color": "#0a2e2e",
   "icons": [
     {
-      "src": "logo-lpc.jpg",
+      "src": "assets/images/logo-lpc.jpg",
       "sizes": "192x192",
       "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {
-      "src": "logo-lpc.jpg",
+      "src": "assets/images/logo-lpc.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any maskable"
