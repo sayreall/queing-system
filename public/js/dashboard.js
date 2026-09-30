@@ -1327,9 +1327,21 @@ function bindEvents() {
   function renderSavedPlayersRoster() {
     if (!savedPlayersList) return;
     const searchStr = (savedPlayersSearch.value || "").toLowerCase();
+
+    const todayStr = new Date().toLocaleDateString();
+
+    function isToday(ts) {
+      if (!ts) return false;
+      let d;
+      if (typeof ts.toDate === "function") d = ts.toDate();
+      else if (ts.seconds) d = new Date(ts.seconds * 1000);
+      else d = new Date(ts);
+      return d.toLocaleDateString() === todayStr;
+    }
     
     const rosterPlayers = Array.from(state.players.values())
-      .filter(p => ["Standby", "Absent", "Archived"].includes(p.status))
+      .filter(p => p.status === "Standby")
+      .filter(p => isToday(p.createdAt) || isToday(p.updatedAt))
       .filter(p => p.name.toLowerCase().includes(searchStr))
       .sort((a, b) => a.name.localeCompare(b.name));
     
@@ -1337,11 +1349,11 @@ function bindEvents() {
       <li class="flex items-center justify-between p-2 hover:bg-slate-800/50 rounded-lg">
         <div>
           <p class="font-semibold text-white text-sm">${p.name} <span class="text-xs text-slate-400 ml-1">(${p.skill})</span></p>
-          <p class="text-xs text-slate-500">${p.gender || "Unspecified"} • ${p.status}</p>
+          <p class="text-xs text-slate-500">${p.gender || "Unspecified"} • ${p.skill}</p>
         </div>
         <button class="btn-primary text-xs px-3 py-1" data-roster-add="${p.id}">Add to Queue</button>
       </li>
-    `).join("") : `<li class="p-2 text-slate-500 text-sm">No saved players found.</li>`;
+    `).join("") : `<li class="p-4 text-slate-500 text-sm text-center">No players imported today.</li>`;
   }
 
   if (openSavedPlayersBtn && savedPlayersModal) {
