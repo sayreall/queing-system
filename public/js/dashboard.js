@@ -599,6 +599,7 @@ function renderPlayers() {
         return player.name.toLowerCase().includes(state.search.toLowerCase());
       }
       if (player.status === "Archived") return false;
+      if (player.status === "Roster") return false;
       const matchFilter = state.filter === "All" || player.skill === state.filter;
       const matchSearch = player.name.toLowerCase().includes(state.search.toLowerCase());
       return matchFilter && matchSearch;
@@ -613,7 +614,7 @@ function renderPlayers() {
     : filteredRows.filter((player) => player.status === "Standby" || player.status === "Absent");
   const activeRows = state.filter.startsWith("Archived")
     ? filteredRows
-    : filteredRows.filter((player) => player.status !== "Standby" && player.status !== "Absent");
+    : filteredRows.filter((player) => player.status !== "Standby" && player.status !== "Absent" && player.status !== "Roster");
 
   // Update total players count badge
   const countEl = document.getElementById("total-players-count");
@@ -1340,8 +1341,7 @@ function bindEvents() {
     }
     
     const rosterPlayers = Array.from(state.players.values())
-      .filter(p => p.status === "Standby")
-      .filter(p => isToday(p.createdAt) || isToday(p.updatedAt))
+      .filter(p => p.status === "Roster")
       .filter(p => p.name.toLowerCase().includes(searchStr))
       .sort((a, b) => a.name.localeCompare(b.name));
     
@@ -1382,7 +1382,7 @@ function bindEvents() {
         try {
           await markPlayerAbsent(playerId, false);
           showToast("Player added to queue.");
-          renderSavedPlayersRoster(); 
+          renderSavedPlayersRoster();
         } catch (err) {
           showToast(err.message, "error");
         }
