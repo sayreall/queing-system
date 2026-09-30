@@ -705,6 +705,7 @@ function renderPlayers() {
                 ? "Return"
                 : "Absent"}</span>
             </button>
+            <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap mobile-icon-only" style="border-color: rgba(251,191,36,0.4); color:#fbbf24;" data-player-done="${player.id}">&#x2714; <span>Done Playing</span></button>
             <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap mobile-icon-only" style="border-color: rgba(248,113,113,0.4); color:#fca5a5;" data-player-remove="${player.id}">&#x2715;</button>
           </div>
         </td>
