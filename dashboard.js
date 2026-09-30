@@ -127,7 +127,10 @@ const elements = {
   playersBodyBeginner: document.getElementById("players-body-beginner"),
   playersBodyIntermediate: document.getElementById("players-body-intermediate"),
   playersBodyAdvanced: document.getElementById("players-body-advanced"),
-  donePlayersBody: document.getElementById("done-players-body"),
+  donePlayersContainer: document.getElementById("done-players-container"),
+  donePlayersBodyBeginner: document.getElementById("done-players-body-beginner"),
+  donePlayersBodyIntermediate: document.getElementById("done-players-body-intermediate"),
+  donePlayersBodyAdvanced: document.getElementById("done-players-body-advanced"),
   toastContainer: document.getElementById("toast-container"),
 };
 
@@ -730,17 +733,24 @@ function renderPlayers() {
   renderTable(elements.playersBodyIntermediate, "count-intermediate", "Intermediate");
   renderTable(elements.playersBodyAdvanced, "count-advanced", "Advanced");
 
-  const donePlayersHTML = doneRows.length
-    ? doneRows
-    .map(
-      (player, idx) => `
+  const renderDoneTable = (tbodyElement, countElementId, skillFilterLabel) => {
+    if (!tbodyElement) return;
+    const rows = doneRows.filter(p => p.skill === skillFilterLabel);
+    
+    const countEl = document.getElementById(countElementId);
+    if (countEl) countEl.textContent = rows.length;
+
+    if (!rows.length) {
+      window.smoothUpdateHTML(tbodyElement, `<tr><td class="py-4 text-slate-500 text-center" colspan="12">No done-playing ${skillFilterLabel} players.</td></tr>`);
+    } else {
+      window.smoothUpdateHTML(tbodyElement, rows.map((player, idx) => `
       <tr class="border-t border-slate-800/60">
         <td class="py-3 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
         <td class="font-semibold">
           <div class="flex items-center flex-wrap gap-2">
             <span>${player.name}</span>
             ${player.practicePartner && state.players.get(player.practicePartner)
-              ? `<span class="text-[10px] px-1.5 py-0.5 rounded border border-purple-400/40 text-purple-300 bg-purple-500/10 align-middle" title="Fixed Partner">🔗 ${state.players.get(player.practicePartner).name}</span>`
+              ? \`<span class="text-[10px] px-1.5 py-0.5 rounded border border-purple-400/40 text-purple-300 bg-purple-500/10 align-middle" title="Fixed Partner">&#x1F517; \${state.players.get(player.practicePartner).name}</span>\`
               : ''}
           </div>
           ${court1ActivePlayers.has(player.id)
@@ -781,9 +791,9 @@ function renderPlayers() {
           <select class="input-field" data-player-skill="${player.id}">
             ${SKILLS.map(
               (skill) =>
-                `<option value="${skill.label}" ${
+                \`<option value="\${skill.label}" \${
                   player.skill === skill.label ? "selected" : ""
-                }>${skill.label}</option>`
+                }>\${skill.label}</option>\`
             ).join("")}
           </select>
         </td>
@@ -796,15 +806,13 @@ function renderPlayers() {
           </div>
         </td>
       </tr>
-    `
-    )
-    .join("")
-    : `
-      <tr>
-        <td class="py-4 text-slate-500 text-center" colspan="12">No done-playing players yet.</td>
-      </tr>
-    `;
-    window.smoothUpdateHTML(elements.donePlayersBody, donePlayersHTML);
+      \`).join(""));
+    }
+  };
+
+  renderDoneTable(elements.donePlayersBodyBeginner, "count-done-beginner", "Beginner");
+  renderDoneTable(elements.donePlayersBodyIntermediate, "count-done-intermediate", "Intermediate");
+  renderDoneTable(elements.donePlayersBodyAdvanced, "count-done-advanced", "Advanced");
 }
 
 async function handlePlayerActionClick(event) {
@@ -1673,7 +1681,7 @@ function bindEvents() {
     body.addEventListener("click", handlePlayerActionClick);
   });
 
-  elements.donePlayersBody.addEventListener("change", async (event) => {
+  elements.donePlayersContainer.addEventListener("change", async (event) => {
     if (event.target.dataset.playerSkill) {
       const playerId = event.target.dataset.playerSkill;
       const newSkill = event.target.value;
@@ -1711,7 +1719,7 @@ function bindEvents() {
     }
   });
 
-  elements.donePlayersBody.addEventListener("click", handlePlayerActionClick);
+  elements.donePlayersContainer.addEventListener("click", handlePlayerActionClick);
 
   const customBtn = document.getElementById("start-custom-match-btn");
   const customModal = document.getElementById("custom-match-modal");

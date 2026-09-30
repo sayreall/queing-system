@@ -432,33 +432,103 @@
             </div>
           </div>
 
-          <div class="mt-6 border-t border-slate-800/60 pt-4">
+          <div class="mt-6 border-t border-slate-800/60 pt-4" id="done-players-container">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
               <h3 class="text-base font-display font-semibold">Done Playing</h3>
               <span class="text-xs text-slate-400">Players already finished their last match</span>
             </div>
-            <div class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg"><table id="done-players-table" class="w-full text-sm whitespace-nowrap relative"><thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
-                <tr>
-                  <th class="py-2 w-8 text-center">#</th>
-                  <th>Player</th>
-                  <th>Gender</th>
-                  <th>Location</th>
-                  <th>Status</th>
-                  <th>Last Match</th>
-                  <th class="text-purple-400" title="Games Played">GP</th>
-                  <th class="text-green-400">W</th>
-                  <th class="text-red-400">L</th>
-                  <th class="text-blue-400">Win %</th>
-                  <th>Skill</th>
-                  <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="done-players-body">
-                <tr>
-                  <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
-                </tr>
-              </tbody>
-            </table>
+
+            <!-- Beginner Players -->
+            <div class="mb-6">
+              <div class="flex items-center gap-2 mb-3">
+                <h3 class="text-base font-display font-semibold text-beginner">Beginner Players</h3>
+                <span class="text-xs text-slate-500" id="count-done-beginner">0</span>
+              </div>
+              <div class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg"><table class="w-full text-sm whitespace-nowrap relative"><thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+                  <tr>
+                    <th class="py-2 w-8 text-center">#</th>
+                    <th>Player</th>
+                    <th>Gender</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Last Match</th>
+                    <th class="text-purple-400" title="Games Played">GP</th>
+                    <th class="text-green-400">W</th>
+                    <th class="text-red-400">L</th>
+                    <th class="text-blue-400">Win %</th>
+                    <th>Skill</th>
+                    <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="done-players-body-beginner">
+                  <tr>
+                    <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
+                  </tr>
+                </tbody>
+              </table>
+              </div>
+            </div>
+
+            <!-- Intermediate Players -->
+            <div class="mb-6">
+              <div class="flex items-center gap-2 mb-3">
+                <h3 class="text-base font-display font-semibold text-intermediate">Intermediate Players</h3>
+                <span class="text-xs text-slate-500" id="count-done-intermediate">0</span>
+              </div>
+              <div class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg"><table class="w-full text-sm whitespace-nowrap relative"><thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+                  <tr>
+                    <th class="py-2 w-8 text-center text-slate-500">#</th>
+                    <th>Player</th>
+                    <th>Gender</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Last Match</th>
+                    <th class="text-purple-400" title="Games Played">GP</th>
+                    <th class="text-green-400">W</th>
+                    <th class="text-red-400">L</th>
+                    <th class="text-blue-400">Win %</th>
+                    <th>Skill</th>
+                    <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="done-players-body-intermediate">
+                  <tr>
+                    <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
+                  </tr>
+                </tbody>
+              </table>
+              </div>
+            </div>
+
+            <!-- Advanced Players -->
+            <div class="mb-6">
+              <div class="flex items-center gap-2 mb-3">
+                <h3 class="text-base font-display font-semibold text-advanced">Advanced Players</h3>
+                <span class="text-xs text-slate-500" id="count-done-advanced">0</span>
+              </div>
+              <div class="overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg"><table class="w-full text-sm whitespace-nowrap relative"><thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+                  <tr>
+                    <th class="py-2 w-8 text-center text-slate-500">#</th>
+                    <th>Player</th>
+                    <th>Gender</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Last Match</th>
+                    <th class="text-purple-400" title="Games Played">GP</th>
+                    <th class="text-green-400">W</th>
+                    <th class="text-red-400">L</th>
+                    <th class="text-blue-400">Win %</th>
+                    <th>Skill</th>
+                    <th class="sticky right-0 text-right pl-4" style="background:rgba(12,50,50,0.98);">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="done-players-body-advanced">
+                  <tr>
+                    <td class="py-4 text-slate-500" colspan="12">Loading players...</td>
+                  </tr>
+                </tbody>
+              </table>
+              </div>
             </div>
           </div>
         </div>

@@ -93,21 +93,37 @@ export async function addPlayer({ name, skill, gender, location, practicePartner
 
   let playerRef;
   let isRevive = false;
+  let existingPlayer = null;
 
   if (!existing.empty) {
     const docSnap = existing.docs[0];
-    if (docSnap.data().status === "Archived") {
-      playerRef = docSnap.ref;
+    existingPlayer = docSnap.data();
+    playerRef = docSnap.ref;
+    
+    if (existingPlayer.status === "Archived") {
       isRevive = true;
     } else {
-      throw new Error("Player already exists.");
+      // Player exists and is active. Update their skill, gender, location, and return.
+      if (existingPlayer.skill !== normalizedSkill) {
+        // Use the existing updatePlayerSkill function to properly handle queue updates
+        await updatePlayerSkill(playerRef.id, normalizedSkill);
+      }
+      
+      // Update other fields
+      await runTransaction(db, async (tx) => {
+        tx.set(playerRef, {
+          gender: playerGender,
+          location: playerLocation,
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+      });
+      
+      return playerRef.id;
     }
   } else {
     playerRef = getTenantDoc("players");
   }
 
-  const skillKey = skillKeyFromLabel(normalizedSkill);
-  const queueRef = getQueueDocRef(skillKey);
   const now = serverTimestamp();
 
   // Use a transaction to ensure clean state
