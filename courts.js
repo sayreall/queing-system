@@ -11,19 +11,28 @@ import {
   limit,
   onSnapshot,
   serverTimestamp,
-  writeBatch, getTenantCollection, getTenantDoc} from "./firebase.js";
+  writeBatch, getTenantCollection, getTenantDoc, getDocFromCache} from "./firebase.js";
 
 // Custom runTransaction that uses writeBatch to enable offline support!
 const runTransaction = async (db, callback) => {
   const batch = writeBatch(db);
   const txMock = {
-    get: async (ref) => await getDoc(ref),
+    get: async (ref) => {
+      try {
+        return await getDoc(ref);
+      } catch (err) {
+        if (err.code === "unavailable") {
+          return await getDocFromCache(ref);
+        }
+        throw err;
+      }
+    },
     set: (ref, data, opts) => batch.set(ref, data, opts),
     update: (ref, data) => batch.update(ref, data),
     delete: (ref) => batch.delete(ref)
   };
   await callback(txMock);
-  await batch.commit();
+  batch.commit(); // Don't await so it returns instantly for offline UI!
 };
 import { skillLabelFromKey, getQueueDocRef, skillKeyFromLabel, markPlayerAbsent } from "./queue.js";
 
@@ -39,7 +48,7 @@ export async function ensureCourtsExist() {
       const courtRef = getTenantDoc("courts", court.id);
       const snap = await getDoc(courtRef);
       if (!snap.exists()) {
-        await setDoc(courtRef, {
+        setDoc(courtRef, {
           name: court.name,
           status: "Available",
           matchId: null,
@@ -66,7 +75,7 @@ export async function addCourt() {
   const courtId = `court-${nextNum}`;
   const courtName = `Court ${nextNum}`;
   
-  await setDoc(getTenantDoc("courts", courtId), {
+  setDoc(getTenantDoc("courts", courtId), {
     name: courtName,
     status: "Available",
     matchId: null,
@@ -95,7 +104,7 @@ export async function removeCourt(courtId) {
   }
   
   const { deleteDoc } = await import("./firebase.js");
-  await deleteDoc(courtRef);
+  deleteDoc(courtRef);
 }
 
 
@@ -566,5 +575,5 @@ export async function activatePendingMatch(matchId, courtId) {
 
 export async function updateCourtAllowedSkill(courtId, allowedSkill) {
   const courtRef = getTenantDoc("courts", courtId);
-  await setDoc(courtRef, { allowedSkill, updatedAt: serverTimestamp() }, { merge: true });
+  setDoc(courtRef, { allowedSkill, updatedAt: serverTimestamp() }, { merge: true });
 }

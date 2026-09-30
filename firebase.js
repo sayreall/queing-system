@@ -5,8 +5,8 @@ import {
   persistentMultipleTabManager,
   collection,
   doc,
-  getDoc,
-  getDocs,
+  getDoc: _getDoc,
+  getDocs: _getDocs,
   setDoc,
   addDoc,
   updateDoc,
@@ -17,8 +17,9 @@ import {
   limit,
   onSnapshot,
   serverTimestamp,
-  runTransaction,
   writeBatch,
+  getDocFromCache,
+  getDocsFromCache
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
   getAuth,
@@ -63,13 +64,29 @@ export function getTenantDoc(collectionName, docId) {
   return doc(db, "users", tenantId, collectionName, docId);
 }
 
+export async function getDoc(ref) {
+  try {
+    return await _getDoc(ref);
+  } catch (e) {
+    if (e.code === "unavailable") return await getDocFromCache(ref);
+    throw e;
+  }
+}
+
+export async function getDocs(queryOrRef) {
+  try {
+    return await _getDocs(queryOrRef);
+  } catch (e) {
+    if (e.code === "unavailable") return await getDocsFromCache(queryOrRef);
+    throw e;
+  }
+}
+
 export {
   auth,
   db,
   collection,
   doc,
-  getDoc,
-  getDocs,
   setDoc,
   addDoc,
   updateDoc,
@@ -80,8 +97,9 @@ export {
   limit,
   onSnapshot,
   serverTimestamp,
-  runTransaction,
   writeBatch,
+  getDocFromCache,
+  getDocsFromCache,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
