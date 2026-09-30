@@ -1,14 +1,23 @@
-const CACHE_NAME = "pickleball-queue-v16";
+const CACHE_NAME = "pickleball-queue-v17";
 const ASSETS = [
   "./",
   "./index.html",
   "./tv.html",
   "./login.html",
+  "./admin.html",
+  "./import.html",
+  "./styles.css",
+  "./dashboard.js",
+  "./queue.js",
+  "./firebase.js",
+  "./multi-club.js",
+  "./login.js",
   "./manifest.json",
   "./manifest-longos.json",
   "./deuce-game-logo.png",
   "./logologinpage-transparent.png",
-  "./logo-lpc.jpg"
+  "./logo-lpc.jpg",
+  "./balian-pc.jpg"
 ];
 
 self.addEventListener("install", (event) => {
@@ -24,7 +33,11 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((name) => caches.delete(name)) // DELETE ALL CACHES TO FORCE CLEAN SLATE
+        cacheNames.map((name) => {
+          if (name !== CACHE_NAME) {
+            return caches.delete(name);
+          }
+        })
       );
     })
   );
@@ -32,27 +45,37 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // Use Network First strategy for all requests to ensure the app is always up-to-date
+  // Ignore requests that aren't HTTP/HTTPS (like chrome-extension://) or are Firebase API calls
+  if (!event.request.url.startsWith("http") || event.request.url.includes("firestore.googleapis.com") || event.request.url.includes("identitytoolkit.googleapis.com")) {
+    return;
+  }
+
   event.respondWith(
-    fetch(event.request).then((networkResponse) => {
-      // If we got a valid response, clone it and put it in the cache
-      if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-      }
-      return networkResponse;
-    }).catch(() => {
-      // If network fails, fall back to cache
-      return caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
+    caches.match(event.request).then((cachedResponse) => {
+      // Background fetch to update cache
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        // Only cache valid responses
+        if (networkResponse && networkResponse.status === 200 && (networkResponse.type === 'basic' || networkResponse.type === 'cors')) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
         }
-        // If nothing in cache and it's a page navigation, return index.html
-        if (event.request.mode === "navigate") {
+        return networkResponse;
+      }).catch((err) => {
+        console.warn("Network fetch failed, serving from cache if available:", err);
+      });
+
+      // Stale-While-Revalidate: Return cached immediately if we have it, otherwise wait for network
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      
+      return fetchPromise.then(res => {
+        if (!res && event.request.mode === "navigate") {
           return caches.match("./index.html");
         }
+        return res;
       });
     })
   );
