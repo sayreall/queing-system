@@ -802,6 +802,7 @@ function renderPlayers() {
           <div class="flex flex-nowrap justify-end gap-1">
             <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap mobile-icon-only" data-player-setup-partner="${player.id}">&#x1F517; <span>Partner</span></button>
             <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap mobile-icon-only" data-player-absent="${player.id}">&#x21A9; <span>Return</span></button>
+            <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap mobile-icon-only" style="border-color: rgba(251,191,36,0.4); color:#fbbf24;" data-player-done="${player.id}">&#x2714; <span>Done Playing</span></button>
             <button class="btn-secondary text-xs px-2 py-1 whitespace-nowrap mobile-icon-only" style="border-color: rgba(248,113,113,0.4); color:#fca5a5;" data-player-remove="${player.id}">&#x2715;</button>
           </div>
         </td>
