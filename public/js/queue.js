@@ -395,7 +395,13 @@ export async function updatePlayerSkill(playerId, newSkill) {
     }
 
     const nextOrderRaw = nextSnap.exists() ? nextSnap.data().order || [] : [];
-    const nextOrder = nextOrderRaw.filter((id) => id !== playerId).concat(playerId);
+    let nextOrder = nextOrderRaw.filter((id) => id !== playerId);
+    
+    // Only add to the new queue if they are actually waiting
+    if (player.status === "Waiting") {
+      nextOrder.push(playerId);
+    }
+    
     tx.set(
       nextQueueRef,
       { skill: normalizedSkill, order: nextOrder, updatedAt: serverTimestamp() },
