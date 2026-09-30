@@ -219,10 +219,10 @@ export async function addPlayersBulk(entries, addToQueue = false) {
     } else {
       playerRef = getTenantDoc("players");
       // Add to existingMap so duplicates in the same bulk import don't crash
-      existingMap.set(nameLower, { ref: playerRef, data: () => ({ status: addToQueue ? "Waiting" : "Standby" }) });
+      existingMap.set(nameLower, { ref: playerRef, data: () => ({ status: addToQueue ? "Waiting" : "Roster" }) });
     }
 
-    const initialStatus = addToQueue ? "Waiting" : "Standby";
+    const initialStatus = addToQueue ? "Waiting" : "Roster";
 
     if (isRevive) {
       batch.set(playerRef, {
