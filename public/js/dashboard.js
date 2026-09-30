@@ -2992,41 +2992,41 @@ document.getElementById('logout-btn')?.addEventListener('click', async () => {
 function applyClubBranding(club) {
   if (club === 'longos') {
     document.title = 'Longos Pickleball Club';
-    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'logo-lpc.jpg');
+    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'assets/images/logo-lpc.jpg');
     document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'Longos Club');
     document.querySelectorAll('.header-title').forEach(el => el.textContent = 'Longos Pickleball Club');
     document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
-      link.href = 'logo-lpc.jpg';
+      link.href = 'assets/images/logo-lpc.jpg';
     });
     document.querySelectorAll('link[rel="manifest"]').forEach(link => {
       link.href = 'manifest-longos.json';
     });
   } else if (club === 'deuce') {
     document.title = 'Deuce Club Queuing System';
-    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'deuce-game-logo.png');
+    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'assets/images/deuce-game-logo.png');
     document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'Deuce Club');
     document.querySelectorAll('.header-title').forEach(el => el.textContent = 'Deuce Club Queuing System');
     document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
-      link.href = 'deuce-game-logo.png';
+      link.href = 'assets/images/deuce-game-logo.png';
     });
     document.querySelectorAll('link[rel="manifest"]').forEach(link => {
       link.href = 'manifest.json';
     });
   } else if (club === 'balian') {
     document.title = 'Balian Picklers Queuing';
-    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'balian-pc.jpg');
+    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'assets/images/balian-pc.jpg');
     document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'Balian Picklers');
     document.querySelectorAll('.header-title').forEach(el => el.textContent = 'Balian Picklers Queuing');
     document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
-      link.href = 'balian-pc.jpg';
+      link.href = 'assets/images/balian-pc.jpg';
     });
   } else {
     document.title = 'PicklQ Queuing System';
-    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'logologinpage-transparent.png');
+    document.querySelectorAll('.splash-logo, .header-logo, .sidebar-logo').forEach(img => img.src = 'assets/images/logologinpage-transparent.png');
     document.querySelectorAll('.splash-title').forEach(el => el.textContent = 'PicklQ');
     document.querySelectorAll('.header-title').forEach(el => el.textContent = 'PicklQ Queuing System');
     document.querySelectorAll('link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
-      link.href = 'logologinpage-transparent.png';
+      link.href = 'assets/images/logologinpage-transparent.png';
     });
   }
 }
