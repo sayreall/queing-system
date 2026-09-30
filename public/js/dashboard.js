@@ -2205,8 +2205,8 @@ function bindEvents() {
 
           const isMobile = window.innerWidth < 768;
           const intro = introJs();
-      
-      const steps = [
+
+          const steps = [
         {
           title: 'Welcome to PicklQ! 🎉',
           intro: 'Let\'s take a quick interactive tour to see how to run your first session.'
@@ -2222,48 +2222,62 @@ function bindEvents() {
       if (isMobile) {
         steps.push({
           element: document.querySelector('#open-add-player-modal'),
-          title: 'Add Players',
-          intro: 'Start by getting players into the system here. You can manually add them, or open the Menu to bulk import.',
+          title: 'Manual Add',
+          intro: 'Tap here to manually add a walk-in player and set their name, skill, and gender on the spot.',
           position: 'bottom'
         });
       } else {
-        steps.push({
-          element: document.querySelector('#import-players-btn'),
-          title: 'Add Players',
-          intro: 'Start by getting players into the system. You can bulk import via CSV/Excel, paste from Reclub, or manually Add Walk-ins below.',
-          position: 'right'
-        });
+        steps.push(
+          {
+            element: document.querySelector('#open-add-player-modal'),
+            title: 'Manual Add',
+            intro: 'Click here to manually add a walk-in player by entering their name, skill, and gender.',
+            position: 'bottom'
+          },
+          {
+            element: document.querySelector('#open-saved-players-modal'),
+            title: 'Saved Players',
+            intro: 'Players you previously imported (but haven\'t queued yet) live here. Click <b>Add</b> next to a name to move them into the active Standby section.',
+            position: 'bottom'
+          },
+          {
+            element: document.querySelector('#import-players-btn'),
+            title: 'Import Players',
+            intro: 'Have a roster ready? Import players from a CSV/Excel file or paste a list from Reclub. Imported players are saved privately until you\'re ready to add them.',
+            position: 'right'
+          }
+        );
       }
 
       steps.push(
         {
           element: document.querySelector('#courts-container'),
           title: 'Set Up Courts',
-          intro: 'Click <b>+ Add Court</b> to set up your courts. You can specify skill restrictions (e.g., "Beginner Only") or leave them open.',
+          intro: 'Click <b>+ Add Court</b> to create courts. You can restrict courts to a skill level (e.g., Beginner Only) or leave them open for all.',
           position: 'bottom'
         },
         {
           element: document.querySelector('#auto-assign-toggle') ? document.querySelector('#auto-assign-toggle').parentElement : null,
           title: 'Auto-Assign',
-          intro: 'Turn this on for a hands-free experience! The system will automatically pull 4 players from the correct queue and assign them whenever a court opens up.',
+          intro: 'Turn this ON for a hands-free experience. The system automatically pulls 4 players from the queue and assigns them to any open court.',
           position: 'bottom'
         },
         {
           element: document.querySelector('#round-generator-panel'),
           title: 'Round Generator',
-          intro: 'Prefer batch processing? Use the Round Generator to auto-balance and queue matches for ALL standby players at once.',
+          intro: 'Prefer batch control? The Round Generator balances and queues matches for ALL waiting players at once based on skill and win history.',
           position: 'top'
         },
         {
           element: document.querySelector('#custom-match-panel'),
-          title: 'Custom Matches',
-          intro: 'Need full control? Build custom matchups by selecting any 4 players and skip the standard skill restrictions.',
+          title: 'Configure Match',
+          intro: 'Need full control? Build custom matchups by hand — pick any 4 players from Waiting or Standby and send them to any court.',
           position: 'top'
         },
         {
           element: document.querySelector('#queues-container'),
           title: 'Manage Queues',
-          intro: 'Matches ready to play appear here. You can manually drag and drop them to reorder their priority.',
+          intro: 'Pending matches appear here sorted by skill. Drag and drop rows to reprioritize who plays next.',
           position: 'top'
         }
       );
@@ -2272,24 +2286,32 @@ function bindEvents() {
         steps.push({
           element: document.querySelector('#mobile-menu-btn'),
           title: 'Menu & TV Display',
-          intro: 'Open this menu to access the Match Log, Rankings, and the TV Display for a big screen view.',
+          intro: 'Open this menu to access the Match Log, Rankings, and the TV Display for a big-screen court view.',
           position: 'bottom'
         });
       } else {
         steps.push({
           element: document.querySelector('#view-tv-btn'),
           title: 'TV Display & Sharing',
-          intro: 'Click here to open a TV-friendly display of live courts and rankings, or use <b>Share TV</b> to let players scan a QR code!',
+          intro: 'Click here to open a TV-friendly view of live courts and the leaderboard. Share the QR code so players can follow along on their phones!',
           position: 'right'
         });
       }
 
-      steps.push({
-        element: document.querySelector('#archive-all'),
-        title: 'End of the Day',
-        intro: 'When the session is over, click this. It clears the queues and courts, but safely stores everyone\'s stats for the next time they play!',
-        position: 'top'
-      });
+      steps.push(
+        {
+          element: document.querySelector('.done-playing-section') || document.querySelector('#done-players-container'),
+          title: 'Done Playing',
+          intro: 'Players who have finished their match appear in this section. Use <b>Return</b> to put them back in queue, or <b>Done Playing</b> to move them to Standby.',
+          position: 'top'
+        },
+        {
+          element: document.querySelector('#archive-all'),
+          title: 'End of the Day',
+          intro: 'When the session is over, click <b>End Day</b>. It clears all queues and courts but safely saves everyone\'s stats for the next session!',
+          position: 'top'
+        }
+      );
 
       // Strictly filter out any steps where the target element was requested but is null or hidden
       const validSteps = steps.filter(step => {
