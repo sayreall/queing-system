@@ -1318,11 +1318,79 @@ function bindEvents() {
     });
   }
 
+  const openSavedPlayersBtn = document.getElementById("open-saved-players-modal");
+  const closeSavedPlayersBtn = document.getElementById("close-saved-players-modal");
+  const savedPlayersModal = document.getElementById("saved-players-modal");
+  const savedPlayersSearch = document.getElementById("saved-players-search");
+  const savedPlayersList = document.getElementById("saved-players-list");
+
+  function renderSavedPlayersRoster() {
+    if (!savedPlayersList) return;
+    const searchStr = (savedPlayersSearch.value || "").toLowerCase();
+    
+    const rosterPlayers = Array.from(state.players.values())
+      .filter(p => ["Standby", "Absent", "Archived"].includes(p.status))
+      .filter(p => p.name.toLowerCase().includes(searchStr))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    
+    savedPlayersList.innerHTML = rosterPlayers.length ? rosterPlayers.map(p => `
+      <li class="flex items-center justify-between p-2 hover:bg-slate-800/50 rounded-lg">
+        <div>
+          <p class="font-semibold text-white text-sm">${p.name} <span class="text-xs text-slate-400 ml-1">(${p.skill})</span></p>
+          <p class="text-xs text-slate-500">${p.gender || "Unspecified"} • ${p.status}</p>
+        </div>
+        <button class="btn-primary text-xs px-3 py-1" data-roster-add="${p.id}">Add to Queue</button>
+      </li>
+    `).join("") : `<li class="p-2 text-slate-500 text-sm">No saved players found.</li>`;
+  }
+
+  if (openSavedPlayersBtn && savedPlayersModal) {
+    openSavedPlayersBtn.addEventListener("click", () => {
+      savedPlayersSearch.value = "";
+      renderSavedPlayersRoster();
+      savedPlayersModal.classList.remove("hidden");
+      savedPlayersSearch.focus();
+    });
+  }
+
+  if (closeSavedPlayersBtn && savedPlayersModal) {
+    closeSavedPlayersBtn.addEventListener("click", () => {
+      savedPlayersModal.classList.add("hidden");
+    });
+  }
+
+  if (savedPlayersSearch) {
+    savedPlayersSearch.addEventListener("input", renderSavedPlayersRoster);
+  }
+
+  if (savedPlayersList) {
+    savedPlayersList.addEventListener("click", async (e) => {
+      if (e.target.dataset.rosterAdd) {
+        const playerId = e.target.dataset.rosterAdd;
+        try {
+          await markPlayerAbsent(playerId, false);
+          showToast("Player added to queue.");
+          renderSavedPlayersRoster(); 
+        } catch (err) {
+          showToast(err.message, "error");
+        }
+      }
+    });
+  }
+
   // Close modal when clicking outside
   if (addPlayerModal) {
     addPlayerModal.addEventListener("click", (e) => {
       if (e.target === addPlayerModal) {
         addPlayerModal.classList.add("hidden");
+      }
+    });
+  }
+
+  if (savedPlayersModal) {
+    savedPlayersModal.addEventListener("click", (e) => {
+      if (e.target === savedPlayersModal) {
+        savedPlayersModal.classList.add("hidden");
       }
     });
   }

@@ -394,7 +394,7 @@
           </div>
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center w-full sm:w-auto">
             <button id="open-add-player-modal" class="btn-primary">Manual Add</button>
-            <a href="import.html" class="btn-primary" style="background: rgba(31, 207, 177, 0.2); border-color: rgba(31, 207, 177, 0.4); color: #1fcfb1;">Import Players</a>
+            <button id="open-saved-players-modal" class="btn-primary" style="background: rgba(31, 207, 177, 0.2); border-color: rgba(31, 207, 177, 0.4); color: #1fcfb1;">Saved Players</button>
             <button id="archive-all" class="btn-secondary"
               style="border-color: rgba(248, 113, 113, 0.4); color: #fca5a5;">End Day (Archive All)</button>
           </div>
@@ -1073,6 +1073,21 @@
     </div>
 
   </div>
+
+    <!-- Saved Players Modal -->
+    <div id="saved-players-modal"
+      class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-2xl relative max-h-[90vh] flex flex-col">
+        <button id="close-saved-players-modal"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
+        <h2 class="text-xl font-display font-semibold mb-2" style="color:#1fcfb1;">Saved Players Roster</h2>
+        <p class="text-sm text-slate-400 mb-4">Add previously imported or saved players directly to the active queue.</p>
+        <input type="text" id="saved-players-search" class="input-field mb-4" placeholder="Search players by name..." />
+        <div class="overflow-y-auto flex-1 border border-slate-700/50 rounded-lg custom-scrollbar p-2 bg-slate-900/40">
+          <ul id="saved-players-list" class="space-y-2"></ul>
+        </div>
+      </div>
+    </div>
 
   <div id="archive-modal"
     class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
