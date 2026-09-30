@@ -7,6 +7,7 @@ import {
   reorderQueue,
   skipPlayer,
   markPlayerAbsent,
+  activatePlayerToStandby,
   updatePlayerSkill,
   updatePlayerGender,
   updatePlayerPracticePartner,
@@ -1380,8 +1381,8 @@ function bindEvents() {
       if (e.target.dataset.rosterAdd) {
         const playerId = e.target.dataset.rosterAdd;
         try {
-          await markPlayerAbsent(playerId, false);
-          showToast("Player added to queue.");
+          await activatePlayerToStandby(playerId);
+          showToast("Player added to standby.");
           renderSavedPlayersRoster();
         } catch (err) {
           showToast(err.message, "error");

@@ -524,6 +524,14 @@ export async function markPlayerAbsent(playerId, absent) {
   });
 }
 
+export async function activatePlayerToStandby(playerId) {
+  const playerRef = getTenantDoc("players", playerId);
+  await updateDoc(playerRef, {
+    status: "Standby",
+    updatedAt: serverTimestamp(),
+  });
+}
+
 export async function skipPlayer(playerId) {
   const playerRef = getTenantDoc("players", playerId);
 
