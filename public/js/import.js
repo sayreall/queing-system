@@ -1,4 +1,4 @@
-import { SKILLS, addPlayersBulk, fetchExistingNames, normalizeRating, normalizeSkill } from "./queue.js";
+import { addPlayersBulk, fetchExistingNames, normalizeSkill } from "./queue.js";
 
 const fileInput = document.getElementById("import-file");
 const tableBody = document.getElementById("import-body");
@@ -14,7 +14,7 @@ function renderRows() {
   if (!rows.length) {
     tableBody.innerHTML = `
       <tr>
-        <td class="py-4 text-slate-500" colspan="6">No file loaded.</td>
+        <td class="py-4 text-slate-500" colspan="5">No file loaded.</td>
       </tr>
     `;
     summary.textContent = "";
@@ -40,8 +40,7 @@ function renderRows() {
 
     tr.innerHTML = `
       <td class="py-3 font-semibold">${row.name || ""}</td>
-      <td>${row.skill || ""}</td>
-      <td>${row.rating ?? "â€”"}</td>
+      <td>${row.rating || ""}</td>
       <td>${selectHTML}</td>
       <td class="text-slate-400">${row.location || "—"}</td>
       <td>${row.valid ? (row.isRevive ? "Ready (Revive)" : "Ready") : row.reason}</td>
@@ -67,11 +66,9 @@ function validateRows(rawRows) {
 
   rows = rawRows.map((row) => {
     const name = (row.Name || row.name || "").trim();
-    const skill = (row.Skill || row.skill || "").trim();
-    const rating = normalizeRating(row.Rating ?? row.rating);
+    const rating = normalizeSkill(row.Rating ?? row.rating);
     const gender = (row.Gender || row.gender || "Unspecified").trim();
     const location = (row.Location || row.location || "").trim();
-    const normalizedSkill = normalizeSkill(skill);
     const nameLower = name.toLowerCase();
 
     let valid = true;
@@ -81,9 +78,9 @@ function validateRows(rawRows) {
     if (!name) {
       valid = false;
       reason = "Missing name";
-    } else if (!normalizedSkill) {
+    } else if (!rating) {
       valid = false;
-      reason = "Invalid skill";
+      reason = "Rating must be 2.0 to 5.0 in 0.5 steps";
     } else if (seenNames.has(nameLower)) {
       valid = false;
       reason = "Duplicate in file";
@@ -101,7 +98,6 @@ function validateRows(rawRows) {
 
     return {
       name,
-      skill: normalizedSkill || skill,
       rating,
       gender,
       location,
@@ -177,22 +173,14 @@ importReclubBtn?.addEventListener("click", async () => {
     const parts = segment.split('|').map(p => p.trim());
     const name = parts[0];
     
-    let skill = "Beginner"; // Default
-    let rating = null;
+    let rating = "2.0"; // Default for Reclub entries without a rating.
     let gender = "Unspecified";
     let location = "";
     
     for (let i = 1; i < parts.length; i++) {
       const pLower = parts[i].toLowerCase();
       if (pLower.includes('rating=')) {
-        rating = normalizeRating(pLower.split('=')[1]);
-        if (rating !== null) {
-          if (rating >= 4.0) skill = "Advanced";
-          else if (rating >= 3.0) skill = "Intermediate";
-        }
-      }
-      if (pLower.includes('skill=')) {
-        skill = parts[i].split('=')[1].trim();
+        rating = normalizeSkill(pLower.split('=')[1]) || null;
       }
       if (pLower.includes('gender=')) {
         gender = parts[i].split('=')[1].trim();
@@ -202,7 +190,7 @@ importReclubBtn?.addEventListener("click", async () => {
       }
     }
     
-    return { Name: name, Skill: skill, Rating: rating, Gender: gender, Location: location };
+    return { Name: name, Rating: rating, Gender: gender, Location: location };
   });
 
   existingNames = await fetchExistingNames();

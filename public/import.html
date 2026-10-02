@@ -48,7 +48,7 @@
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 class="text-xl font-display font-semibold">Upload Spreadsheet</h2>
-            <p class="text-sm text-slate-400">Upload .xlsx or .csv files with Name, Skill, optional Rating, Gender, and Location columns.</p>
+            <p class="text-sm text-slate-400">Upload .xlsx or .csv files with Name, Rating, Gender, and Location columns. Rating must be 2.0–5.0 in 0.5 steps.</p>
           </div>
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
             <input type="file" id="import-file" class="input-field w-full max-w-full overflow-hidden text-ellipsis" accept=".xlsx,.csv" />
@@ -92,7 +92,6 @@
             <table class="w-full text-sm relative" id="import-table"><thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(18, 26, 43, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
                 <tr>
                   <th class="py-2">Name</th>
-                  <th>Skill</th>
                   <th>Rating</th>
                   <th>Gender</th>
                   <th>Location</th>

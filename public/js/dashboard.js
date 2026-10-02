@@ -120,7 +120,7 @@ document.head.appendChild(style);
 const elements = {
   addForm: document.getElementById("add-player-form"),
   nameInput: document.getElementById("player-name"),
-  skillSelect: document.getElementById("player-skill"),
+  skillSelect: document.getElementById("player-rating"),
   locationInput: document.getElementById("player-location"),
   archiveAll: document.getElementById("archive-all"),
   searchInput: document.getElementById("player-search"),
@@ -134,6 +134,45 @@ const elements = {
   donePlayersBodyAdvanced: document.getElementById("done-players-body-advanced"),
   toastContainer: document.getElementById("toast-container"),
 };
+
+function initializeRatingUI() {
+  const ratings = SKILLS;
+  const counts = document.querySelector("#stat-queues > div");
+  if (counts) {
+    counts.innerHTML = ratings.map((rating) =>
+      `<span class="badge badge-beginner" data-queue-count="${rating.key}">${rating.label} 0</span>`
+    ).join("");
+  }
+
+  const queues = document.getElementById("queues-container");
+  if (queues) {
+    queues.innerHTML = ratings.map((rating) => `
+      <div class="glass-card" data-skill-card="${rating.key}">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div><h3 class="queue-title text-cyan-400">Rating ${rating.label} Queue</h3>
+            <p class="queue-meta"><span data-queue-total="${rating.key}">0 waiting</span><span class="mx-2 text-slate-500">|</span><span data-queue-wait="${rating.key}">Est wait 0 mins</span></p>
+          </div><span class="skill-pill skill-beginner">${rating.label}</span>
+        </div>
+        <div class="queue-matches-container" data-queue="${rating.key}" id="queue-${rating.key}"></div>
+      </div>`).join("");
+  }
+
+  const filter = document.getElementById("player-filter");
+  if (filter) filter.innerHTML = `<option value="All">All ratings</option>${ratings.map((rating) => `<option value="${rating.label}">${rating.label}</option>`).join("")}<option value="Archived">Archived Status</option>`;
+
+  const activeExtra = [elements.playersBodyIntermediate, elements.playersBodyAdvanced];
+  const doneExtra = [elements.donePlayersBodyIntermediate, elements.donePlayersBodyAdvanced];
+  [...activeExtra, ...doneExtra].forEach((body) => body?.closest(".mb-6")?.remove());
+  const activeBlock = elements.playersBodyBeginner?.closest(".mb-6");
+  const doneBlock = elements.donePlayersBodyBeginner?.closest(".mb-6");
+  if (activeBlock) activeBlock.querySelector("h3").textContent = "Players";
+  if (doneBlock) doneBlock.querySelector("h3").textContent = "Done Playing";
+  document.querySelectorAll("th").forEach((header) => {
+    if (header.textContent.trim() === "Skill") header.textContent = "Rating";
+  });
+}
+
+initializeRatingUI();
 
 function shuffleArray(input) {
   const arr = input.slice();
@@ -461,14 +500,12 @@ function renderCourts() {
 
     if (court.status === "Available") {
       // Determine which queues are allowed for this court (fallback to default map if null/undefined)
-      const courtAllowedSkill = court.allowedSkill !== undefined ? court.allowedSkill : { "court-1": "beginner", "court-2": "intermediate", "court-3": null }[cid];
+      const courtAllowedSkill = court.allowedSkill !== undefined ? court.allowedSkill : null;
 
       const skillDropdown = `
         <select class="input-field text-xs py-1 px-2 h-auto mt-1 w-36 bg-slate-800 border-slate-700" data-court-skill-select="${cid}">
-          <option value="any" ${courtAllowedSkill === null || courtAllowedSkill === "any" ? "selected" : ""}>Any Skill</option>
-          <option value="beginner" ${courtAllowedSkill === "beginner" ? "selected" : ""}>Beginner Only</option>
-          <option value="intermediate" ${courtAllowedSkill === "intermediate" ? "selected" : ""}>Intermediate Only</option>
-          <option value="advanced" ${courtAllowedSkill === "advanced" ? "selected" : ""}>Advanced Only</option>
+          <option value="any" ${courtAllowedSkill === null || courtAllowedSkill === "any" ? "selected" : ""}>Any Rating</option>
+          ${SKILLS.map((rating) => `<option value="${rating.key}" ${courtAllowedSkill === rating.key ? "selected" : ""}>${rating.label} Only</option>`).join("")}
         </select>
       `;
 
@@ -601,7 +638,7 @@ function renderPlayers() {
       }
       if (player.status === "Archived") return false;
       if (player.status === "Roster") return false;
-      const matchFilter = state.filter === "All" || player.skill === state.filter;
+      const matchFilter = state.filter === "All" || player.rating === state.filter;
       const matchSearch = player.name.toLowerCase().includes(state.search.toLowerCase());
       return matchFilter && matchSearch;
     })
@@ -689,11 +726,11 @@ function renderPlayers() {
         <td class="text-red-400 font-semibold">${player.losses ?? 0}L</td>
         <td class="text-blue-400 font-semibold">${((player.wins ?? 0) + (player.losses ?? 0)) > 0 ? Math.round(((player.wins ?? 0) / ((player.wins ?? 0) + (player.losses ?? 0))) * 100) + '%' : '—'}</td>
         <td>
-          <select class="input-field" data-player-skill="${player.id}">
+          <select class="input-field" data-player-skill="${player.id}" aria-label="Rating">
             ${SKILLS.map(
               (skill) =>
                 `<option value="${skill.label}" ${
-                  player.skill === skill.label ? "selected" : ""
+                  player.rating === skill.label ? "selected" : ""
                 }>${skill.label}</option>`
             ).join("")}
           </select>
@@ -719,37 +756,35 @@ function renderPlayers() {
       </tr>
     `;
 
-  const renderTable = (tbodyElement, countElementId, skillFilterLabel) => {
+  const renderTable = (tbodyElement, countElementId) => {
     if (!tbodyElement) return;
     
     // For archived filter we don't separate by skill if we still show the table, 
     // but the user only wanted to separate by skill.
     // If the overall filter is set to a specific skill or Archived, the activeRows is already filtered.
-    const rows = activeRows.filter(p => p.skill === skillFilterLabel);
+    const rows = activeRows;
     
     const countEl = document.getElementById(countElementId);
     if (countEl) countEl.textContent = rows.length;
 
     if (!rows.length) {
-      window.smoothUpdateHTML(tbodyElement, `<tr><td class="py-4 text-slate-500 text-center" colspan="12">No ${skillFilterLabel} players.</td></tr>`);
+      window.smoothUpdateHTML(tbodyElement, `<tr><td class="py-4 text-slate-500 text-center" colspan="12">No players.</td></tr>`);
     } else {
       window.smoothUpdateHTML(tbodyElement, rows.map(generateRowHTML).join(""));
     }
   };
 
-  renderTable(elements.playersBodyBeginner, "count-beginner", "Beginner");
-  renderTable(elements.playersBodyIntermediate, "count-intermediate", "Intermediate");
-  renderTable(elements.playersBodyAdvanced, "count-advanced", "Advanced");
+  renderTable(elements.playersBodyBeginner, "count-beginner");
 
-  const renderDoneTable = (tbodyElement, countElementId, skillFilterLabel) => {
+  const renderDoneTable = (tbodyElement, countElementId) => {
     if (!tbodyElement) return;
-    const rows = doneRows.filter(p => p.skill === skillFilterLabel);
+    const rows = doneRows;
     
     const countEl = document.getElementById(countElementId);
     if (countEl) countEl.textContent = rows.length;
 
     if (!rows.length) {
-      window.smoothUpdateHTML(tbodyElement, `<tr><td class="py-4 text-slate-500 text-center" colspan="12">No done-playing ${skillFilterLabel} players.</td></tr>`);
+      window.smoothUpdateHTML(tbodyElement, `<tr><td class="py-4 text-slate-500 text-center" colspan="12">No done-playing players.</td></tr>`);
     } else {
       window.smoothUpdateHTML(tbodyElement, rows.map((player, idx) => `
       <tr class="border-t border-slate-800/60">
@@ -800,7 +835,7 @@ function renderPlayers() {
             ${SKILLS.map(
               (skill) =>
                 `<option value="${skill.label}" ${
-                  player.skill === skill.label ? "selected" : ""
+                  player.rating === skill.label ? "selected" : ""
                 }>${skill.label}</option>`
             ).join("")}
           </select>
@@ -818,9 +853,7 @@ function renderPlayers() {
     }
   };
 
-  renderDoneTable(elements.donePlayersBodyBeginner, "count-done-beginner", "Beginner");
-  renderDoneTable(elements.donePlayersBodyIntermediate, "count-done-intermediate", "Intermediate");
-  renderDoneTable(elements.donePlayersBodyAdvanced, "count-done-advanced", "Advanced");
+  renderDoneTable(elements.donePlayersBodyBeginner, "count-done-beginner");
 }
 
 async function handlePlayerActionClick(event) {
@@ -942,11 +975,7 @@ function setupSortable() {
 // Court 1 → Beginner only
 // Court 2 → Intermediate only
 // Court 3 → Any skill (random / overflow)
-const COURT_SKILL_RESTRICTION = {
-  "court-1": "beginner",
-  "court-2": "intermediate",
-  "court-3": null, // any
-};
+const COURT_SKILL_RESTRICTION = {};
 
 // Returns allowed skill keys for a given court
 function getAllowedSkillsForCourt(court) {
@@ -1279,8 +1308,7 @@ function bindEvents() {
       const partnerSelect = document.getElementById("player-practice-partner");
       const newPlayerId = await addPlayer({
         name: elements.nameInput.value,
-        skill: elements.skillSelect.value,
-        rating: document.getElementById("player-rating")?.value,
+        rating: elements.skillSelect.value,
         gender: genderSelect ? genderSelect.value : "",
         location: elements.locationInput ? elements.locationInput.value.trim() : "",
       });
@@ -1289,8 +1317,6 @@ function bindEvents() {
       }
       elements.nameInput.value = "";
       elements.skillSelect.value = "";
-      const ratingInput = document.getElementById("player-rating");
-      if (ratingInput) ratingInput.value = "";
       if (genderSelect) genderSelect.value = "";
       if (elements.locationInput) elements.locationInput.value = "";
       showToast("Player added");
@@ -1561,7 +1587,7 @@ function bindEvents() {
         fair_play: "Fair Play",
         mixed: "Mixed Doubles",
         flex_borrow: "Flex Borrow",
-        rating: "Rating Groups",
+        rating: "Rating Separated",
       };
       autoRoundModeLabel.textContent = state.autoRound
         ? `Mode: ${modeNames[state.autoRoundMode] || state.autoRoundMode}`
@@ -1750,9 +1776,9 @@ function bindEvents() {
         const newSkill = event.target.value;
         try {
           await updatePlayerSkill(playerId, newSkill);
-          showToast("Player skill updated");
+          showToast("Player rating updated");
         } catch (err) {
-          showToast(err.message || "Error updating skill", "error");
+          showToast(err.message || "Error updating rating", "error");
         }
       }
       
@@ -1779,9 +1805,9 @@ function bindEvents() {
       const newSkill = event.target.value;
       try {
         await updatePlayerSkill(playerId, newSkill);
-        showToast("Player skill updated");
+        showToast("Player rating updated");
       } catch (err) {
-        showToast(err.message || "Error updating skill", "error");
+        showToast(err.message || "Error updating rating", "error");
       }
     }
     if (event.target.dataset.playerGender) {
@@ -1876,9 +1902,9 @@ function bindEvents() {
     }
     const selected = ids.map(id => state.players.get(id));
 
-    // Calculate power: Skill (1,2,3) * 100 + Win% (0-100)
+    // Calculate power: rating * 100 + Win% (0-100)
     const getPower = (p) => {
-      let skillVal = p.skill === "Advanced" ? 3 : p.skill === "Intermediate" ? 2 : 1;
+      const skillVal = Number(p.rating || 2.0);
       let winPct = 0;
       let totalGames = (p.wins || 0) + (p.losses || 0);
       if (totalGames > 0) winPct = (p.wins || 0) / totalGames * 100;
@@ -2507,10 +2533,8 @@ async function bootstrap() {
     if (filterEl) {
       const currentVal = filterEl.value;
       const staticOptions = `
-        <option value="All">All skills</option>
-        <option value="Beginner">Beginner</option>
-        <option value="Intermediate">Intermediate</option>
-        <option value="Advanced">Advanced</option>
+        <option value="All">All ratings</option>
+        ${SKILLS.map((rating) => `<option value="${rating.label}">${rating.label}</option>`).join("")}
       `;
       let archiveOptions = `<option value="Archived">All Archived</option>`;
       Array.from(archiveDates).sort((a, b) => new Date(b) - new Date(a)).forEach(dateStr => {

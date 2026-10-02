@@ -34,7 +34,7 @@ const runTransaction = async (db, callback) => {
   await callback(txMock);
   batch.commit(); // Don't await so it returns instantly for offline UI!
 };
-import { skillLabelFromKey, getQueueDocRef, skillKeyFromLabel, markPlayerAbsent } from "./queue.js";
+import { SKILLS, playerRatingLabel, skillLabelFromKey, getQueueDocRef, skillKeyFromLabel, markPlayerAbsent } from "./queue.js";
 
 export const COURTS = [
   { id: "court-1", name: "Court 1" },
@@ -287,12 +287,6 @@ export async function replaceActiveCourtPlayer(courtId, slotIndex, newPlayerId) 
     let newQueueSnap = null;
     let newQueueRef = null;
     
-    const SKILLS = [
-      { label: "Beginner", key: "beginner" },
-      { label: "Intermediate", key: "intermediate" },
-      { label: "Advanced", key: "advanced" }
-    ];
-
     if (existingIdx === -1) {
       const newPlayerRef = getTenantDoc("players", newPlayerId);
       newPlayerSnap = await tx.get(newPlayerRef);
@@ -305,7 +299,7 @@ export async function replaceActiveCourtPlayer(courtId, slotIndex, newPlayerId) 
         oldPlayerSnap = await tx.get(oldPlayerRef);
         if (oldPlayerSnap.exists()) {
            const pData = oldPlayerSnap.data();
-           const match = SKILLS.find(s => s.label === pData.skill);
+           const match = SKILLS.find(s => s.label === playerRatingLabel(pData));
            if (match) {
               oldQueueRef = getTenantDoc("queues", match.key);
               oldQueueSnap = await tx.get(oldQueueRef);
@@ -315,7 +309,7 @@ export async function replaceActiveCourtPlayer(courtId, slotIndex, newPlayerId) 
       
       if (newPlayerSnap.exists()) {
          const pData = newPlayerSnap.data();
-         const match = SKILLS.find(s => s.label === pData.skill);
+         const match = SKILLS.find(s => s.label === playerRatingLabel(pData));
          if (match) {
             newQueueRef = getTenantDoc("queues", match.key);
             newQueueSnap = await tx.get(newQueueRef);
@@ -482,7 +476,7 @@ export async function queueCustomMatch(playerIds, teamA, teamB) {
       if (!snap.exists()) return;
       const player = snap.data();
       if (player.status === "Waiting") {
-        const skillKey = skillKeyFromLabel(player.skill);
+        const skillKey = skillKeyFromLabel(playerRatingLabel(player));
         if (skillKey) {
           if (!queuesToUpdate.has(skillKey)) queuesToUpdate.set(skillKey, []);
           queuesToUpdate.get(skillKey).push(playerIds[idx]);

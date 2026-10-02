@@ -38,11 +38,19 @@ const runTransaction = async (db, callback) => {
   batch.commit(); // Don't await so it returns instantly for offline UI!
 };
 
-export const SKILLS = [
-  { label: "Beginner", key: "beginner" },
-  { label: "Intermediate", key: "intermediate" },
-  { label: "Advanced", key: "advanced" },
+export const RATINGS = [
+  { label: "2.0", key: "rating-2-0" },
+  { label: "2.5", key: "rating-2-5" },
+  { label: "3.0", key: "rating-3-0" },
+  { label: "3.5", key: "rating-3-5" },
+  { label: "4.0", key: "rating-4-0" },
+  { label: "4.5", key: "rating-4-5" },
+  { label: "5.0", key: "rating-5-0" },
 ];
+
+// Retained as an internal alias while the rest of the queue/court code uses
+// its existing helper names. Every label is now a rating, never a skill level.
+export const SKILLS = RATINGS;
 
 const skillByKey = new Map(SKILLS.map((skill) => [skill.key, skill.label]));
 const skillByLabel = new Map(
@@ -52,10 +60,8 @@ const skillByLabel = new Map(
 const queueState = new Map();
 
 export function normalizeSkill(input) {
-  if (!input) return null;
-  const normalized = input.toLowerCase();
-  const match = skillByLabel.get(normalized) || skillByLabel.get(normalized.trim());
-  return match ? match.label : null;
+  const rating = normalizeRating(input);
+  return RATINGS.find((item) => Number(item.label) === rating)?.label || null;
 }
 
 export function normalizeRating(input) {
@@ -63,6 +69,15 @@ export function normalizeRating(input) {
   const rating = Number(input);
   if (!Number.isFinite(rating) || rating < 0) return null;
   return Math.round(rating * 100) / 100;
+}
+
+export function playerRatingLabel(player) {
+  const directRating = normalizeSkill(player?.rating);
+  if (directRating) return directRating;
+  // Legacy records remain visible after the migration, without exposing their
+  // previous skill level in the UI.
+  const legacyRatings = { Beginner: "2.5", Intermediate: "3.5", Advanced: "4.5" };
+  return legacyRatings[player?.skill] || "2.0";
 }
 
 export function skillKeyFromLabel(label) {
@@ -102,18 +117,40 @@ export async function ensureQueuesExist() {
       }
     })
   );
+
+  // Carry existing queue positions into their equivalent rating queues once,
+  // so upgrading does not make active legacy players disappear from the board.
+  const legacyQueueMap = {
+    beginner: "rating-2-5",
+    intermediate: "rating-3-5",
+    advanced: "rating-4-5",
+  };
+  await Promise.all(Object.entries(legacyQueueMap).map(async ([legacyKey, ratingKey]) => {
+    const [legacySnap, ratingSnap] = await Promise.all([
+      getDoc(getQueueDocRef(legacyKey)),
+      getDoc(getQueueDocRef(ratingKey)),
+    ]);
+    const legacyOrder = legacySnap.exists() ? legacySnap.data().order || [] : [];
+    const ratingOrder = ratingSnap.exists() ? ratingSnap.data().order || [] : [];
+    if (legacyOrder.length && !ratingOrder.length) {
+      await setDoc(getQueueDocRef(ratingKey), {
+        skill: skillLabelFromKey(ratingKey),
+        order: legacyOrder,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    }
+  }));
 }
 
-export async function addPlayer({ name, skill, rating, gender, location, practicePartner }) {
+export async function addPlayer({ name, rating, gender, location, practicePartner }) {
   const trimmedName = normalizeName(name || "");
-  const normalizedSkill = normalizeSkill(skill || "");
-  const normalizedRating = normalizeRating(rating);
+  const normalizedRating = normalizeSkill(rating);
   const playerGender = gender || "Unspecified";
   const playerLocation = normalizeName(location || "");
   const playerPracticePartner = practicePartner || null;
 
   if (!trimmedName) throw new Error("Player name is required.");
-  if (!normalizedSkill) throw new Error("Skill level is invalid.");
+  if (!normalizedRating) throw new Error("Please select a valid rating.");
 
   const nameLower = trimmedName.toLowerCase();
   const existing = await getDocs(
@@ -133,9 +170,8 @@ export async function addPlayer({ name, skill, rating, gender, location, practic
       isRevive = true;
     } else {
       // Player exists and is active. Update their skill, gender, location, and return.
-      if (existingPlayer.skill !== normalizedSkill) {
-        // Use the existing updatePlayerSkill function to properly handle queue updates
-        await updatePlayerSkill(playerRef.id, normalizedSkill);
+      if (playerRatingLabel(existingPlayer) !== normalizedRating) {
+        await updatePlayerSkill(playerRef.id, normalizedRating);
       }
       
       // Update other fields
@@ -143,7 +179,7 @@ export async function addPlayer({ name, skill, rating, gender, location, practic
         tx.set(playerRef, {
           gender: playerGender,
           location: playerLocation,
-          ...(normalizedRating !== null ? { rating: normalizedRating } : {}),
+          rating: normalizedRating,
           updatedAt: serverTimestamp(),
         }, { merge: true });
       });
@@ -160,10 +196,9 @@ export async function addPlayer({ name, skill, rating, gender, location, practic
   await runTransaction(db, async (tx) => {
     if (isRevive) {
       tx.set(playerRef, {
-        skill: normalizedSkill,
+        rating: normalizedRating,
         gender: playerGender,
         location: playerLocation,
-        ...(normalizedRating !== null ? { rating: normalizedRating } : {}),
         status: "Standby",
         playedWith: {},
         updatedAt: now,
@@ -172,10 +207,9 @@ export async function addPlayer({ name, skill, rating, gender, location, practic
       tx.set(playerRef, {
         name: trimmedName,
         nameLower,
-        skill: normalizedSkill,
+        rating: normalizedRating,
         gender: playerGender,
         location: playerLocation,
-        ...(normalizedRating !== null ? { rating: normalizedRating } : {}),
         status: "Standby",
         playedWith: {},
         currentMatchId: null,
@@ -208,11 +242,10 @@ export async function addPlayersBulk(entries, addToQueue = false) {
 
   entries.forEach((entry) => {
     const trimmedName = normalizeName(entry.name || "");
-    const normalizedSkill = normalizeSkill(entry.skill || "");
-    const normalizedRating = normalizeRating(entry.rating);
+    const normalizedRating = normalizeSkill(entry.rating);
     const playerGender = entry.gender || "Unspecified";
     const playerLocation = normalizeName(entry.location || entry.Location || "");
-    if (!trimmedName || !normalizedSkill) return;
+    if (!trimmedName || !normalizedRating) return;
 
     const nameLower = trimmedName.toLowerCase();
     const existingSnap = existingMap.get(nameLower);
@@ -238,10 +271,9 @@ export async function addPlayersBulk(entries, addToQueue = false) {
 
     if (isRevive) {
       batch.set(playerRef, {
-        skill: normalizedSkill,
+        rating: normalizedRating,
         gender: playerGender,
         location: playerLocation,
-        ...(normalizedRating !== null ? { rating: normalizedRating } : {}),
         status: initialStatus,
         playedWith: {},
         updatedAt: now,
@@ -250,10 +282,9 @@ export async function addPlayersBulk(entries, addToQueue = false) {
       batch.set(playerRef, {
         name: trimmedName,
         nameLower,
-        skill: normalizedSkill,
+        rating: normalizedRating,
         gender: playerGender,
         location: playerLocation,
-        ...(normalizedRating !== null ? { rating: normalizedRating } : {}),
         status: initialStatus,
         playedWith: {},
         currentMatchId: null,
@@ -263,7 +294,7 @@ export async function addPlayersBulk(entries, addToQueue = false) {
     }
 
     if (addToQueue) {
-      const skillKey = skillKeyFromLabel(normalizedSkill);
+      const skillKey = skillKeyFromLabel(normalizedRating);
       if (!queuesToUpdate[skillKey]) queuesToUpdate[skillKey] = [];
       queuesToUpdate[skillKey].push(playerRef.id);
     }
@@ -286,7 +317,7 @@ export async function removePlayer(playerId) {
     if (!playerSnap.exists()) return;
 
     const player = playerSnap.data();
-    const skillKey = skillKeyFromLabel(player.skill);
+    const skillKey = skillKeyFromLabel(playerRatingLabel(player));
     const queueRef = getQueueDocRef(skillKey);
     const queueSnap = await tx.get(queueRef);
 
@@ -298,7 +329,7 @@ export async function removePlayer(playerId) {
       }
       tx.set(
         queueRef,
-        { skill: player.skill, order: filtered, updatedAt: serverTimestamp() },
+        { skill: playerRatingLabel(player), order: filtered, updatedAt: serverTimestamp() },
         { merge: true }
       );
     }
@@ -317,7 +348,7 @@ export async function archiveSinglePlayer(playerId) {
     if (!playerSnap.exists()) return;
 
     const player = playerSnap.data();
-    const skillKey = skillKeyFromLabel(player.skill);
+    const skillKey = skillKeyFromLabel(playerRatingLabel(player));
     const queueRef = getQueueDocRef(skillKey);
     const queueSnap = await tx.get(queueRef);
 
@@ -328,7 +359,7 @@ export async function archiveSinglePlayer(playerId) {
       while (filtered.length > 0 && filtered[filtered.length - 1] === "EMPTY") {
         filtered.pop();
       }
-      tx.set(queueRef, { skill: player.skill, order: filtered, updatedAt: now }, { merge: true });
+      tx.set(queueRef, { skill: playerRatingLabel(player), order: filtered, updatedAt: now }, { merge: true });
     }
 
     // Archive the player but keep their name/stats; add archivedDate for date-filtering
@@ -395,7 +426,7 @@ export async function archiveAllPlayers(playersList) {
 
 export async function updatePlayerSkill(playerId, newSkill) {
   const normalizedSkill = normalizeSkill(newSkill || "");
-  if (!normalizedSkill) throw new Error("Skill level is invalid.");
+  if (!normalizedSkill) throw new Error("Rating is invalid.");
 
   const playerRef = getTenantDoc("players", playerId);
 
@@ -404,7 +435,7 @@ export async function updatePlayerSkill(playerId, newSkill) {
     if (!playerSnap.exists()) return;
 
     const player = playerSnap.data();
-    const currentKey = skillKeyFromLabel(player.skill);
+    const currentKey = skillKeyFromLabel(playerRatingLabel(player));
     const nextKey = skillKeyFromLabel(normalizedSkill);
 
     if (currentKey === nextKey) return;
@@ -425,7 +456,7 @@ export async function updatePlayerSkill(playerId, newSkill) {
       }
       tx.set(
         currentQueueRef,
-        { skill: player.skill, order: filtered, updatedAt: serverTimestamp() },
+        { skill: playerRatingLabel(player), order: filtered, updatedAt: serverTimestamp() },
         { merge: true }
       );
     }
@@ -444,7 +475,7 @@ export async function updatePlayerSkill(playerId, newSkill) {
       { merge: true }
     );
 
-    tx.update(playerRef, { skill: normalizedSkill, updatedAt: serverTimestamp() });
+    tx.update(playerRef, { rating: normalizedSkill, updatedAt: serverTimestamp() });
   });
 }
 
@@ -492,7 +523,7 @@ export async function markPlayerAbsent(playerId, absent) {
     if (!playerSnap.exists()) return;
 
     const player = playerSnap.data();
-    const skillKey = skillKeyFromLabel(player.skill);
+    const skillKey = skillKeyFromLabel(playerRatingLabel(player));
     const queueRef = getQueueDocRef(skillKey);
     const queueSnap = await tx.get(queueRef);
     const orderRaw = queueSnap.exists() ? queueSnap.data().order || [] : [];
@@ -532,7 +563,7 @@ export async function markPlayerAbsent(playerId, absent) {
 
     tx.set(
       queueRef,
-      { skill: player.skill, order: updated, updatedAt: serverTimestamp() },
+      { skill: playerRatingLabel(player), order: updated, updatedAt: serverTimestamp() },
       { merge: true }
     );
   });
@@ -554,7 +585,7 @@ export async function skipPlayer(playerId) {
     if (!playerSnap.exists()) return;
 
     const player = playerSnap.data();
-    const skillKey = skillKeyFromLabel(player.skill);
+    const skillKey = skillKeyFromLabel(playerRatingLabel(player));
     const queueRef = getQueueDocRef(skillKey);
     const queueSnap = await tx.get(queueRef);
     const order = queueSnap.exists() ? queueSnap.data().order || [] : [];
@@ -566,7 +597,7 @@ export async function skipPlayer(playerId) {
 
     tx.set(
       queueRef,
-      { skill: player.skill, order: filtered, updatedAt: serverTimestamp() },
+      { skill: playerRatingLabel(player), order: filtered, updatedAt: serverTimestamp() },
       { merge: true }
     );
     tx.update(playerRef, { updatedAt: serverTimestamp() });
@@ -601,10 +632,18 @@ export function listenToQueues(callback) {
 
 export function listenToPlayers(callback) {
   return onSnapshot(getTenantCollection("players"), (snapshot) => {
-    const players = snapshot.docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data(),
-    }));
+    const players = snapshot.docs.map((docSnap) => {
+      const data = docSnap.data();
+      const rating = playerRatingLabel(data);
+      return {
+        id: docSnap.id,
+        ...data,
+        rating,
+        // Compatibility alias for legacy UI helpers. It is never written for
+        // newly created players and always contains the numeric rating.
+        skill: rating,
+      };
+    });
     // An orderBy query excludes documents that do not contain its field. Sort
     // locally so legacy/imported players without createdAt remain visible.
     players.sort((a, b) => {
@@ -649,40 +688,20 @@ export async function generateNextRound(playersList, mode = "social_mix") {
     throw new Error("No waiting or standby players available.");
   }
 
-  const bySkill = { beginner: [], intermediate: [], advanced: [] };
   const ratingFor = (player) => {
-    const rating = normalizeRating(player.rating);
-    if (rating !== null) return rating;
-    return player.skill === "Advanced" ? 4 : player.skill === "Intermediate" ? 3 : 2;
+    return Number(playerRatingLabel(player));
   };
-  const queueForRating = (rating) => rating >= 4 ? "advanced" : rating >= 3 ? "intermediate" : "beginner";
-
-  if (mode === "rating") {
-    // Keep ready and currently-playing players apart, then make consecutive
-    // groups of four from the closest ratings. The existing queues are only
-    // used to display and schedule those generated groups.
-    const addRatingGroups = (source) => {
-      const sorted = [...source].sort((a, b) => ratingFor(a) - ratingFor(b));
-      for (let index = 0; index < sorted.length; index += 4) {
-        const group = sorted.slice(index, index + 4);
-        const average = group.reduce((sum, player) => sum + ratingFor(player), 0) / group.length;
-        bySkill[queueForRating(average)].push(...group);
-      }
-    };
-    addRatingGroups(eligiblePlayers.filter((player) => player.status !== "Playing"));
-    addRatingGroups(eligiblePlayers.filter((player) => player.status === "Playing"));
-  } else {
-    eligiblePlayers.forEach(p => {
-      const key = skillKeyFromLabel(p.skill);
-      if (bySkill[key]) bySkill[key].push(p);
-    });
-  }
+  const bySkill = Object.fromEntries(SKILLS.map((item) => [item.key, []]));
+  eligiblePlayers.forEach((player) => {
+    const key = skillKeyFromLabel(playerRatingLabel(player));
+    if (bySkill[key]) bySkill[key].push(player);
+  });
 
   // ── Flex Borrow: fill short skill groups from Intermediate ──────────────
   // When a skill group (beginner, intermediate, or advanced) has 1–3 players
   // (not enough for a full game of 4), borrow the needed players from the
   // Intermediate queue so no court sits empty.
-  if (mode === "flex_borrow") {
+  if (mode === "flex_borrow" && bySkill.intermediate) {
     // We work on a copy of intermediate so we track what is left to lend.
     const intPool = bySkill.intermediate.slice();
 
