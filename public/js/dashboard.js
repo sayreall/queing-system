@@ -2050,6 +2050,7 @@ function bindEvents() {
     updateAutoRoundBtn();
     if (state.autoRound) {
       showToast("Auto Round ON — keeps upcoming matches queued automatically.");
+      window.requestAutoQueueTopUp?.();
     } else {
       showToast("Auto Round disabled.");
     }
@@ -3096,6 +3097,8 @@ async function bootstrap() {
       state.autoRoundLock = false;
     }
   }
+
+  window.requestAutoQueueTopUp = checkAutoRound;
 
   listenToQueues((queues) => {
     state.queues = queues;
