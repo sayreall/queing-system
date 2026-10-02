@@ -103,7 +103,6 @@ const state = {
   // off, which stores "0" in local storage.
   autoRound: localStorage.getItem("dq_auto_round") !== "0",
   autoRoundMode: localStorage.getItem("dq_auto_round_mode") || "smart",
-  prevCourtStatuses: {}, // tracks { courtId: "Active" | "Available" | "Inactive" }
   autoRoundLock: false,
   ready: {
     queues: false,
@@ -3113,15 +3112,8 @@ async function bootstrap() {
   });
 
   listenToCourts((courts) => {
-    const prevStatuses = { ...state.prevCourtStatuses };
-
-    // Update state first
     state.courts = courts;
     state.ready.courts = true;
-
-    // Snapshot new statuses for next comparison
-    state.prevCourtStatuses = {};
-    courts.forEach(c => { state.prevCourtStatuses[c.id] = c.status; });
 
     renderCourts();
     renderStats();
