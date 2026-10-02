@@ -230,10 +230,10 @@
   <!-- Main Content Wrapper -->
   <div class="w-full md:pl-16 flex flex-col relative min-h-screen">
 
-    <header class="px-6 py-4 md:px-10 md:py-6">
-      <div class="header-inner">
+    <header class="px-6 py-4 md:px-10 md:py-6 border-b border-slate-700/30">
+      <div class="header-inner flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-4">
         <!-- Brand: logo + title -->
-        <div class="header-brand">
+        <div class="header-brand flex items-center">
           <button id="mobile-menu-btn"
             class="md:hidden mr-2 text-slate-300 hover:text-white p-2 -ml-2 rounded-lg focus:outline-none">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,9 +241,45 @@
             </svg>
           </button>
           <div class="header-title-block">
-            <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Open Play Doubles</p>
-            <h1 class="font-display font-semibold header-title" style="color:#F5C42A;">Deuce Club Queuing System</h1>
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-semibold mb-1">LIVE OPEN PLAY</p>
+            <div class="flex items-center gap-3">
+              <h1 class="font-display font-bold text-xl md:text-2xl tracking-wide uppercase text-white">STX HAVOC WENESDAY</h1>
+              <span class="bg-[#a855f7] text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><div class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>LIVE</span>
+            </div>
+            <div class="flex items-center gap-3 mt-1 text-[11px] text-slate-400 font-medium">
+              <span>Strict skill separation ON</span>
+              <span class="w-1 h-1 bg-slate-600 rounded-full"></span>
+              <span>8 games per player</span>
+            </div>
           </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="hidden lg:flex items-center gap-2 flex-wrap">
+          <button class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-300 bg-transparent hover:bg-slate-800/50 border border-transparent hover:border-slate-700 rounded transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Pause
+          </button>
+          <button class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-300 bg-transparent hover:bg-slate-800/50 border border-transparent hover:border-slate-700 rounded transition-colors">
+            Game Limit
+          </button>
+          <button class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-300 bg-transparent hover:bg-slate-800/50 border border-transparent hover:border-slate-700 rounded transition-colors">
+            Scoring: ON
+          </button>
+          <button id="open-top-players-btn" class="flex items-center gap-2 px-4 py-1.5 text-xs font-bold text-white bg-transparent border-2 border-pink-500/80 rounded hover:bg-pink-500/10 transition-colors shadow-[0_0_15px_rgba(236,72,153,0.2)]" onclick="document.getElementById('top-players-modal').classList.remove('hidden'); document.getElementById('top-players-modal').classList.add('flex')">
+            <span class="text-yellow-500 text-sm">🏆</span> Top Players
+          </button>
+          <button class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-400 bg-transparent hover:bg-slate-800/50 border border-transparent hover:border-slate-700 rounded transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> Lock Partners
+          </button>
+          <button class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-400 bg-transparent hover:bg-slate-800/50 border border-transparent hover:border-slate-700 rounded transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg> Unlock Partners
+          </button>
+          <button class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-300 bg-transparent hover:bg-slate-800/50 border border-transparent hover:border-slate-700 rounded transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Reset
+          </button>
+          <button class="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-red-500/90 hover:bg-red-500 rounded transition-colors ml-2 shadow-lg shadow-red-500/20">
+            End Session
+          </button>
         </div>
       </div>
     </header>
@@ -1104,6 +1140,151 @@
             <!-- Rendered via JS -->
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Players Modal -->
+  <div id="top-players-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-md transition-opacity">
+    <div class="bg-[#121623] border border-slate-700/60 rounded-xl w-full max-w-4xl shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col max-h-[85vh]">
+      <!-- Header -->
+      <div class="px-6 py-5 border-b border-slate-700/50 flex justify-between items-start relative bg-[#171b29]">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 rounded-full bg-yellow-500/10 flex items-center justify-center shadow-[0_0_15px_rgba(234,179,8,0.2)] border border-yellow-500/20">
+            <span class="text-3xl filter drop-shadow-lg">🏆</span>
+          </div>
+          <div>
+            <h2 class="text-xl md:text-2xl font-display font-bold text-white tracking-wider">TOP PLAYERS</h2>
+            <p class="text-sm text-slate-400">Current Session Standings</p>
+          </div>
+        </div>
+        <button onclick="document.getElementById('top-players-modal').classList.add('hidden'); document.getElementById('top-players-modal').classList.remove('flex')" class="text-slate-400 hover:text-white transition-colors bg-slate-800/50 hover:bg-slate-700 p-2 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      
+      <!-- Toggles -->
+      <div class="flex justify-center py-4 bg-[#171b29] border-b border-slate-700/30">
+        <div class="bg-[#0b0e17] rounded-full p-1 flex shadow-inner">
+          <button class="px-8 py-2 rounded-full bg-[#a855f7] text-white text-sm font-bold shadow-[0_0_15px_rgba(168,85,247,0.5)] transition-all">Overall Top 10</button>
+          <button class="px-8 py-2 rounded-full text-slate-400 hover:text-white text-sm font-semibold transition-colors">Category Top 3</button>
+        </div>
+      </div>
+
+      <!-- Table Section -->
+      <div class="flex-1 overflow-y-auto custom-scrollbar bg-[#121623] p-6 pb-2">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700/50">
+              <th class="pb-3 font-semibold w-10 text-center">#</th>
+              <th class="pb-3 font-semibold">Player</th>
+              <th class="pb-3 font-semibold text-center">Skill</th>
+              <th class="pb-3 font-semibold text-center">Games</th>
+              <th class="pb-3 font-semibold text-center">Wins</th>
+              <th class="pb-3 font-semibold text-center">Losses</th>
+              <th class="pb-3 font-semibold text-center">Pts Diff</th>
+              <th class="pb-3 font-semibold text-center">Win Rate</th>
+            </tr>
+          </thead>
+          <tbody class="text-sm font-medium">
+            <!-- Row 1 -->
+            <tr class="border-b border-slate-700/30 hover:bg-slate-800/20 transition-colors">
+              <td class="py-3 text-center text-lg">👑</td>
+              <td class="py-3 text-white">Kel Balmes</td>
+              <td class="py-3 text-center text-slate-300">3.5</td>
+              <td class="py-3 text-center text-slate-300">6</td>
+              <td class="py-3 text-center text-slate-300">5</td>
+              <td class="py-3 text-center text-slate-300">1</td>
+              <td class="py-3 text-center text-green-400 font-bold">+42</td>
+              <td class="py-3 text-center text-green-400 font-bold">83%</td>
+            </tr>
+            <!-- Row 2 -->
+            <tr class="border-b border-slate-700/30 hover:bg-slate-800/20 transition-colors">
+              <td class="py-3 text-center text-lg filter grayscale opacity-80">👑</td>
+              <td class="py-3 text-white">Nico Tumambing</td>
+              <td class="py-3 text-center text-slate-300">3.5</td>
+              <td class="py-3 text-center text-slate-300">6</td>
+              <td class="py-3 text-center text-slate-300">5</td>
+              <td class="py-3 text-center text-slate-300">1</td>
+              <td class="py-3 text-center text-green-400 font-bold">+38</td>
+              <td class="py-3 text-center text-green-400 font-bold">83%</td>
+            </tr>
+            <!-- Row 3 -->
+            <tr class="border-b border-slate-700/30 hover:bg-slate-800/20 transition-colors">
+              <td class="py-3 text-center text-lg filter sepia hue-rotate-15 opacity-80">👑</td>
+              <td class="py-3 text-white">Louise Salveleon</td>
+              <td class="py-3 text-center text-slate-300">3.0</td>
+              <td class="py-3 text-center text-slate-300">6</td>
+              <td class="py-3 text-center text-slate-300">4</td>
+              <td class="py-3 text-center text-slate-300">2</td>
+              <td class="py-3 text-center text-green-400 font-bold">+26</td>
+              <td class="py-3 text-center text-green-400 font-bold">67%</td>
+            </tr>
+            <!-- Row 4 -->
+            <tr class="border-b border-slate-700/30 hover:bg-slate-800/20 transition-colors">
+              <td class="py-3 text-center text-slate-400 font-bold">4</td>
+              <td class="py-3 text-white">Ethan Luke</td>
+              <td class="py-3 text-center text-slate-300">2.5</td>
+              <td class="py-3 text-center text-slate-300">6</td>
+              <td class="py-3 text-center text-slate-300">4</td>
+              <td class="py-3 text-center text-slate-300">2</td>
+              <td class="py-3 text-center text-green-400 font-bold">+20</td>
+              <td class="py-3 text-center text-green-400 font-bold">67%</td>
+            </tr>
+            <!-- Row 5 -->
+            <tr class="border-b border-slate-700/30 hover:bg-slate-800/20 transition-colors">
+              <td class="py-3 text-center text-slate-400 font-bold">5</td>
+              <td class="py-3 text-white">Zeline</td>
+              <td class="py-3 text-center text-slate-300">3.0</td>
+              <td class="py-3 text-center text-slate-300">6</td>
+              <td class="py-3 text-center text-slate-300">4</td>
+              <td class="py-3 text-center text-slate-300">2</td>
+              <td class="py-3 text-center text-green-400 font-bold">+18</td>
+              <td class="py-3 text-center text-green-400 font-bold">67%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Categories Section (Bottom) -->
+        <div class="grid grid-cols-2 gap-4 mt-6 pb-4">
+          <!-- Beg - Nov -->
+          <div class="bg-[#171b29] border border-blue-500/30 rounded-xl overflow-hidden shadow-lg">
+            <div class="bg-blue-500/10 px-4 py-2 border-b border-blue-500/30 flex items-center gap-2">
+              <span class="text-blue-400">🛡️</span>
+              <span class="text-blue-400 font-bold text-xs uppercase tracking-wider">BEG - NOV</span>
+            </div>
+            <div class="p-3">
+              <table class="w-full text-left text-xs">
+                <thead class="text-slate-500 border-b border-slate-700/50">
+                  <tr><th class="pb-2 font-medium">Player</th><th class="pb-2 text-center font-medium">Pts Diff</th><th class="pb-2 text-center font-medium">Win Rate</th></tr>
+                </thead>
+                <tbody class="text-slate-300 font-medium">
+                  <tr><td class="py-2 flex items-center gap-1"><span class="text-yellow-500">👑</span> Ethan Luke</td><td class="py-2 text-center text-green-400">+28</td><td class="py-2 text-center text-green-400">83%</td></tr>
+                  <tr><td class="py-2 flex items-center gap-1"><span class="text-slate-400 grayscale">👑</span> Loreen Beatrice</td><td class="py-2 text-center text-green-400">+18</td><td class="py-2 text-center text-green-400">87%</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- IntLow - IntHigh -->
+          <div class="bg-[#171b29] border border-pink-500/30 rounded-xl overflow-hidden shadow-lg">
+            <div class="bg-pink-500/10 px-4 py-2 border-b border-pink-500/30 flex items-center gap-2">
+              <span class="text-pink-400">🔥</span>
+              <span class="text-pink-400 font-bold text-xs uppercase tracking-wider">INTLOW - INTHIGH</span>
+            </div>
+            <div class="p-3">
+              <table class="w-full text-left text-xs">
+                <thead class="text-slate-500 border-b border-slate-700/50">
+                  <tr><th class="pb-2 font-medium">Player</th><th class="pb-2 text-center font-medium">Pts Diff</th><th class="pb-2 text-center font-medium">Win Rate</th></tr>
+                </thead>
+                <tbody class="text-slate-300 font-medium">
+                  <tr><td class="py-2 flex items-center gap-1"><span class="text-yellow-500">👑</span> Kel Balmes</td><td class="py-2 text-center text-green-400">+42</td><td class="py-2 text-center text-green-400">83%</td></tr>
+                  <tr><td class="py-2 flex items-center gap-1"><span class="text-slate-400 grayscale">👑</span> Nico Tumambing</td><td class="py-2 text-center text-green-400">+38</td><td class="py-2 text-center text-green-400">83%</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
