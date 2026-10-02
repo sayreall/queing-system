@@ -615,6 +615,29 @@ function renderQueueWorkspaceCards() {
       });
     }
   } catch(e) {}
+  
+  // Re-number titles based on global order
+  cards.forEach((card, index) => {
+    const isUpNext = index === 0;
+    const titleText = isUpNext ? "Up Next · Match 1" : `Match ${index + 1}`;
+    const headerColor = isUpNext ? "text-emerald-400" : "text-slate-400";
+    
+    const h4 = card.querySelector(".match-card-drag-handle h4");
+    if (h4) {
+      h4.textContent = titleText.toUpperCase();
+      h4.className = `text-[10px] uppercase tracking-wider font-bold ${headerColor}`;
+    }
+    
+    const svg = card.querySelector(".match-card-drag-handle svg");
+    if (svg) svg.setAttribute("class", headerColor);
+    
+    card.classList.remove("border-slate-700/60", "bg-slate-800/20", "border-emerald-500/30", "bg-emerald-500/5", "shadow-lg", "shadow-emerald-500/5");
+    if (isUpNext) {
+      card.classList.add("border-emerald-500/30", "bg-emerald-500/5", "shadow-lg", "shadow-emerald-500/5");
+    } else {
+      card.classList.add("border-slate-700/60", "bg-slate-800/20");
+    }
+  });
 
   globalGrid.replaceChildren(...cards);
 }
@@ -720,66 +743,27 @@ function renderCourts() {
     }
 
     if (court.status === "Available") {
-      // Determine which queues are allowed for this court (fallback to default map if null/undefined)
       const courtAllowedSkill = court.allowedSkill !== undefined ? court.allowedSkill : null;
-
-      const skillDropdown = `
-        <select class="input-field text-xs py-1 px-2 h-auto mt-1 w-36 bg-slate-800 border-slate-700" data-court-skill-select="${cid}">
-          <option value="any" ${courtAllowedSkill === null || courtAllowedSkill === "any" ? "selected" : ""}>Any Rating</option>
-          ${SKILLS.map((rating) => `<option value="${rating.key}" ${courtAllowedSkill === rating.key ? "selected" : ""}>${rating.label} Only</option>`).join("")}
-        </select>
-      `;
-
-      const selectableQueues = [];
-      if ((courtAllowedSkill === null || courtAllowedSkill === "any") && hasPending) {
-        selectableQueues.push({
-          key: "custom",
-          label: `Custom (${state.pendingMatches.length} pending)`,
-          count: state.pendingMatches.length * 4
-        });
-      }
-      SKILLS
-        .filter(skill => courtAllowedSkill === null || courtAllowedSkill === "any" || skill.key === courtAllowedSkill)
-        .forEach((skill) => {
-          const count = (state.queues[skill.key] || []).filter(id => id !== "EMPTY").length;
-          if (count >= 4) {
-            selectableQueues.push({
-              key: skill.key,
-              label: `${skill.label} (${count} queued)`,
-              count
-            });
-          }
-        });
-
       const courtQueuedTotal = (courtAllowedSkill === null || courtAllowedSkill === "any")
         ? totalQueued
         : (state.queues[courtAllowedSkill] || []).filter(id => id !== "EMPTY").length;
 
-      if (selectableQueues.length) {
-        const queueSelect = `
-          <select class="input-field text-xs py-1 px-2 h-auto mt-2 w-full bg-slate-800 border-slate-700" data-start-queue-select="${cid}">
-            ${selectableQueues.map((q) => `<option value="${q.key}">${q.label}</option>`).join("")}
-          </select>
-        `;
+      const hasValidMatch = state.pendingMatches.length > 0 || totalQueued >= 4;
+
+      if (hasValidMatch) {
         return `
           <div class="glass-card court-card" data-court-id="${cid}">
             <div class="flex items-start justify-between">
               <div>
                 <h3 class="court-title">${courtInfo.name}</h3>
-                ${skillDropdown}
-                ${queueSelect}
+                <p class="text-xs text-emerald-400 mt-1 uppercase tracking-wider font-bold">Ready for next match</p>
               </div>
               <div class="flex items-center gap-1">
                 ${removeCourtButton}
                 <button class="text-slate-400 hover:text-white text-lg leading-none px-1" data-toggle-court="${cid}" title="Mark Inactive">×</button>
               </div>
             </div>
-            <div class="flex items-center gap-2 text-xs text-slate-400 mb-1 mt-2">
-              <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block"></span>
-              <span class="text-cyan-300 font-semibold">Manual Queue Selection</span>
-              <span>${selectableQueues.length} options ready</span>
-            </div>
-            <button class="btn-primary w-full py-3 text-sm" data-start-court="${cid}">
+            <button class="btn-primary w-full py-3 text-sm mt-4 shadow-lg shadow-emerald-500/20" data-start-court="${cid}" style="background:linear-gradient(135deg,rgba(16,185,129,0.9),rgba(5,150,105,0.9));border-color:rgba(16,185,129,0.4)">
               ▶ Start Next Match
             </button>
           </div>`;
@@ -792,7 +776,6 @@ function renderCourts() {
             <div class="flex items-start justify-between">
               <div>
                 <h3 class="court-title text-slate-400">${courtInfo.name}</h3>
-                ${skillDropdown}
               </div>
               <div class="flex items-center gap-1">
                 ${removeCourtButton}
@@ -2052,8 +2035,18 @@ function bindEvents() {
     const startCourtBtn = event.target.closest("[data-start-court]");
     if (startCourtBtn) {
       const courtId = startCourtBtn.dataset.startCourt;
-      const queueSelect = document.querySelector(`[data-start-queue-select="${courtId}"]`);
-      const skillKey = queueSelect?.value;
+      let skillKey = null;
+      
+      // Look at pending matches first, then global grid
+      if (state.pendingMatches && state.pendingMatches.length > 0) {
+        skillKey = "custom";
+      } else {
+        const globalGrid = document.getElementById("global-match-grid");
+        if (globalGrid && globalGrid.children.length > 0) {
+          skillKey = globalGrid.children[0].dataset.skillKey;
+        }
+      }
+
       try {
         if (!skillKey) {
           showToast("Select a queue first", "error");
