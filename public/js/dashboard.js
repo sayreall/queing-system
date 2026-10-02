@@ -3,7 +3,6 @@ import {
   SKILLS,
   playerRatingLabel,
   ratingRankLabel,
-  skillKeyFromLabel,
   ensureQueuesExist,
   addPlayer,
   listenToQueues,
@@ -212,15 +211,13 @@ function initializeRatingUI() {
   const queueSection = queueContainer?.closest("section");
   const queueDestination = document.querySelector("#players-body-beginner")?.closest(".glass-subcard");
   if (queueContainer && queueDestination) {
-    const queueWrapper = document.createElement("div");
-    queueWrapper.className = "mb-6 border-b border-slate-700/50 pb-6 queue-workspace";
-    queueWrapper.innerHTML = `
+    queueDestination.innerHTML = `
       <div class="flex items-center justify-between gap-3 mb-4">
         <div><h3 class="text-lg font-display font-semibold">Next Matches</h3><p class="text-xs text-slate-400">All generated matches in one queue</p></div>
         <span class="text-xs text-emerald-400">Up next</span>
       </div>`;
-    queueWrapper.appendChild(queueContainer);
-    queueDestination.insertBefore(queueWrapper, queueDestination.firstChild);
+    queueDestination.appendChild(queueContainer);
+    queueDestination.classList.add("queue-workspace");
     if (queueSection) queueSection.style.display = "none";
   }
 
@@ -583,8 +580,67 @@ function renderQueues() {
     if (countEl) countEl.textContent = `${count} waiting`;
     if (waitEl) waitEl.textContent = `Est wait ${wait} mins`;
   });
+  
+  renderQueueWorkspaceCards();
+
   // Re-attach sortable after re-render
   setupSortable();
+}
+
+function renderQueueWorkspaceCards() {
+  const queuesContainer = document.getElementById("queues-container");
+  if (!queuesContainer?.closest(".queue-workspace")) return;
+
+  let globalGrid = document.getElementById("global-match-grid");
+  if (!globalGrid) {
+    globalGrid = document.createElement("div");
+    globalGrid.id = "global-match-grid";
+    globalGrid.className = "queue-matches-grid";
+    queuesContainer.appendChild(globalGrid);
+  }
+
+  const cards = Array.from(queuesContainer.querySelectorAll(
+    ".queue-matches-container .match-card"
+  ));
+  
+  try {
+    const savedOrder = JSON.parse(localStorage.getItem("globalMatchOrder") || "[]");
+    if (savedOrder.length > 0) {
+      cards.sort((a, b) => {
+        const idxA = savedOrder.indexOf(a.dataset.matchId);
+        const idxB = savedOrder.indexOf(b.dataset.matchId);
+        if (idxA === -1 && idxB === -1) return 0;
+        if (idxA === -1) return 1;
+        if (idxB === -1) return -1;
+        return idxA - idxB;
+      });
+    }
+  } catch(e) {}
+  
+  // Re-number titles based on global order
+  cards.forEach((card, index) => {
+    const isUpNext = index === 0;
+    const titleText = isUpNext ? "Up Next · Match 1" : `Match ${index + 1}`;
+    const headerColor = isUpNext ? "text-emerald-400" : "text-slate-400";
+    
+    const h4 = card.querySelector(".match-card-drag-handle h4");
+    if (h4) {
+      h4.textContent = titleText.toUpperCase();
+      h4.className = `text-[10px] uppercase tracking-wider font-bold ${headerColor}`;
+    }
+    
+    const svg = card.querySelector(".match-card-drag-handle svg");
+    if (svg) svg.setAttribute("class", headerColor);
+    
+    card.classList.remove("border-slate-700/60", "bg-slate-800/20", "border-emerald-500/30", "bg-emerald-500/5", "shadow-lg", "shadow-emerald-500/5");
+    if (isUpNext) {
+      card.classList.add("border-emerald-500/30", "bg-emerald-500/5", "shadow-lg", "shadow-emerald-500/5");
+    } else {
+      card.classList.add("border-slate-700/60", "bg-slate-800/20");
+    }
+  });
+
+  globalGrid.replaceChildren(...cards);
 }
 
 
@@ -1092,6 +1148,82 @@ function setupSortable() {
     return;
   }
 
+  const globalGrid = document.getElementById("global-match-grid");
+  if (globalGrid) {
+    if (!globalGrid._sortable) {
+      globalGrid._sortable = new Sortable(globalGrid, {
+        animation: 150,
+        draggable: ".match-card",
+        filter: ".queue-item, button, select, input, textarea",
+        preventOnFilter: false,
+        fallbackOnBody: true,
+        forceFallback: true,
+        onMove: (event) => {
+          return true; // Allow match cards to be dragged anywhere freely
+        },
+        onEnd: async (event) => {
+          const globalOrder = [];
+          Array.from(globalGrid.children).forEach(child => {
+            if (child.dataset.matchId) {
+              globalOrder.push(child.dataset.matchId);
+            }
+          });
+          localStorage.setItem("globalMatchOrder", JSON.stringify(globalOrder));
+
+          const skillKey = event.item.dataset.skillKey;
+          const order = [];
+          globalGrid.querySelectorAll(`.match-card[data-skill-key="${skillKey}"] .queue-item`).forEach((item) => {
+            if (item.dataset.playerId) {
+              order.push(item.dataset.playerId);
+            } else if (item.dataset.action === "open-add-player-modal") {
+              order.push("EMPTY");
+            }
+          });
+          while (order.length > 0 && order[order.length - 1] === "EMPTY") {
+            order.pop();
+          }
+          
+          renderNextMatch();
+          
+          try {
+            await reorderQueue(skillKey, order);
+          } catch (error) {
+            showToast(error.message || "Failed to reorder matches", "error");
+          }
+        },
+      });
+    }
+
+    globalGrid.querySelectorAll(".team-list").forEach((list) => {
+      if (list._sortable) return;
+
+      const skillKey = list.dataset.queue;
+      list._sortable = new Sortable(list, {
+        group: `queue-${skillKey}`, // Revert to only allowing dragging within same skill queue
+        animation: 150,
+        filter: "button, .add-player-btn",
+        preventOnFilter: false,
+        delay: 150,
+        swap: true,
+        swapClass: "bg-slate-700/80",
+        delayOnTouchOnly: true,
+        touchStartThreshold: 3,
+        onEnd: async () => {
+          const order = [];
+          globalGrid.querySelectorAll(`.match-card[data-skill-key="${skillKey}"] .queue-item`).forEach((item) => {
+            if (item.dataset.playerId) order.push(item.dataset.playerId);
+          });
+          try {
+            await reorderQueue(skillKey, order);
+          } catch (error) {
+            showToast(error.message || "Failed to reorder queue", "error");
+          }
+        },
+      });
+    });
+    return;
+  }
+
   document.querySelectorAll(".queue-matches-container").forEach((container) => {
     const skillKey = container.dataset.queue;
     
@@ -1099,13 +1231,13 @@ function setupSortable() {
     container.querySelectorAll(".queue-matches-grid").forEach((grid) => {
       if (grid._sortable) return;
       grid._sortable = new Sortable(grid, {
-        group: 'queue-grid',
+        group: `queue-grid-${skillKey}`,
         animation: 150,
         handle: '.match-card-drag-handle',
         delay: 150,
         delayOnTouchOnly: true,
         touchStartThreshold: 3,
-        onSort: async (e) => {
+        onEnd: async (e) => {
           const order = [];
           container.querySelectorAll(".queue-item").forEach((item) => {
             if (item.dataset.playerId) {
@@ -1132,7 +1264,7 @@ function setupSortable() {
       if (list._sortable) return;
 
       list._sortable = new Sortable(list, {
-        group: 'queue-players',
+        group: `queue-${skillKey}`, // Allows dragging between match cards in this skill queue
         animation: 150,
         filter: 'button, .add-player-btn',
         preventOnFilter: false,
@@ -1141,7 +1273,7 @@ function setupSortable() {
         swapClass: 'bg-slate-700/80',
         delayOnTouchOnly: true,
         touchStartThreshold: 3,
-        onSort: async (e) => {
+        onEnd: async (e) => {
           // Rebuild the entire order array from ALL match cards in this skill's container
           const order = [];
           container.querySelectorAll(".queue-item").forEach((item) => {
@@ -2329,157 +2461,48 @@ function bindEvents() {
   const closeRankingBtn = document.getElementById("close-ranking-modal");
   const rankingTbody = document.getElementById("ranking-tbody");
 
-  let currentRankingTab = 'overall';
-  let isScoringOn = false;
-
-  const renderRankingContent = () => {
-    const rankingContent = document.getElementById("ranking-content");
-    if (!rankingContent) return;
-
-    const tabOverall = document.getElementById("ranking-tab-overall");
-    const tabCategory = document.getElementById("ranking-tab-category");
-    if (tabOverall && tabCategory) {
-      if (currentRankingTab === 'overall') {
-        tabOverall.className = "px-6 py-2 rounded-full text-xs md:text-sm font-bold text-white bg-purple-600 shadow-lg transition-all z-10 w-40 text-center";
-        tabCategory.className = "px-6 py-2 rounded-full text-xs md:text-sm font-bold text-slate-400 hover:text-white transition-all z-10 w-40 text-center";
-      } else {
-        tabCategory.className = "px-6 py-2 rounded-full text-xs md:text-sm font-bold text-white bg-purple-600 shadow-lg transition-all z-10 w-40 text-center";
-        tabOverall.className = "px-6 py-2 rounded-full text-xs md:text-sm font-bold text-slate-400 hover:text-white transition-all z-10 w-40 text-center";
-      }
-    }
-
-    const allPlayers = Array.from(state.players.values()).filter(p => p.status !== "Archived" && ((p.wins || 0) + (p.losses || 0)) > 0);
-
-    const sortPlayers = (players) => {
-      return [...players].sort((a, b) => {
-        const aW = a.wins || 0;
-        const aL = a.losses || 0;
-        const bW = b.wins || 0;
-        const bL = b.losses || 0;
-        const aGP = aW + aL;
-        const bGP = bW + bL;
-        const aWinPct = aGP > 0 ? (aW / aGP) * 100 : 0;
-        const bWinPct = bGP > 0 ? (bW / bGP) * 100 : 0;
-        const aPts = a.pointsDiff || 0;
-        const bPts = b.pointsDiff || 0;
-
-        if (isScoringOn) {
-          if (bPts !== aPts) return bPts - aPts;
-          if (Math.abs(bWinPct - aWinPct) > 0.1) return bWinPct - aWinPct;
-        } else {
-          if (Math.abs(bWinPct - aWinPct) > 0.1) return bWinPct - aWinPct;
-          if (bW !== aW) return bW - aW;
-        }
-        return bGP - aGP;
-      });
-    };
-
-    const generateTableHTML = (players, limit, hideHeader = false) => {
-      const sorted = sortPlayers(players).slice(0, limit);
-      if (sorted.length === 0) return `<div class="py-6 text-center text-slate-500">No players yet.</div>`;
-
-      const rows = sorted.map((player, idx) => {
-        const gp = (player.wins || 0) + (player.losses || 0);
-        const winPct = gp > 0 ? Math.round(((player.wins || 0) / gp) * 100) + '%' : '0%';
-        const ptsDiff = (player.pointsDiff || 0) > 0 ? `+${player.pointsDiff}` : (player.pointsDiff || 0);
-        const ptsColor = (player.pointsDiff || 0) >= 0 ? "text-green-400" : "text-red-400";
-
-        let rankIcon = idx + 1;
-        const crowns = ['<span style="color:#fbbf24; text-shadow: 0 0 8px rgba(251,191,36,0.4)">👑</span>', '<span style="color:#94a3b8">👑</span>', '<span style="color:#b45309">👑</span>'];
-        if (idx < 3) rankIcon = crowns[idx];
-
-        return \`
-          <tr class="border-t border-slate-800/60 hover:bg-slate-800/20">
-            <td class="py-3 px-4 text-center font-bold text-base text-slate-300 w-12">\${rankIcon}</td>
-            <td class="py-3 px-4 font-bold text-white">\${player.name}</td>
-            <td class="py-3 px-4 text-slate-400 text-xs">\${ratingForPlayer(player)}</td>
-            <td class="py-3 px-4 text-center text-slate-300 font-semibold">\${gp}</td>
-            <td class="py-3 px-4 text-center text-slate-300 font-semibold">\${player.wins || 0}</td>
-            <td class="py-3 px-4 text-center text-slate-300 font-semibold">\${player.losses || 0}</td>
-            \${isScoringOn ? \`<td class="py-3 px-4 text-center \${ptsColor} font-bold">\${ptsDiff}</td>\` : ''}
-            <td class="py-3 px-4 text-center text-emerald-400 font-bold">\${winPct}</td>
-          </tr>
-        \`;
-      }).join("");
-
-      return \`
-        <table class="w-full text-sm whitespace-nowrap mb-4">
-          \${hideHeader ? '' : \`
-          <thead class="text-left text-slate-400 border-b border-slate-700/50">
-            <tr>
-              <th class="py-3 px-4 w-12 text-center">#</th>
-              <th class="py-3 px-4">Player</th>
-              <th class="py-3 px-4">Skill</th>
-              <th class="py-3 px-4 text-center">Games</th>
-              <th class="py-3 px-4 text-center">Wins</th>
-              <th class="py-3 px-4 text-center">Losses</th>
-              \${isScoringOn ? \`<th class="py-3 px-4 text-center text-green-400">Pts Diff</th>\` : ''}
-              <th class="py-3 px-4 text-center text-emerald-400">Win Rate</th>
-            </tr>
-          </thead>
-          \`}
-          <tbody class="divide-y divide-slate-800/60">
-            \${rows}
-          </tbody>
-        </table>
-      \`;
-    };
-
-    if (currentRankingTab === 'overall') {
-      rankingContent.innerHTML = generateTableHTML(allPlayers, 10);
-    } else {
-      const categories = SKILLS.map(skill => {
-        const playersInSkill = allPlayers.filter(p => skillKeyFromLabel(ratingForPlayer(p)) === skill.key);
-        return { skill, playersInSkill };
-      });
-
-      const cardsHTML = categories.map(cat => \`
-        <div class="border border-slate-700/60 rounded-xl bg-slate-800/40 overflow-hidden mb-6 shadow-lg">
-          <div class="bg-slate-800/80 px-4 py-3 border-b border-slate-700/60 flex items-center gap-2">
-            <span class="text-xs font-bold text-white uppercase tracking-wider">\${cat.skill.label}</span>
-          </div>
-          <div class="overflow-x-auto">
-            \${generateTableHTML(cat.playersInSkill, 3, false)}
-          </div>
-        </div>
-      \`).join("");
-      
-      rankingContent.innerHTML = \`<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">\${cardsHTML}</div>\`;
-    }
-  };
-
   const openRankingModal = () => {
-    const rankingModal = document.getElementById("ranking-modal");
-    if (!rankingModal) return;
-
-    if (!rankingModal.dataset.bound) {
-      document.getElementById("ranking-tab-overall")?.addEventListener("click", () => {
-        currentRankingTab = 'overall';
-        renderRankingContent();
-      });
-      document.getElementById("ranking-tab-category")?.addEventListener("click", () => {
-        currentRankingTab = 'category';
-        renderRankingContent();
-      });
-      const toggle = document.getElementById("ranking-scoring-toggle");
-      toggle?.addEventListener("change", (e) => {
-        isScoringOn = e.target.checked;
-        const lbl = document.getElementById("ranking-scoring-label");
-        if (lbl) lbl.textContent = isScoringOn ? "Pts Diff" : "Win %";
-        renderRankingContent();
-      });
+    const allPlayers = Array.from(state.players.values()).filter(p => p.status !== "Archived" && ((p.wins || 0) + (p.losses || 0)) > 0);
+    
+    allPlayers.sort((a, b) => {
+      const aW = a.wins || 0;
+      const aL = a.losses || 0;
+      const bW = b.wins || 0;
+      const bL = b.losses || 0;
+      const aGP = aW + aL;
+      const bGP = bW + bL;
       
-      if (toggle) {
-        isScoringOn = toggle.checked;
-        const lbl = document.getElementById("ranking-scoring-label");
-        if (lbl) lbl.textContent = isScoringOn ? "Pts Diff" : "Win %";
-      }
-      
-      rankingModal.dataset.bound = "true";
-    }
+      const aWinPct = aGP > 0 ? (aW / aGP) * 100 : 0;
+      const bWinPct = bGP > 0 ? (bW / bGP) * 100 : 0;
 
-    renderRankingContent();
+      if (Math.abs(bWinPct - aWinPct) > 0.1) return bWinPct - aWinPct;
+      if (bW !== aW) return bW - aW;
+      return bGP - aGP;
+    });
+
+    rankingTbody.innerHTML = allPlayers.length > 0 ? allPlayers.map((player, idx) => {
+      const gp = (player.wins || 0) + (player.losses || 0);
+      const winPct = gp > 0 ? Math.round(((player.wins || 0) / gp) * 100) + '%' : '0%';
+      let rankIcon = idx + 1;
+      if (idx === 0) rankIcon = '🥇';
+      else if (idx === 1) rankIcon = '🥈';
+      else if (idx === 2) rankIcon = '🥉';
+
+      return `
+        <tr class="border-t border-slate-800/60 hover:bg-slate-800/20">
+          <td class="py-3 px-4 text-center font-bold text-lg text-slate-300">${rankIcon}</td>
+          <td class="py-3 px-4 font-semibold text-white">${player.name}</td>
+          <td class="py-3 px-4 text-slate-400 text-xs">${player.skill}</td>
+          <td class="py-3 px-4 text-center text-purple-400 font-semibold">${gp}</td>
+          <td class="py-3 px-4 text-center text-green-400 font-semibold">${player.wins || 0}</td>
+          <td class="py-3 px-4 text-center text-red-400 font-semibold">${player.losses || 0}</td>
+          <td class="py-3 px-4 text-center text-blue-400 font-semibold">${winPct}</td>
+        </tr>
+      `;
+    }).join("") : `<tr><td colspan="7" class="py-6 text-center text-slate-500">No players with matches played yet.</td></tr>`;
+
     rankingModal.classList.remove("hidden");
+    // Ensure mobile sidebar closes when opening modal
     if (window.innerWidth < 768 && window.toggleMobileMenu) window.toggleMobileMenu();
   };
 
