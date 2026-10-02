@@ -1165,9 +1165,8 @@ function setupSortable() {
     globalGrid.querySelectorAll(".team-list").forEach((list) => {
       if (list._sortable) return;
 
-      const skillKey = list.dataset.queue;
       list._sortable = new Sortable(list, {
-        group: `queue-${skillKey}`,
+        group: `queue-players`, // allow dragging across any skill queue
         animation: 150,
         filter: "button, .add-player-btn",
         preventOnFilter: false,
@@ -1176,13 +1175,27 @@ function setupSortable() {
         swapClass: "bg-slate-700/80",
         delayOnTouchOnly: true,
         touchStartThreshold: 3,
-        onEnd: async () => {
-          const order = [];
-          globalGrid.querySelectorAll(`.match-card[data-skill-key="${skillKey}"] .queue-item`).forEach((item) => {
-            if (item.dataset.playerId) order.push(item.dataset.playerId);
-          });
+        onEnd: async (e) => {
+          const fromContainer = e.from.closest(".match-card");
+          const toContainer = e.to.closest(".match-card");
+          
+          const fromSkill = fromContainer?.dataset.skillKey;
+          const toSkill = toContainer?.dataset.skillKey;
+          
+          const updateSkillQueue = async (skill) => {
+            if (!skill) return;
+            const order = [];
+            globalGrid.querySelectorAll(`.match-card[data-skill-key="${skill}"] .queue-item`).forEach((item) => {
+              if (item.dataset.playerId) order.push(item.dataset.playerId);
+            });
+            await window.reorderQueue(skill, order);
+          };
+
           try {
-            await reorderQueue(skillKey, order);
+            await updateSkillQueue(fromSkill);
+            if (fromSkill !== toSkill) {
+               await updateSkillQueue(toSkill);
+            }
           } catch (error) {
             showToast(error.message || "Failed to reorder queue", "error");
           }
@@ -1232,7 +1245,7 @@ function setupSortable() {
       if (list._sortable) return;
 
       list._sortable = new Sortable(list, {
-        group: `queue-${skillKey}`, // Allows dragging between match cards in this skill queue
+        group: `queue-players`, // Allows dragging between match cards in any skill queue
         animation: 150,
         filter: 'button, .add-player-btn',
         preventOnFilter: false,
@@ -1242,16 +1255,34 @@ function setupSortable() {
         delayOnTouchOnly: true,
         touchStartThreshold: 3,
         onEnd: async (e) => {
-          // Rebuild the entire order array from ALL match cards in this skill's container
-          const order = [];
-          container.querySelectorAll(".queue-item").forEach((item) => {
-            if (item.dataset.playerId) {
-              order.push(item.dataset.playerId);
-            }
-          });
+          const fromCard = e.from.closest(".match-card");
+          const toCard = e.to.closest(".match-card");
           
+          const fromSkill = fromCard?.dataset.skillKey || skillKey;
+          const toSkill = toCard?.dataset.skillKey || skillKey;
+          
+          const updateSkillQueue = async (skill) => {
+            if (!skill) return;
+            const order = [];
+            const skillContainer = document.querySelector(`.queue-matches-container[data-queue="${skill}"]`);
+            if (!skillContainer) return;
+            
+            skillContainer.querySelectorAll(".queue-item").forEach((item) => {
+              if (item.dataset.playerId) order.push(item.dataset.playerId);
+              else if (item.dataset.action === "open-add-player-modal") order.push("EMPTY");
+            });
+            
+            while (order.length > 0 && order[order.length - 1] === "EMPTY") {
+              order.pop();
+            }
+            await window.reorderQueue(skill, order);
+          };
+
           try {
-            await reorderQueue(skillKey, order);
+            await updateSkillQueue(fromSkill);
+            if (fromSkill !== toSkill) {
+               await updateSkillQueue(toSkill);
+            }
           } catch (error) {
             showToast(error.message || "Failed to reorder queue", "error");
           }
