@@ -449,9 +449,8 @@ Navigate to: `https://your-site.netlify.app/admin.html`
 
 When your session is finished for the day:
 
-1. Scroll to the **Player Management** section.
-2. Click the red **"End Day (Archive All)"** button.
-3. **Confirm** the action in the popup.
+1. Click the red **"End Session"** button in the header.
+2. **Confirm** the action in the popup.
 
 ### What Archiving Does
 - ✅ All active players are moved to **Archived** status

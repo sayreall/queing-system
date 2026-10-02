@@ -171,7 +171,6 @@ const elements = {
   nameInput: document.getElementById("player-name"),
   skillSelect: document.getElementById("player-rating"),
   locationInput: document.getElementById("player-location"),
-  archiveAll: document.getElementById("archive-all"),
   searchInput: document.getElementById("player-search"),
   filterSelect: document.getElementById("player-filter"),
   playersBodyBeginner: document.getElementById("players-body-beginner"),
@@ -250,7 +249,7 @@ function initializeRatingUI() {
   });
   document.getElementById("custom-match-panel")?.after(compactList);
   document.getElementById("compact-add-player")?.addEventListener("click", () => {
-    document.getElementById("open-add-player-modal")?.click();
+    openNewPlayerModal();
   });
 
   const queueContainer = document.getElementById("queues-container");
@@ -1558,6 +1557,19 @@ function openUnlockPartnersModal() {
   modal.classList.remove("hidden");
 }
 
+function openNewPlayerModal() {
+  const partnerSelect = document.getElementById("player-practice-partner");
+  if (partnerSelect) {
+    partnerSelect.innerHTML = `<option value="">None</option>` +
+      Array.from(state.players.values())
+        .filter(player => player.status !== "Archived")
+        .map(player => `<option value="${player.id}">${player.name}</option>`)
+        .join("");
+  }
+  document.getElementById("add-player-modal")?.classList.remove("hidden");
+  elements.nameInput?.focus();
+}
+
 function openAddPlayerModal(queueKey, matchIndex, slotIndex, courtId = null) {
   _pendingAddSlotInfo = { queueKey, matchIndex, slotIndex, courtId };
   const modal = document.getElementById("add-to-match-modal");
@@ -1856,24 +1868,8 @@ function bindEvents() {
     }
   });
 
-  const openAddPlayerBtn = document.getElementById("open-add-player-modal");
   const closeAddPlayerBtn = document.getElementById("close-add-player-modal");
   const addPlayerModal = document.getElementById("add-player-modal");
-
-  if (openAddPlayerBtn && addPlayerModal) {
-    openAddPlayerBtn.addEventListener("click", () => {
-      const partnerSelect = document.getElementById("player-practice-partner");
-      if (partnerSelect) {
-        partnerSelect.innerHTML = `<option value="">None</option>` +
-          Array.from(state.players.values())
-            .filter(p => p.status !== 'Archived')
-            .map(p => `<option value="${p.id}">${p.name}</option>`)
-            .join('');
-      }
-      addPlayerModal.classList.remove("hidden");
-      elements.nameInput?.focus();
-    });
-  }
 
   if (closeAddPlayerBtn && addPlayerModal) {
     closeAddPlayerBtn.addEventListener("click", () => {
@@ -2005,10 +2001,6 @@ function bindEvents() {
     }
   };
 
-  if (elements.archiveAll) {
-    elements.archiveAll.addEventListener("click", handleArchiveAll);
-  }
-  
   const headerEndSessionBtn = document.getElementById("header-end-session-btn");
   if (headerEndSessionBtn) {
     headerEndSessionBtn.addEventListener("click", handleArchiveAll);
@@ -2969,27 +2961,15 @@ function bindEvents() {
         }
       ];
 
-      if (isMobile) {
-        steps.push({
-          element: document.querySelector('#open-add-player-modal'),
-          title: 'Manual Add',
-          intro: 'Tap here to manually add a walk-in player and set their name, skill, and gender on the spot.',
-          position: 'bottom'
-        });
-      } else {
+      steps.push({
+        element: document.querySelector('#open-saved-players-modal'),
+        title: 'Saved Players',
+        intro: 'Players you previously imported (but haven\'t queued yet) live here. Click <b>Add</b> next to a name to move them into the active Standby section.',
+        position: 'bottom'
+      });
+
+      if (!isMobile) {
         steps.push(
-          {
-            element: document.querySelector('#open-add-player-modal'),
-            title: 'Manual Add',
-            intro: 'Click here to manually add a walk-in player by entering their name, skill, and gender.',
-            position: 'bottom'
-          },
-          {
-            element: document.querySelector('#open-saved-players-modal'),
-            title: 'Saved Players',
-            intro: 'Players you previously imported (but haven\'t queued yet) live here. Click <b>Add</b> next to a name to move them into the active Standby section.',
-            position: 'bottom'
-          },
           {
             element: document.querySelector('#import-players-btn'),
             title: 'Import Players',
@@ -3056,10 +3036,10 @@ function bindEvents() {
           position: 'top'
         },
         {
-          element: document.querySelector('#archive-all'),
-          title: 'End of the Day',
-          intro: 'When the session is over, click <b>End Day</b>. It clears all queues and courts but safely saves everyone\'s stats for the next session!',
-          position: 'top'
+          element: document.querySelector('#header-end-session-btn'),
+          title: 'End Session',
+          intro: 'When the session is over, click <b>End Session</b>. It clears all queues and courts but safely saves everyone\'s stats for the next session!',
+          position: 'bottom'
         }
       );
 
