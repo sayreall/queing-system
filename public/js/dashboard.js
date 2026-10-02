@@ -3,6 +3,7 @@ import {
   SKILLS,
   playerRatingLabel,
   ratingRankLabel,
+  skillKeyFromLabel,
   ensureQueuesExist,
   addPlayer,
   listenToQueues,
@@ -2461,48 +2462,157 @@ function bindEvents() {
   const closeRankingBtn = document.getElementById("close-ranking-modal");
   const rankingTbody = document.getElementById("ranking-tbody");
 
-  const openRankingModal = () => {
+  let currentRankingTab = 'overall';
+  let isScoringOn = false;
+
+  const renderRankingContent = () => {
+    const rankingContent = document.getElementById("ranking-content");
+    if (!rankingContent) return;
+
+    const tabOverall = document.getElementById("ranking-tab-overall");
+    const tabCategory = document.getElementById("ranking-tab-category");
+    if (tabOverall && tabCategory) {
+      if (currentRankingTab === 'overall') {
+        tabOverall.className = "px-6 py-2 rounded-full text-xs md:text-sm font-bold text-white bg-purple-600 shadow-lg transition-all z-10 w-40 text-center";
+        tabCategory.className = "px-6 py-2 rounded-full text-xs md:text-sm font-bold text-slate-400 hover:text-white transition-all z-10 w-40 text-center";
+      } else {
+        tabCategory.className = "px-6 py-2 rounded-full text-xs md:text-sm font-bold text-white bg-purple-600 shadow-lg transition-all z-10 w-40 text-center";
+        tabOverall.className = "px-6 py-2 rounded-full text-xs md:text-sm font-bold text-slate-400 hover:text-white transition-all z-10 w-40 text-center";
+      }
+    }
+
     const allPlayers = Array.from(state.players.values()).filter(p => p.status !== "Archived" && ((p.wins || 0) + (p.losses || 0)) > 0);
-    
-    allPlayers.sort((a, b) => {
-      const aW = a.wins || 0;
-      const aL = a.losses || 0;
-      const bW = b.wins || 0;
-      const bL = b.losses || 0;
-      const aGP = aW + aL;
-      const bGP = bW + bL;
+
+    const sortPlayers = (players) => {
+      return [...players].sort((a, b) => {
+        const aW = a.wins || 0;
+        const aL = a.losses || 0;
+        const bW = b.wins || 0;
+        const bL = b.losses || 0;
+        const aGP = aW + aL;
+        const bGP = bW + bL;
+        const aWinPct = aGP > 0 ? (aW / aGP) * 100 : 0;
+        const bWinPct = bGP > 0 ? (bW / bGP) * 100 : 0;
+        const aPts = a.pointsDiff || 0;
+        const bPts = b.pointsDiff || 0;
+
+        if (isScoringOn) {
+          if (bPts !== aPts) return bPts - aPts;
+          if (Math.abs(bWinPct - aWinPct) > 0.1) return bWinPct - aWinPct;
+        } else {
+          if (Math.abs(bWinPct - aWinPct) > 0.1) return bWinPct - aWinPct;
+          if (bW !== aW) return bW - aW;
+        }
+        return bGP - aGP;
+      });
+    };
+
+    const generateTableHTML = (players, limit, hideHeader = false) => {
+      const sorted = sortPlayers(players).slice(0, limit);
+      if (sorted.length === 0) return `<div class="py-6 text-center text-slate-500">No players yet.</div>`;
+
+      const rows = sorted.map((player, idx) => {
+        const gp = (player.wins || 0) + (player.losses || 0);
+        const winPct = gp > 0 ? Math.round(((player.wins || 0) / gp) * 100) + '%' : '0%';
+        const ptsDiff = (player.pointsDiff || 0) > 0 ? `+${player.pointsDiff}` : (player.pointsDiff || 0);
+        const ptsColor = (player.pointsDiff || 0) >= 0 ? "text-green-400" : "text-red-400";
+
+        let rankIcon = idx + 1;
+        const crowns = ['<span style="color:#fbbf24; text-shadow: 0 0 8px rgba(251,191,36,0.4)">👑</span>', '<span style="color:#94a3b8">👑</span>', '<span style="color:#b45309">👑</span>'];
+        if (idx < 3) rankIcon = crowns[idx];
+
+        return \`
+          <tr class="border-t border-slate-800/60 hover:bg-slate-800/20">
+            <td class="py-3 px-4 text-center font-bold text-base text-slate-300 w-12">\${rankIcon}</td>
+            <td class="py-3 px-4 font-bold text-white">\${player.name}</td>
+            <td class="py-3 px-4 text-slate-400 text-xs">\${ratingForPlayer(player)}</td>
+            <td class="py-3 px-4 text-center text-slate-300 font-semibold">\${gp}</td>
+            <td class="py-3 px-4 text-center text-slate-300 font-semibold">\${player.wins || 0}</td>
+            <td class="py-3 px-4 text-center text-slate-300 font-semibold">\${player.losses || 0}</td>
+            \${isScoringOn ? \`<td class="py-3 px-4 text-center \${ptsColor} font-bold">\${ptsDiff}</td>\` : ''}
+            <td class="py-3 px-4 text-center text-emerald-400 font-bold">\${winPct}</td>
+          </tr>
+        \`;
+      }).join("");
+
+      return \`
+        <table class="w-full text-sm whitespace-nowrap mb-4">
+          \${hideHeader ? '' : \`
+          <thead class="text-left text-slate-400 border-b border-slate-700/50">
+            <tr>
+              <th class="py-3 px-4 w-12 text-center">#</th>
+              <th class="py-3 px-4">Player</th>
+              <th class="py-3 px-4">Skill</th>
+              <th class="py-3 px-4 text-center">Games</th>
+              <th class="py-3 px-4 text-center">Wins</th>
+              <th class="py-3 px-4 text-center">Losses</th>
+              \${isScoringOn ? \`<th class="py-3 px-4 text-center text-green-400">Pts Diff</th>\` : ''}
+              <th class="py-3 px-4 text-center text-emerald-400">Win Rate</th>
+            </tr>
+          </thead>
+          \`}
+          <tbody class="divide-y divide-slate-800/60">
+            \${rows}
+          </tbody>
+        </table>
+      \`;
+    };
+
+    if (currentRankingTab === 'overall') {
+      rankingContent.innerHTML = generateTableHTML(allPlayers, 10);
+    } else {
+      const categories = SKILLS.map(skill => {
+        const playersInSkill = allPlayers.filter(p => skillKeyFromLabel(ratingForPlayer(p)) === skill.key);
+        return { skill, playersInSkill };
+      });
+
+      const cardsHTML = categories.map(cat => \`
+        <div class="border border-slate-700/60 rounded-xl bg-slate-800/40 overflow-hidden mb-6 shadow-lg">
+          <div class="bg-slate-800/80 px-4 py-3 border-b border-slate-700/60 flex items-center gap-2">
+            <span class="text-xs font-bold text-white uppercase tracking-wider">\${cat.skill.label}</span>
+          </div>
+          <div class="overflow-x-auto">
+            \${generateTableHTML(cat.playersInSkill, 3, false)}
+          </div>
+        </div>
+      \`).join("");
       
-      const aWinPct = aGP > 0 ? (aW / aGP) * 100 : 0;
-      const bWinPct = bGP > 0 ? (bW / bGP) * 100 : 0;
+      rankingContent.innerHTML = \`<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">\${cardsHTML}</div>\`;
+    }
+  };
 
-      if (Math.abs(bWinPct - aWinPct) > 0.1) return bWinPct - aWinPct;
-      if (bW !== aW) return bW - aW;
-      return bGP - aGP;
-    });
+  const openRankingModal = () => {
+    const rankingModal = document.getElementById("ranking-modal");
+    if (!rankingModal) return;
 
-    rankingTbody.innerHTML = allPlayers.length > 0 ? allPlayers.map((player, idx) => {
-      const gp = (player.wins || 0) + (player.losses || 0);
-      const winPct = gp > 0 ? Math.round(((player.wins || 0) / gp) * 100) + '%' : '0%';
-      let rankIcon = idx + 1;
-      if (idx === 0) rankIcon = '🥇';
-      else if (idx === 1) rankIcon = '🥈';
-      else if (idx === 2) rankIcon = '🥉';
+    if (!rankingModal.dataset.bound) {
+      document.getElementById("ranking-tab-overall")?.addEventListener("click", () => {
+        currentRankingTab = 'overall';
+        renderRankingContent();
+      });
+      document.getElementById("ranking-tab-category")?.addEventListener("click", () => {
+        currentRankingTab = 'category';
+        renderRankingContent();
+      });
+      const toggle = document.getElementById("ranking-scoring-toggle");
+      toggle?.addEventListener("change", (e) => {
+        isScoringOn = e.target.checked;
+        const lbl = document.getElementById("ranking-scoring-label");
+        if (lbl) lbl.textContent = isScoringOn ? "Pts Diff" : "Win %";
+        renderRankingContent();
+      });
+      
+      if (toggle) {
+        isScoringOn = toggle.checked;
+        const lbl = document.getElementById("ranking-scoring-label");
+        if (lbl) lbl.textContent = isScoringOn ? "Pts Diff" : "Win %";
+      }
+      
+      rankingModal.dataset.bound = "true";
+    }
 
-      return `
-        <tr class="border-t border-slate-800/60 hover:bg-slate-800/20">
-          <td class="py-3 px-4 text-center font-bold text-lg text-slate-300">${rankIcon}</td>
-          <td class="py-3 px-4 font-semibold text-white">${player.name}</td>
-          <td class="py-3 px-4 text-slate-400 text-xs">${player.skill}</td>
-          <td class="py-3 px-4 text-center text-purple-400 font-semibold">${gp}</td>
-          <td class="py-3 px-4 text-center text-green-400 font-semibold">${player.wins || 0}</td>
-          <td class="py-3 px-4 text-center text-red-400 font-semibold">${player.losses || 0}</td>
-          <td class="py-3 px-4 text-center text-blue-400 font-semibold">${winPct}</td>
-        </tr>
-      `;
-    }).join("") : `<tr><td colspan="7" class="py-6 text-center text-slate-500">No players with matches played yet.</td></tr>`;
-
+    renderRankingContent();
     rankingModal.classList.remove("hidden");
-    // Ensure mobile sidebar closes when opening modal
     if (window.innerWidth < 768 && window.toggleMobileMenu) window.toggleMobileMenu();
   };
 

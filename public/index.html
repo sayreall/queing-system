@@ -1065,33 +1065,47 @@
     </div>
 
     <!-- Ranking Modal -->
-    <div id="ranking-modal"
-      class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div class="glass-card w-full max-w-3xl relative max-h-[90vh] flex flex-col">
-        <button id="close-ranking-modal"
-          class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
-        <h2 class="text-2xl font-display font-semibold mb-2" style="color:#F5C42A;">Player Ranking</h2>
-        <p class="text-sm text-slate-400 mb-4">Top players sorted by Win Percentage and Matches Played.</p>
-        <div
-          class="overflow-y-auto overflow-x-auto flex-1 border border-slate-700/50 rounded-lg custom-scrollbar bg-slate-900/40">
-          <table class="w-full text-sm whitespace-nowrap relative">
-            <thead class="text-left text-slate-400 sticky top-0 z-10"
-              style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
-              <tr>
-                <th class="py-3 px-4 text-center w-12">Rank</th>
-                <th class="py-3 px-4">Player</th>
-                <th class="py-3 px-4">Skill</th>
-                <th class="py-3 px-4 text-center text-purple-400">GP</th>
-                <th class="py-3 px-4 text-center text-green-400">W</th>
-                <th class="py-3 px-4 text-center text-red-400">L</th>
-                <th class="py-3 px-4 text-center text-blue-400">Win %</th>
-              </tr>
-            </thead>
-            <tbody id="ranking-tbody">
-              <!-- Rendered via JS -->
-            </tbody>
-          </table>
+    <div id="ranking-modal" class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-4xl relative max-h-[90vh] flex flex-col p-6 border-slate-700/60 bg-slate-900/95 shadow-2xl overflow-hidden rounded-xl">
+        <button id="close-ranking-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none z-10">&times;</button>
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6 flex-wrap gap-4 pr-8">
+          <div class="flex items-center gap-4">
+            <div class="bg-yellow-500/20 p-2.5 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+              <span class="text-3xl">🏆</span>
+            </div>
+            <div>
+              <h2 class="text-xl md:text-2xl font-display font-bold text-white tracking-wide uppercase">Top Players</h2>
+              <p class="text-xs md:text-sm text-slate-400">Current Session Standings</p>
+            </div>
+          </div>
+          
+          <div class="flex flex-col items-end gap-1">
+            <div class="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700/50 shadow-inner">
+              <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Scoring Mode:</span>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="ranking-scoring-toggle" class="sr-only peer">
+                <div class="w-9 h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+              </label>
+              <span class="text-[11px] font-bold text-white uppercase tracking-wider w-16 text-center" id="ranking-scoring-label">Win %</span>
+            </div>
+          </div>
         </div>
+
+        <!-- Tabs -->
+        <div class="flex justify-center mb-6">
+          <div class="bg-slate-800/80 p-1 rounded-full inline-flex border border-slate-700/50 shadow-inner relative">
+            <button id="ranking-tab-overall" class="px-6 py-2 rounded-full text-xs md:text-sm font-bold text-white bg-purple-600 shadow-lg transition-all z-10 w-40 text-center">Overall Top 10</button>
+            <button id="ranking-tab-category" class="px-6 py-2 rounded-full text-xs md:text-sm font-bold text-slate-400 hover:text-white transition-all z-10 w-40 text-center">Category Top 3</button>
+          </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="overflow-y-auto flex-1 custom-scrollbar pr-1 relative" id="ranking-content">
+          <!-- Rendered via JS -->
+        </div>
+
       </div>
     </div>
 
