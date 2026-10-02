@@ -231,9 +231,9 @@
   <div class="w-full md:pl-16 flex flex-col relative min-h-screen">
 
     <header class="px-6 py-4 md:px-10 md:py-6">
-      <div class="header-inner">
+      <div class="header-inner flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <!-- Brand: logo + title -->
-        <div class="header-brand">
+        <div class="header-brand flex items-center">
           <button id="mobile-menu-btn"
             class="md:hidden mr-2 text-slate-300 hover:text-white p-2 -ml-2 rounded-lg focus:outline-none">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,9 +241,51 @@
             </svg>
           </button>
           <div class="header-title-block">
-            <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Open Play Doubles</p>
-            <h1 class="font-display font-semibold header-title" style="color:#F5C42A;">Deuce Club Queuing System</h1>
+            <div class="flex items-center gap-3 mb-1">
+              <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> LIVE</span>
+              <p class="text-xs text-slate-400">Strict skill separation ON</p>
+            </div>
+            <h1 class="font-display font-semibold header-title text-2xl md:text-3xl" style="color:#F5C42A;">Deuce Club Queuing System</h1>
           </div>
+        </div>
+
+        <!-- Header Actions -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <button class="btn-secondary text-xs px-3 py-2 flex items-center gap-2 border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-slate-300 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+            Pause
+          </button>
+          
+          <button class="btn-secondary text-xs px-3 py-2 flex items-center gap-2 border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-slate-300 transition-colors">
+            Game Limit
+          </button>
+
+          <button class="btn-secondary text-xs px-3 py-2 flex items-center gap-2 border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-slate-300 transition-colors">
+            Scoring: ON
+          </button>
+
+          <button id="header-top-players-btn" class="btn-secondary text-xs px-3 py-2 flex items-center gap-2 border border-yellow-500/40 bg-yellow-500/10 hover:bg-yellow-500/20 rounded-lg text-yellow-400 font-semibold transition-colors" title="View Ranking">
+            🏆 Top Players
+          </button>
+
+          <button class="btn-secondary text-xs px-3 py-2 flex items-center gap-2 border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-slate-300 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Lock Partners
+          </button>
+          
+          <button class="btn-secondary text-xs px-3 py-2 flex items-center gap-2 border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-slate-300 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+            Unlock Partners
+          </button>
+
+          <button class="btn-secondary text-xs px-3 py-2 flex items-center gap-2 border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-slate-300 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+            Reset
+          </button>
+
+          <button id="header-end-session-btn" class="btn-primary text-xs px-4 py-2 flex items-center gap-2 bg-rose-500 hover:bg-rose-600 border border-rose-600 rounded-lg text-white font-bold transition-colors">
+            End Session
+          </button>
         </div>
       </div>
     </header>

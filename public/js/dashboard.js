@@ -1758,17 +1758,24 @@ function bindEvents() {
       }
     });
   }
+  const handleArchiveAll = async () => {
+    if (!(await showConfirmModal("Are you sure you want to end the session and archive all active players? This will clear all courts and queues."))) return;
+    try {
+      await archiveAllPlayers(Array.from(state.players.values()));
+      showToast("Session ended. All players archived.");
+    } catch (error) {
+      console.error("Archive failed", error);
+      showToast(formatFirebaseError(error), "error");
+    }
+  };
+
   if (elements.archiveAll) {
-    elements.archiveAll.addEventListener("click", async () => {
-      if (!(await showConfirmModal("Are you sure you want to end the day and archive all active players? This will clear all courts and queues."))) return;
-      try {
-        await archiveAllPlayers(Array.from(state.players.values()));
-        showToast("Session ended. All players archived.");
-      } catch (error) {
-        console.error("Archive failed", error);
-        showToast(formatFirebaseError(error), "error");
-      }
-    });
+    elements.archiveAll.addEventListener("click", handleArchiveAll);
+  }
+  
+  const headerEndSessionBtn = document.getElementById("header-end-session-btn");
+  if (headerEndSessionBtn) {
+    headerEndSessionBtn.addEventListener("click", handleArchiveAll);
   }
 
   elements.searchInput.addEventListener("input", (event) => {
@@ -2397,11 +2404,12 @@ function bindEvents() {
 
   // Ranking Modal Logic
   const viewRankingBtn = document.getElementById("view-ranking-btn");
+  const headerTopPlayersBtn = document.getElementById("header-top-players-btn");
   const rankingModal = document.getElementById("ranking-modal");
   const closeRankingBtn = document.getElementById("close-ranking-modal");
   const rankingTbody = document.getElementById("ranking-tbody");
 
-  viewRankingBtn?.addEventListener("click", () => {
+  const openRankingModal = () => {
     const allPlayers = Array.from(state.players.values()).filter(p => p.status !== "Archived" && ((p.wins || 0) + (p.losses || 0)) > 0);
     
     allPlayers.sort((a, b) => {
@@ -2443,8 +2451,11 @@ function bindEvents() {
 
     rankingModal.classList.remove("hidden");
     // Ensure mobile sidebar closes when opening modal
-    if (window.innerWidth < 768 && toggleMobileMenu) toggleMobileMenu();
-  });
+    if (window.innerWidth < 768 && window.toggleMobileMenu) window.toggleMobileMenu();
+  };
+
+  viewRankingBtn?.addEventListener("click", openRankingModal);
+  headerTopPlayersBtn?.addEventListener("click", openRankingModal);
 
   closeRankingBtn?.addEventListener("click", () => {
     rankingModal.classList.add("hidden");
