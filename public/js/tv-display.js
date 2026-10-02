@@ -46,6 +46,26 @@ function formatPoints(value) {
   return value > 0 ? `+${value}` : String(value);
 }
 
+function renderSessionPulse() {
+  const activeCourts = state.courts.filter((court) => court.status === "Active");
+  const waitingPlayerIds = new Set(
+    Object.values(state.queues)
+      .flat()
+      .filter((playerId) => playerId && playerId !== "EMPTY")
+  );
+  const playingPlayerIds = new Set(activeCourts.flatMap((court) => court.players || []));
+
+  const values = {
+    "tv-active-courts": activeCourts.length,
+    "tv-waiting-players": waitingPlayerIds.size,
+    "tv-playing-players": playingPlayerIds.size,
+  };
+  Object.entries(values).forEach(([id, value]) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+  });
+}
+
 window.showTvError = function(error) {
   const container = document.getElementById("tv-upcoming-matches");
   if (container) {
@@ -312,6 +332,9 @@ function renderLeaderboards() {
   document.querySelectorAll("[data-tv-primary-label]").forEach((label) => {
     label.textContent = usePoints ? "Pts Diff" : "Wins";
   });
+  document.querySelectorAll("[data-tv-secondary-label]").forEach((label) => {
+    label.textContent = "WR";
+  });
   if (rankingMode) rankingMode.textContent = usePoints ? "Points differential" : "Win rate ranking";
   if (rankingDescription) {
     rankingDescription.textContent = usePoints
@@ -328,15 +351,18 @@ function renderLeaderboards() {
     const elWins = document.getElementById(`leaderboard-${rank}-wins`);
     const elWinPct = document.getElementById(`leaderboard-${rank}-winpct`);
     if (!elName || !elWins || !elWinPct) return;
+    const card = elName.closest(".tv-podium-card");
     
     if (player) {
+      card?.classList.remove("is-empty");
       elName.textContent = player.name;
       elWins.textContent = usePoints ? formatPoints(player.pointsDiff) : player.wins;
       elWinPct.textContent = Math.round(player.winRate * 100) + "%";
     } else {
-      elName.textContent = "--";
-      elWins.textContent = "0";
-      elWinPct.textContent = "0%";
+      card?.classList.add("is-empty");
+      elName.textContent = "No results yet";
+      elWins.textContent = "—";
+      elWinPct.textContent = "—";
     }
   };
 
@@ -349,7 +375,7 @@ function renderLeaderboards() {
   if (fullContainer) {
     let newHTML = "";
     if (ranked.length === 0) {
-      newHTML = `<div class="col-span-full text-slate-500 text-center py-4">No active players</div>`;
+      newHTML = `<div class="col-span-full tv-ranking-empty">Complete a match to start the rankings.</div>`;
     } else {
       newHTML = ranked.map((player, index) => {
         const rank = index + 1;
@@ -415,17 +441,20 @@ async function bootstrap() {
 
   listenToCourts((courts) => {
     state.courts = courts;
+    renderSessionPulse();
     renderCourts();
     renderUpcomingMatches();
   });
 
   listenToQueues((queues) => {
     state.queues = queues;
+    renderSessionPulse();
     renderUpcomingMatches();
   });
 
   listenToPlayers((players) => {
     state.players = new Map(players.map((player) => [player.id, player]));
+    renderSessionPulse();
     renderCourts();
     renderUpcomingMatches();
     renderLeaderboards();

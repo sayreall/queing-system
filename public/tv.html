@@ -46,6 +46,10 @@
     .tv-title { font-size: clamp(2.25rem, 5vw, 4.4rem); line-height: .9; letter-spacing: .01em; }
     .tv-live-chip { display: inline-flex; align-items: center; gap: .5rem; margin-top: .85rem; color: var(--text-muted); font-size: .75rem; }
     .tv-live-dot { width: .5rem; height: .5rem; border-radius: 999px; background: var(--accent-tl); box-shadow: 0 0 0 4px rgba(31, 207, 177, .12); animation: tvPulse 1.8s ease-in-out infinite; }
+    .tv-session-pulse { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin-top: 1.4rem; max-width: 38rem; overflow: hidden; border: 1px solid rgba(31, 207, 177, .2); border-radius: .8rem; background: rgba(31, 207, 177, .16); }
+    .tv-pulse-item { padding: .55rem .85rem; background: rgba(7, 42, 42, .68); }
+    .tv-pulse-label { display: block; color: var(--text-muted); font-size: .58rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .tv-pulse-value { display: block; margin-top: .1rem; color: #fff; font-family: Rajdhani, sans-serif; font-size: 1.3rem; font-weight: 700; line-height: 1; }
     .tv-court { position: relative; min-height: 222px; padding: clamp(1rem, 2vw, 1.45rem); overflow: hidden; transition: border-color .2s ease, transform .2s ease; }
     .tv-court:hover { transform: translateY(-2px); border-color: rgba(31, 207, 177, .45); }
     .tv-court::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--accent-tl); opacity: .75; }
@@ -71,11 +75,14 @@
     .tv-podium--gold > p { font-size: clamp(2rem, 3.2vw, 3rem) !important; }
     .tv-podium-card > div:last-child { display: flex; flex-wrap: wrap; justify-content: center; gap: .55rem; margin-top: .85rem !important; color: #d8e6e1; font-size: .82rem; }
     .tv-podium-card > div:last-child > span { padding: .28rem .5rem; border-radius: .45rem; background: rgba(4, 28, 28, .36); }
+    .tv-podium-card.is-empty { opacity: .62; filter: saturate(.65); }
+    .tv-podium-card.is-empty > p { font-size: 1.45rem !important; }
+    .tv-ranking-empty { min-height: 6rem; display: grid; place-items: center; border: 1px dashed rgba(31, 207, 177, .25); border-radius: .8rem; color: var(--text-muted); }
     .tv-ranking-grid { gap: .65rem; }
     .tv-ranking-grid > div { min-height: 4.1rem; padding: .75rem 1rem; background: rgba(8, 42, 42, .68); transition: .15s ease; }
     .tv-ranking-grid > div:hover { transform: translateY(-1px); border-color: rgba(31, 207, 177, .35); }
     @keyframes tvPulse { 50% { opacity: .45; transform: scale(.8); } }
-    @media (max-width: 767px) { .tv-court { min-height: auto; } }
+    @media (max-width: 767px) { .tv-court { min-height: auto; } .tv-session-pulse { max-width: none; } }
   </style>
   <script>
     (function() {
@@ -109,6 +116,11 @@
         <p class="tv-eyebrow">Live courts</p>
         <h1 class="tv-title mt-2 font-display font-semibold" style="color:#F5C42A;">Pickleball Queue Display</h1>
         <p class="tv-live-chip"><span class="tv-live-dot"></span> Live session updates</p>
+        <div class="tv-session-pulse" aria-label="Live session summary">
+          <div class="tv-pulse-item"><span class="tv-pulse-label">Courts live</span><strong class="tv-pulse-value" id="tv-active-courts">0</strong></div>
+          <div class="tv-pulse-item"><span class="tv-pulse-label">Waiting</span><strong class="tv-pulse-value" id="tv-waiting-players">0</strong></div>
+          <div class="tv-pulse-item"><span class="tv-pulse-label">Playing now</span><strong class="tv-pulse-value" id="tv-playing-players">0</strong></div>
+        </div>
       </div>
       <div id="back-btn-container"></div>
     </div>
@@ -193,7 +205,7 @@
           <div class="flex items-center gap-3 mt-2 text-sm">
             <span class="text-slate-300"><span id="leaderboard-2-wins" class="font-bold text-slate-100">0</span> <span data-tv-primary-label>Wins</span></span>
             <span class="text-slate-500">|</span>
-            <span class="text-slate-300"><span id="leaderboard-2-winpct" class="font-bold text-slate-100">0%</span></span>
+            <span class="text-slate-300"><span id="leaderboard-2-winpct" class="font-bold text-slate-100">0%</span> <span data-tv-secondary-label>WR</span></span>
           </div>
         </div>
 
@@ -204,7 +216,7 @@
           <div class="flex items-center gap-4 mt-2">
             <span class="text-gold text-base"><span id="leaderboard-1-wins" class="font-bold text-white">0</span> <span data-tv-primary-label>Wins</span></span>
             <span class="text-slate-500">|</span>
-            <span class="text-gold text-base"><span id="leaderboard-1-winpct" class="font-bold text-white">0%</span> WR</span>
+            <span class="text-gold text-base"><span id="leaderboard-1-winpct" class="font-bold text-white">0%</span> <span data-tv-secondary-label>WR</span></span>
           </div>
         </div>
 
@@ -215,7 +227,7 @@
           <div class="flex items-center gap-3 mt-2 text-sm">
             <span class="text-slate-300"><span id="leaderboard-3-wins" class="font-bold text-slate-100">0</span> <span data-tv-primary-label>Wins</span></span>
             <span class="text-slate-500">|</span>
-            <span class="text-slate-300"><span id="leaderboard-3-winpct" class="font-bold text-slate-100">0%</span></span>
+            <span class="text-slate-300"><span id="leaderboard-3-winpct" class="font-bold text-slate-100">0%</span> <span data-tv-secondary-label>WR</span></span>
           </div>
         </div>
       </div>
