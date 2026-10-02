@@ -99,7 +99,9 @@ const state = {
   filter: "All",
   automationLock: false,
   editingMatches: new Set(),
-  autoRound: false,
+  // Auto queue top-up is enabled by default. A user can explicitly turn it
+  // off, which stores "0" in local storage.
+  autoRound: localStorage.getItem("dq_auto_round") !== "0",
   autoRoundMode: localStorage.getItem("dq_auto_round_mode") || "smart",
   prevCourtStatuses: {}, // tracks { courtId: "Active" | "Available" | "Inactive" }
   autoRoundLock: false,
@@ -2047,16 +2049,12 @@ function bindEvents() {
     localStorage.setItem("dq_auto_round", state.autoRound ? "1" : "0");
     updateAutoRoundBtn();
     if (state.autoRound) {
-      showToast("Auto Round ON — generates new round when a court finishes.");
+      showToast("Auto Round ON — keeps upcoming matches queued automatically.");
     } else {
       showToast("Auto Round disabled.");
     }
   });
 
-  // Restore auto-round toggle from localStorage
-  if (localStorage.getItem("dq_auto_round") === "1") {
-    state.autoRound = true;
-  }
   updateAutoRoundBtn();
 
   document.body.addEventListener("click", async (event) => {
@@ -3041,29 +3039,36 @@ async function bootstrap() {
     }
   }
 
-  // ── Auto Round: triggers when any individual court finishes ──────────────
-  async function checkAutoRound(prevStatuses, newCourts) {
+  // ── Auto Round: keeps a short queue of upcoming matches ready ───────────
+  async function checkAutoRound() {
     if (!state.autoRound) return;
     if (state.autoRoundLock) return;
-    if (!state.ready.players) return;
+    if (!state.ready.players || !state.ready.queues) return;
 
-    // Detect which courts just transitioned from Active → Available
-    const justFinished = newCourts.filter(c => {
-      const prev = prevStatuses[c.id];
-      return prev === "Active" && c.status === "Available";
-    });
+    // Once three or fewer cards remain, append fresh matches without moving
+    // the cards already waiting in the queue.
+    const queuedOrders = Object.values(state.queues);
+    const pendingMatches = queuedOrders.reduce((total, order) => {
+      const queuedPlayers = order.filter((id) => id && id !== "EMPTY").length;
+      return total + Math.ceil(queuedPlayers / 4);
+    }, 0);
+    if (pendingMatches > 3) return;
 
-    if (justFinished.length === 0) return;
-
-    // Don't auto-round if queues already have enough players waiting
-    // (means someone already generated a round manually)
-    const totalWaiting = Object.values(state.queues)
-      .reduce((sum, q) => sum + q.filter(id => id && id !== "EMPTY").length, 0);
-
-    if (totalWaiting >= 4) return; // already has a queue ready, skip
+    const queuedPlayerIds = new Set(queuedOrders.flat().filter((id) => id && id !== "EMPTY"));
+    const hasUnqueuedPlayers = Array.from(state.players.values()).some((player) =>
+      !queuedPlayerIds.has(player.id) &&
+      (player.status === "Waiting" || player.status === "Standby" || player.status === "Playing")
+    );
+    if (!hasUnqueuedPlayers) return;
 
     state.autoRoundLock = true;
     try {
+      // A match completion updates the court and its players in the same
+      // Firestore write, but their listeners can arrive separately. Wait for
+      // the player snapshot so the just-finished players are eligible for the
+      // new round instead of still looking like they are on court.
+      await new Promise((resolve) => setTimeout(resolve, 350));
+
       const players = Array.from(state.players.values());
       const mode = state.autoRoundMode || "smart";
       const history = [
@@ -3074,7 +3079,7 @@ async function bootstrap() {
           teamB: (court.players || []).slice(2, 4),
         })),
       ];
-      const summary = await generateSmartRound(players, mode, history);
+      const summary = await generateSmartRound(players, mode, history, { preserveExisting: true });
       const repeatCount = summary.repeatLineups + summary.repeatTeammates + summary.repeatOpponents;
       showToast(
         repeatCount
@@ -3101,6 +3106,7 @@ async function bootstrap() {
     setupSortable();
     cacheState();
     checkAutoAssign();
+    checkAutoRound();
   });
 
   listenToCourts((courts) => {
@@ -3120,8 +3126,7 @@ async function bootstrap() {
     cacheState();
     checkAutoAssign();
 
-    // Check if any court just finished → trigger auto round
-    checkAutoRound(prevStatuses, courts);
+    checkAutoRound();
   });
 
   listenToPlayers((players) => {
@@ -3196,6 +3201,7 @@ async function bootstrap() {
       }
       errDiv.textContent = "FATAL ERROR IN RENDER: " + err.message + "\n" + err.stack;
     }
+    checkAutoRound();
   });
 
   const q = query(getTenantCollection("matches"), where("status", "==", "Pending"));

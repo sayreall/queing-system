@@ -1038,11 +1038,11 @@ function arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode) {
   return { teamA: best[0], teamB: best[1], ...bestDetails };
 }
 
-// Reserve an incomplete queued card when a new round is generated.
+// Reserve queued cards when a new round is generated.
 // Queue cards are represented by every four positions in the flat queue order;
 // an open position is stored as "EMPTY". The generator fills that position
 // first, instead of reshuffling the three players already on the card.
-function getLockedThreePlayerCards(playersList) {
+function getLockedQueuedCards(playersList, preserveExisting = false) {
   const playerById = new Map(playersList.map((player) => [player.id, player]));
   const locked = Object.fromEntries(SKILLS.map((skill) => [skill.key, []]));
   const playerIds = new Set();
@@ -1055,10 +1055,10 @@ function getLockedThreePlayerCards(playersList) {
 
       const filledIds = card.filter((id) => id && id !== "EMPTY");
       const cardPlayers = filledIds.map((id) => playerById.get(id));
-      const canKeepCard = filledIds.length === 3 &&
+      const canKeepCard = (preserveExisting ? filledIds.length === 4 : filledIds.length === 3) &&
         cardPlayers.every((player) =>
           player &&
-          (player.status === "Waiting" || player.status === "Standby") &&
+          (player.status === "Waiting" || player.status === "Standby" || player.status === "Playing") &&
           canPlayAnotherMatch(player)
         );
 
@@ -1074,8 +1074,8 @@ function getLockedThreePlayerCards(playersList) {
   return { locked, playerIds };
 }
 
-export async function generateSmartRound(playersList, mode = "social_mix", matchHistory = []) {
-  const lockedCards = getLockedThreePlayerCards(playersList);
+export async function generateSmartRound(playersList, mode = "social_mix", matchHistory = [], options = {}) {
+  const lockedCards = getLockedQueuedCards(playersList, options.preserveExisting === true);
   const eligible = playersList.filter((player) =>
     !lockedCards.playerIds.has(player.id) &&
     (player.status === "Waiting" || player.status === "Standby" || player.status === "Playing") && canPlayAnotherMatch(player)
