@@ -218,7 +218,10 @@ function initializeRatingUI() {
 
   const workspaceStyle = document.createElement("style");
   workspaceStyle.textContent = `
-    .queue-workspace #queues-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:0.75rem; }
+    .queue-workspace #queues-container { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0.75rem; }
+    @media (max-width: 639px) {
+      .queue-workspace #queues-container { grid-template-columns:1fr; }
+    }
     .queue-workspace #queues-container > .glass-card,
     .queue-workspace #queues-container .queue-matches-container,
     .queue-workspace #queues-container .queue-matches-grid { display:contents; }
@@ -377,7 +380,7 @@ function renderQueues() {
       window.smoothUpdateHTML(container, `<p class="queue-empty text-slate-500 py-4 text-center text-sm border border-dashed border-slate-700/50 rounded-xl mt-4">No players waiting.</p>`);
     } else {
       const wrapper = document.createElement("div");
-      wrapper.className = "queue-matches-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4 items-start";
+      wrapper.className = "queue-matches-grid grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 items-start";
       
       const chunks = [];
       for (let i = 0; i < order.length; i += 4) {
@@ -2809,7 +2812,7 @@ function renderPendingMatches() {
   container.innerHTML = `
     <div class="mb-6">
       <h3 class="text-xs uppercase tracking-widest font-bold text-amber-500 mb-3">Pending Custom Matches</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         ${cardsHtml}
       </div>
     </div>
