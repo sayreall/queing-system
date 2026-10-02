@@ -176,6 +176,16 @@ function initializeRatingUI() {
   compactList.className = "mt-5 border border-slate-700/50 rounded-xl overflow-y-auto max-h-[620px]";
   compactList.innerHTML = `<p class="p-4 text-sm text-slate-500">Loading players...</p>`;
   compactList.addEventListener("click", handlePlayerActionClick);
+  compactList.addEventListener("change", async (event) => {
+    const playerId = event.target.dataset.playerRating;
+    if (!playerId) return;
+    try {
+      await updatePlayerSkill(playerId, event.target.value);
+      showToast("Player rating updated");
+    } catch (error) {
+      showToast(error.message || "Unable to update rating", "error");
+    }
+  });
   document.getElementById("custom-match-panel")?.after(compactList);
 
   const queueContainer = document.getElementById("queues-container");
@@ -200,8 +210,10 @@ function initializeRatingUI() {
     .queue-workspace #queues-container .queue-matches-grid { display:contents; }
     .queue-workspace #queues-container > .glass-card > .flex { display:none; }
     .queue-workspace #queues-container .queue-empty { display:none; }
-    #compact-player-list .compact-player { display:grid; grid-template-columns:1.5rem minmax(0,1fr) auto auto; gap:0.65rem; align-items:center; padding:0.7rem 0.8rem; border-bottom:1px solid rgba(51,65,85,.55); }
+    #compact-player-list { height:480px; overflow-y:scroll; scrollbar-gutter:stable; }
+    #compact-player-list .compact-player { display:grid; grid-template-columns:1.5rem minmax(0,1fr) auto auto auto; gap:0.65rem; align-items:center; padding:0.7rem 0.8rem; border-bottom:1px solid rgba(51,65,85,.55); }
     #compact-player-list .compact-player:last-child { border-bottom:0; }
+    @media (max-width: 640px) { #compact-player-list .compact-player { grid-template-columns:1.5rem minmax(0,1fr) auto; } #compact-player-list .compact-player select { grid-column:2; } }
   `;
   document.head.appendChild(workspaceStyle);
 }
@@ -728,8 +740,12 @@ function renderPlayers() {
               <div class="min-w-0"><p class="font-semibold text-sm truncate">${player.name}</p>
                 <p class="text-[11px] text-slate-400">${games} games · <span class="text-emerald-400">${player.wins ?? 0}W</span> <span class="text-rose-400">${player.losses ?? 0}L</span>${getWaitTime(player)}</p>
               </div>
+              <select class="input-field text-xs py-1 px-1.5 w-16" data-player-rating="${player.id}" aria-label="${player.name} rating">
+                ${SKILLS.map((rating) => `<option value="${rating.label}" ${player.rating === rating.label ? "selected" : ""}>${rating.label}</option>`).join("")}
+              </select>
               <span class="text-xs px-2 py-1 rounded border border-slate-700 bg-slate-800 whitespace-nowrap">${player.status}</span>
-              <button class="text-xs text-slate-300 hover:text-white" data-player-absent="${player.id}" ${isUnavailable ? "disabled" : ""}>${isUnavailable ? "In match" : (player.status === "Absent" || player.status === "Standby" ? "Return" : "Absent")}</button>
+              <div class="flex items-center gap-2"><button class="text-xs text-slate-300 hover:text-white" data-player-absent="${player.id}" ${isUnavailable ? "disabled" : ""}>${isUnavailable ? "In match" : (player.status === "Absent" || player.status === "Standby" ? "Return" : "Absent")}</button>
+              <button class="text-xs text-amber-300 hover:text-amber-100" data-player-done="${player.id}" ${isUnavailable ? "disabled" : ""}>Done</button></div>
             </div>`;
         }).join("")
       : `<p class="p-4 text-sm text-slate-500">No players match the current filter.</p>`;
