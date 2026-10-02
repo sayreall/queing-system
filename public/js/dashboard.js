@@ -531,7 +531,7 @@ function renderQueues() {
               <div class="flex items-center gap-1 overflow-hidden min-w-0">
                 <span class="drag-handle text-slate-400 cursor-grab hover:text-white px-0.5 text-xs shrink-0">⋮⋮</span>
                 <span class="font-semibold text-[11px] truncate flex-1 cursor-grab" title="${player ? player.name : "Unknown"}">${player ? player.name : "Unknown"}</span>
-                <span class="rating-badge text-[9px] font-bold text-cyan-300 bg-cyan-400/10 border border-cyan-400/20 px-1 rounded shrink-0 truncate max-w-[65px]" title="${ratingForPlayer(player)} · ${rankForPlayer(player)}">${ratingForPlayer(player)}<span class="rating-rank hidden lg:inline"> · ${rankForPlayer(player)}</span></span>
+                <span class="rating-badge text-[10px] font-bold text-cyan-300 bg-cyan-400/10 border border-cyan-400/20 px-1.5 py-0.5 rounded shrink-0" title="${ratingForPlayer(player)} · ${rankForPlayer(player)}">${ratingForPlayer(player)}</span>
                 ${resultBadge}
               </div>
               <div class="queue-actions hidden items-center gap-0.5 shrink-0">
