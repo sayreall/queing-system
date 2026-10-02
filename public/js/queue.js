@@ -39,13 +39,13 @@ const runTransaction = async (db, callback) => {
 };
 
 export const RATINGS = [
-  { label: "2.0", key: "rating-2-0" },
-  { label: "2.5", key: "rating-2-5" },
-  { label: "3.0", key: "rating-3-0" },
-  { label: "3.5", key: "rating-3-5" },
-  { label: "4.0", key: "rating-4-0" },
-  { label: "4.5", key: "rating-4-5" },
-  { label: "5.0", key: "rating-5-0" },
+  { label: "2.0", key: "rating-2-0", rank: "Beginner" },
+  { label: "2.5", key: "rating-2-5", rank: "Novice" },
+  { label: "3.0", key: "rating-3-0", rank: "Low Intermediate" },
+  { label: "3.5", key: "rating-3-5", rank: "High Intermediate" },
+  { label: "4.0", key: "rating-4-0", rank: "High Intermediate" },
+  { label: "4.5", key: "rating-4-5", rank: "Advanced" },
+  { label: "5.0", key: "rating-5-0", rank: "Advanced" },
 ];
 
 // Retained as an internal alias while the rest of the queue/court code uses
@@ -78,6 +78,11 @@ export function playerRatingLabel(player) {
   // previous skill level in the UI.
   const legacyRatings = { Beginner: "2.5", Intermediate: "3.5", Advanced: "4.5" };
   return legacyRatings[player?.skill] || "2.0";
+}
+
+export function ratingRankLabel(input) {
+  const rating = typeof input === "object" ? playerRatingLabel(input) : normalizeSkill(input);
+  return RATINGS.find((item) => item.label === rating)?.rank || "Unrated";
 }
 
 export function skillKeyFromLabel(label) {

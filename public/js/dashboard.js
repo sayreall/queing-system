@@ -1,6 +1,7 @@
 import {
   SKILLS,
   playerRatingLabel,
+  ratingRankLabel,
   ensureQueuesExist,
   addPlayer,
   listenToQueues,
@@ -142,6 +143,7 @@ function initializeRatingUI() {
   if (counts) {
     counts.innerHTML = ratings.map((rating) =>
       `<span class="badge badge-beginner" data-queue-count="${rating.key}">${rating.label} 0</span>`
+      `<span class="badge badge-beginner" data-queue-count="${rating.key}">${rating.label} · ${rating.rank} 0</span>`
     ).join("");
   }
 
@@ -151,8 +153,10 @@ function initializeRatingUI() {
       <div class="glass-card" data-skill-card="${rating.key}">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div><h3 class="queue-title text-cyan-400">Rating ${rating.label} Queue</h3>
+          <div><h3 class="queue-title text-cyan-400">${rating.label} · ${rating.rank} Queue</h3>
             <p class="queue-meta"><span data-queue-total="${rating.key}">0 waiting</span><span class="mx-2 text-slate-500">|</span><span data-queue-wait="${rating.key}">Est wait 0 mins</span></p>
           </div><span class="skill-pill skill-beginner">${rating.label}</span>
+          </div><span class="skill-pill skill-beginner">${rating.rank}</span>
         </div>
         <div class="queue-matches-container" data-queue="${rating.key}" id="queue-${rating.key}"></div>
       </div>`).join("");
@@ -160,6 +164,7 @@ function initializeRatingUI() {
 
   const filter = document.getElementById("player-filter");
   if (filter) filter.innerHTML = `<option value="All">All ratings</option>${ratings.map((rating) => `<option value="${rating.label}">${rating.label}</option>`).join("")}<option value="Archived">Archived Status</option>`;
+  if (filter) filter.innerHTML = `<option value="All">All ratings</option>${ratings.map((rating) => `<option value="${rating.label}">${rating.label} · ${rating.rank}</option>`).join("")}<option value="Archived">Archived Status</option>`;
 
   const activeExtra = [elements.playersBodyIntermediate, elements.playersBodyAdvanced];
   const doneExtra = [elements.donePlayersBodyIntermediate, elements.donePlayersBodyAdvanced];
@@ -237,7 +242,7 @@ function initializeRatingUI() {
     }
     .queue-workspace .match-card .queue-item .font-semibold { font-size:.84rem; line-height:1.2; max-width:8.25rem; }
     .queue-workspace .match-card .queue-item .drag-handle { font-size:.9rem; }
-    .queue-workspace .match-card .queue-item [title="Player rating"] { font-size:.68rem; padding:.15rem .3rem; }
+    .queue-workspace .match-card .queue-item .rating-badge { font-size:.68rem; padding:.15rem .3rem; white-space:nowrap; }
     .queue-workspace .match-card .queue-actions button { padding:.22rem; }
     @media (max-width: 899px) {
       .queue-workspace #global-match-grid { grid-template-columns:1fr; }
@@ -251,6 +256,7 @@ function initializeRatingUI() {
       .queue-workspace .match-card .match-teams > div:nth-child(2) { min-height:1.25rem; padding:0; }
       .queue-workspace .match-card .team-list { min-height:0; }
       .queue-workspace .match-card .queue-item .font-semibold { max-width:calc(100vw - 12.5rem); font-size:.88rem; }
+      .queue-workspace .match-card .queue-item .rating-rank { display:none; }
     }
     .queue-workspace #queues-container > .glass-card,
     .queue-workspace #queues-container .queue-matches-container { display:contents; }
@@ -308,6 +314,10 @@ function shuffleArray(input) {
 
 function ratingForPlayer(player) {
   return player ? playerRatingLabel(player) : "—";
+}
+
+function rankForPlayer(player) {
+  return player ? ratingRankLabel(player) : "Unrated";
 }
 
 function rotationInsight(teamA, teamB) {
@@ -524,6 +534,7 @@ function renderQueues() {
                 <span class="drag-handle text-slate-400 cursor-grab hover:text-white px-0.5 text-xs">⋮⋮</span>
                 <span class="font-semibold text-[11px] truncate max-w-[70px] sm:max-w-[90px] cursor-grab" title="${player ? player.name : "Unknown"}">${player ? player.name : "Unknown"}</span>
                 <span class="text-[9px] font-bold text-cyan-300 bg-cyan-400/10 border border-cyan-400/20 px-1 rounded shrink-0" title="Player rating">${ratingForPlayer(player)}</span>
+                <span class="rating-badge text-[9px] font-bold text-cyan-300 bg-cyan-400/10 border border-cyan-400/20 px-1 rounded shrink-0" title="${ratingForPlayer(player)} · ${rankForPlayer(player)}">${ratingForPlayer(player)} <span class="rating-rank">· ${rankForPlayer(player)}</span></span>
                 ${resultBadge}
               </div>
               <div class="queue-actions hidden items-center gap-0.5 shrink-0">
