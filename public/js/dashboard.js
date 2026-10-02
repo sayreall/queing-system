@@ -243,7 +243,7 @@ function initializeRatingUI() {
     .queue-workspace .match-card .queue-item .drag-handle { font-size:.9rem; }
     .queue-workspace .match-card .queue-item .rating-badge { font-size:.68rem; padding:.15rem .3rem; white-space:nowrap; }
     .queue-workspace .match-card .queue-actions button { padding:.22rem; }
-    @media (max-width: 899px) {
+    @media (max-width: 1150px) {
       .queue-workspace #global-match-grid { grid-template-columns:1fr; }
     }
     @media (max-width: 520px) {
