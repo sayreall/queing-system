@@ -375,6 +375,11 @@ function renderQueues() {
     if (!container) return;
 
     const order = state.queues[skill.key] || [];
+    // Queue cards share one visual order, even though their players remain in
+    // separate rating queues for matching and drag-and-drop.
+    const matchesBefore = SKILLS
+      .slice(0, SKILLS.findIndex((item) => item.key === skill.key))
+      .reduce((total, previousSkill) => total + Math.ceil((state.queues[previousSkill.key] || []).length / 4), 0);
 
     if (!order.length) {
       window.smoothUpdateHTML(container, `<p class="queue-empty text-slate-500 py-4 text-center text-sm border border-dashed border-slate-700/50 rounded-xl mt-4">No players waiting.</p>`);
@@ -392,9 +397,10 @@ function renderQueues() {
         const matchId = `${skill.key}-${index}`;
         const isEditing = state.editingMatches && state.editingMatches.has(matchId);
         
-        const isUpNext = index === 0;
+        const matchNumber = matchesBefore + index + 1;
+        const isUpNext = matchNumber === 1;
         const isComplete = chunk.length === 4 && chunk.every(id => id && id !== "EMPTY");
-        const titleText = isUpNext ? "Up Next" : `Match ${index + 1}`;
+        const titleText = isUpNext ? "Up Next · Match 1" : `Match ${matchNumber}`;
         const headerColor = isUpNext ? "text-emerald-400" : "text-slate-400";
         const bgStyles = isUpNext 
             ? "border border-emerald-500/30 bg-emerald-500/5 shadow-lg shadow-emerald-500/5" 
