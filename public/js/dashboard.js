@@ -1280,6 +1280,7 @@ function bindEvents() {
       const newPlayerId = await addPlayer({
         name: elements.nameInput.value,
         skill: elements.skillSelect.value,
+        rating: document.getElementById("player-rating")?.value,
         gender: genderSelect ? genderSelect.value : "",
         location: elements.locationInput ? elements.locationInput.value.trim() : "",
       });
@@ -1288,6 +1289,8 @@ function bindEvents() {
       }
       elements.nameInput.value = "";
       elements.skillSelect.value = "";
+      const ratingInput = document.getElementById("player-rating");
+      if (ratingInput) ratingInput.value = "";
       if (genderSelect) genderSelect.value = "";
       if (elements.locationInput) elements.locationInput.value = "";
       showToast("Player added");
@@ -1558,7 +1561,7 @@ function bindEvents() {
         fair_play: "Fair Play",
         mixed: "Mixed Doubles",
         flex_borrow: "Flex Borrow",
-        skill_separated: "Skill Separated",
+        rating: "Rating Groups",
       };
       autoRoundModeLabel.textContent = state.autoRound
         ? `Mode: ${modeNames[state.autoRoundMode] || state.autoRoundMode}`

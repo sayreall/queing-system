@@ -58,6 +58,13 @@ export function normalizeSkill(input) {
   return match ? match.label : null;
 }
 
+export function normalizeRating(input) {
+  if (input === undefined || input === null || String(input).trim() === "") return null;
+  const rating = Number(input);
+  if (!Number.isFinite(rating) || rating < 0) return null;
+  return Math.round(rating * 100) / 100;
+}
+
 export function skillKeyFromLabel(label) {
   if (!label) return null;
   const match = skillByLabel.get(label.toLowerCase());
@@ -97,9 +104,10 @@ export async function ensureQueuesExist() {
   );
 }
 
-export async function addPlayer({ name, skill, gender, location, practicePartner }) {
+export async function addPlayer({ name, skill, rating, gender, location, practicePartner }) {
   const trimmedName = normalizeName(name || "");
   const normalizedSkill = normalizeSkill(skill || "");
+  const normalizedRating = normalizeRating(rating);
   const playerGender = gender || "Unspecified";
   const playerLocation = normalizeName(location || "");
   const playerPracticePartner = practicePartner || null;
@@ -135,6 +143,7 @@ export async function addPlayer({ name, skill, gender, location, practicePartner
         tx.set(playerRef, {
           gender: playerGender,
           location: playerLocation,
+          ...(normalizedRating !== null ? { rating: normalizedRating } : {}),
           updatedAt: serverTimestamp(),
         }, { merge: true });
       });
@@ -154,6 +163,7 @@ export async function addPlayer({ name, skill, gender, location, practicePartner
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
+        ...(normalizedRating !== null ? { rating: normalizedRating } : {}),
         status: "Standby",
         playedWith: {},
         updatedAt: now,
@@ -165,6 +175,7 @@ export async function addPlayer({ name, skill, gender, location, practicePartner
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
+        ...(normalizedRating !== null ? { rating: normalizedRating } : {}),
         status: "Standby",
         playedWith: {},
         currentMatchId: null,
@@ -198,6 +209,7 @@ export async function addPlayersBulk(entries, addToQueue = false) {
   entries.forEach((entry) => {
     const trimmedName = normalizeName(entry.name || "");
     const normalizedSkill = normalizeSkill(entry.skill || "");
+    const normalizedRating = normalizeRating(entry.rating);
     const playerGender = entry.gender || "Unspecified";
     const playerLocation = normalizeName(entry.location || entry.Location || "");
     if (!trimmedName || !normalizedSkill) return;
@@ -229,6 +241,7 @@ export async function addPlayersBulk(entries, addToQueue = false) {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
+        ...(normalizedRating !== null ? { rating: normalizedRating } : {}),
         status: initialStatus,
         playedWith: {},
         updatedAt: now,
@@ -240,6 +253,7 @@ export async function addPlayersBulk(entries, addToQueue = false) {
         skill: normalizedSkill,
         gender: playerGender,
         location: playerLocation,
+        ...(normalizedRating !== null ? { rating: normalizedRating } : {}),
         status: initialStatus,
         playedWith: {},
         currentMatchId: null,
@@ -636,10 +650,33 @@ export async function generateNextRound(playersList, mode = "social_mix") {
   }
 
   const bySkill = { beginner: [], intermediate: [], advanced: [] };
-  eligiblePlayers.forEach(p => {
-    const key = skillKeyFromLabel(p.skill);
-    if (bySkill[key]) bySkill[key].push(p);
-  });
+  const ratingFor = (player) => {
+    const rating = normalizeRating(player.rating);
+    if (rating !== null) return rating;
+    return player.skill === "Advanced" ? 4 : player.skill === "Intermediate" ? 3 : 2;
+  };
+  const queueForRating = (rating) => rating >= 4 ? "advanced" : rating >= 3 ? "intermediate" : "beginner";
+
+  if (mode === "rating") {
+    // Keep ready and currently-playing players apart, then make consecutive
+    // groups of four from the closest ratings. The existing queues are only
+    // used to display and schedule those generated groups.
+    const addRatingGroups = (source) => {
+      const sorted = [...source].sort((a, b) => ratingFor(a) - ratingFor(b));
+      for (let index = 0; index < sorted.length; index += 4) {
+        const group = sorted.slice(index, index + 4);
+        const average = group.reduce((sum, player) => sum + ratingFor(player), 0) / group.length;
+        bySkill[queueForRating(average)].push(...group);
+      }
+    };
+    addRatingGroups(eligiblePlayers.filter((player) => player.status !== "Playing"));
+    addRatingGroups(eligiblePlayers.filter((player) => player.status === "Playing"));
+  } else {
+    eligiblePlayers.forEach(p => {
+      const key = skillKeyFromLabel(p.skill);
+      if (bySkill[key]) bySkill[key].push(p);
+    });
+  }
 
   // ── Flex Borrow: fill short skill groups from Intermediate ──────────────
   // When a skill group (beginner, intermediate, or advanced) has 1–3 players
@@ -683,10 +720,12 @@ export async function generateNextRound(playersList, mode = "social_mix") {
   const now = serverTimestamp();
   
   for (const [skill, players] of Object.entries(bySkill)) {
-    // Basic shuffle first to break ties
-    for (let i = players.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [players[i], players[j]] = [players[j], players[i]];
+    // Basic shuffle first to break ties. Rating groups stay in rating order.
+    if (mode !== "rating") {
+      for (let i = players.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [players[i], players[j]] = [players[j], players[i]];
+      }
     }
 
     if (mode === "winners_losers") {
@@ -789,7 +828,27 @@ export async function generateNextRound(playersList, mode = "social_mix") {
         return finalArr;
     }
     
-    players.splice(0, players.length, ...pairUpAndFlatten(paddedReady), ...pairUpAndFlatten(paddedPlaying));
+    const arrangeRatingTeams = (group) => {
+      const arranged = [];
+      for (let index = 0; index < group.length; index += 4) {
+        const match = group.slice(index, index + 4);
+        if (match.length === 4) {
+          match.sort((a, b) => ratingFor(a) - ratingFor(b));
+          // Lowest + highest play together, as do the middle two.
+          arranged.push(match[0], match[3], match[1], match[2]);
+        } else {
+          arranged.push(...match);
+        }
+      }
+      return arranged;
+    };
+
+    players.splice(
+      0,
+      players.length,
+      ...(mode === "rating" ? arrangeRatingTeams(paddedReady) : pairUpAndFlatten(paddedReady)),
+      ...(mode === "rating" ? arrangeRatingTeams(paddedPlaying) : pairUpAndFlatten(paddedPlaying))
+    );
     const newOrder = players.map(p => p.id);
 
     const queueRef = getQueueDocRef(skill);

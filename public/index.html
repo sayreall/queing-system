@@ -731,6 +731,10 @@
             </select>
           </div>
           <div>
+            <label class="block text-sm text-slate-400 mb-1">Rating (optional)</label>
+            <input type="number" id="player-rating" min="0" step="0.01" placeholder="e.g. 3.75" class="input-field w-full" />
+          </div>
+          <div>
             <label class="block text-sm text-slate-400 mb-1">Gender</label>
             <select id="player-gender" class="input-field w-full" required>
               <option value="">Select gender</option>
@@ -826,22 +830,21 @@
               aren't used.</p>
           </label>
 
-          <!-- Skill Separated -->
+          <!-- Rating Groups -->
           <label
             class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
-            <input type="radio" name="matching_mode" value="skill_separated" class="peer sr-only">
+            <input type="radio" name="matching_mode" value="rating" class="peer sr-only">
             <div
               class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all">
             </div>
             <div class="flex items-center gap-2 mb-1 relative z-10">
-              <h3 class="text-base font-semibold text-white">Skill Separated</h3>
+              <h3 class="text-base font-semibold text-white">Rating Groups</h3>
               <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;"
                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p class="text-sm text-slate-400 relative z-10">Keeps similar skill levels together. May leave a court
-              waiting.</p>
+            <p class="text-sm text-slate-400 relative z-10">Forms matches from the closest player ratings, then balances each team's total rating.</p>
           </label>
 
           <!-- Winners / Losers -->

@@ -1,4 +1,4 @@
-import { SKILLS, addPlayersBulk, fetchExistingNames, normalizeSkill } from "./queue.js";
+import { SKILLS, addPlayersBulk, fetchExistingNames, normalizeRating, normalizeSkill } from "./queue.js";
 
 const fileInput = document.getElementById("import-file");
 const tableBody = document.getElementById("import-body");
@@ -14,7 +14,7 @@ function renderRows() {
   if (!rows.length) {
     tableBody.innerHTML = `
       <tr>
-        <td class="py-4 text-slate-500" colspan="5">No file loaded.</td>
+        <td class="py-4 text-slate-500" colspan="6">No file loaded.</td>
       </tr>
     `;
     summary.textContent = "";
@@ -41,6 +41,7 @@ function renderRows() {
     tr.innerHTML = `
       <td class="py-3 font-semibold">${row.name || ""}</td>
       <td>${row.skill || ""}</td>
+      <td>${row.rating ?? "â€”"}</td>
       <td>${selectHTML}</td>
       <td class="text-slate-400">${row.location || "—"}</td>
       <td>${row.valid ? (row.isRevive ? "Ready (Revive)" : "Ready") : row.reason}</td>
@@ -67,6 +68,7 @@ function validateRows(rawRows) {
   rows = rawRows.map((row) => {
     const name = (row.Name || row.name || "").trim();
     const skill = (row.Skill || row.skill || "").trim();
+    const rating = normalizeRating(row.Rating ?? row.rating);
     const gender = (row.Gender || row.gender || "Unspecified").trim();
     const location = (row.Location || row.location || "").trim();
     const normalizedSkill = normalizeSkill(skill);
@@ -100,6 +102,7 @@ function validateRows(rawRows) {
     return {
       name,
       skill: normalizedSkill || skill,
+      rating,
       gender,
       location,
       valid,
@@ -175,14 +178,15 @@ importReclubBtn?.addEventListener("click", async () => {
     const name = parts[0];
     
     let skill = "Beginner"; // Default
+    let rating = null;
     let gender = "Unspecified";
     let location = "";
     
     for (let i = 1; i < parts.length; i++) {
       const pLower = parts[i].toLowerCase();
       if (pLower.includes('rating=')) {
-        const rating = parseFloat(pLower.split('=')[1]);
-        if (!isNaN(rating)) {
+        rating = normalizeRating(pLower.split('=')[1]);
+        if (rating !== null) {
           if (rating >= 4.0) skill = "Advanced";
           else if (rating >= 3.0) skill = "Intermediate";
         }
@@ -198,7 +202,7 @@ importReclubBtn?.addEventListener("click", async () => {
       }
     }
     
-    return { Name: name, Skill: skill, Gender: gender, Location: location };
+    return { Name: name, Skill: skill, Rating: rating, Gender: gender, Location: location };
   });
 
   existingNames = await fetchExistingNames();

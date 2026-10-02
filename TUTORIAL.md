@@ -195,13 +195,13 @@ The **Round Generator** is a powerful feature that creates multiple matches at o
 ### How to Use It
 1. Scroll to Player Management → find the **"Round Generator"** panel (green border).
 2. Click **"Generate Round"** → a **Matching Mode** modal appears.
-3. Choose one of **6 matching modes**:
+3. Choose one of **7 matching modes**:
 
 | Mode | Description | Best For |
 |------|-------------|----------|
 | ⚖️ **Balanced** *(Recommended)* | Balances teams by win ratio; avoids repeat matchups | Competitive fairness |
 | 🤝 **Social Mix** *(Improved)* | Rotates partners/opponents fairly; stats not used | Casual social play |
-| 🎯 **Skill Separated** | Keeps similar skill levels together | Organized skill brackets |
+| 🎯 **Rating Groups** | Groups the closest numeric ratings, then balances the two team totals | Rating-based competitive play |
 | 🏆 **Winners / Losers** | Winners play winners, losers play losers | Tournament-style rotation |
 | 👫 **Mixed Doubles** | Each team gets one male + one female player | Mixed-gender events |
 | 🔀 **Flex Borrow** | If a queue is short by 1–3 players, borrows from Intermediate | Uneven skill turnout |

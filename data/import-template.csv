@@ -1,4 +1,4 @@
-Name,Skill,Gender
-John Doe,Beginner,Male
-Jane Smith,Advanced,Female
-Bob Johnson,Intermediate,Unspecified
+Name,Skill,Rating,Gender
+John Doe,Beginner,2.50,Male
+Jane Smith,Advanced,4.25,Female
+Bob Johnson,Intermediate,3.50,Unspecified
