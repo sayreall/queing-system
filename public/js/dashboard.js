@@ -748,7 +748,14 @@ function renderCourts() {
         ? totalQueued
         : (state.queues[courtAllowedSkill] || []).filter(id => id !== "EMPTY").length;
 
-      const hasValidMatch = state.pendingMatches.length > 0 || totalQueued >= 4;
+      const hasValidMatch = (courtAllowedSkill === null || courtAllowedSkill === "any" ? state.pendingMatches.length > 0 : false) || courtQueuedTotal >= 4;
+
+      const skillDropdown = `
+        <select class="input-field text-xs py-1 px-2 h-auto mt-1 w-36 bg-slate-800 border-slate-700" data-court-skill-select="${cid}">
+          <option value="any" ${courtAllowedSkill === null || courtAllowedSkill === "any" ? "selected" : ""}>Any Rating</option>
+          ${SKILLS.map((rating) => `<option value="${rating.key}" ${courtAllowedSkill === rating.key ? "selected" : ""}>${rating.label} Only</option>`).join("")}
+        </select>
+      `;
 
       if (hasValidMatch) {
         return `
@@ -756,7 +763,7 @@ function renderCourts() {
             <div class="flex items-start justify-between">
               <div>
                 <h3 class="court-title">${courtInfo.name}</h3>
-                <p class="text-xs text-emerald-400 mt-1 uppercase tracking-wider font-bold">Ready for next match</p>
+                ${skillDropdown}
               </div>
               <div class="flex items-center gap-1">
                 ${removeCourtButton}
@@ -776,6 +783,7 @@ function renderCourts() {
             <div class="flex items-start justify-between">
               <div>
                 <h3 class="court-title text-slate-400">${courtInfo.name}</h3>
+                ${skillDropdown}
               </div>
               <div class="flex items-center gap-1">
                 ${removeCourtButton}
@@ -2035,15 +2043,26 @@ function bindEvents() {
     const startCourtBtn = event.target.closest("[data-start-court]");
     if (startCourtBtn) {
       const courtId = startCourtBtn.dataset.startCourt;
+      const court = state.courts.find(c => c.id === courtId);
+      const courtAllowedSkill = court?.allowedSkill && court.allowedSkill !== "any" ? court.allowedSkill : null;
       let skillKey = null;
       
       // Look at pending matches first, then global grid
-      if (state.pendingMatches && state.pendingMatches.length > 0) {
+      if (!courtAllowedSkill && state.pendingMatches && state.pendingMatches.length > 0) {
         skillKey = "custom";
       } else {
         const globalGrid = document.getElementById("global-match-grid");
         if (globalGrid && globalGrid.children.length > 0) {
-          skillKey = globalGrid.children[0].dataset.skillKey;
+          // If court has restricted skill, find the first match with that skill
+          for (const card of globalGrid.children) {
+            if (!courtAllowedSkill || card.dataset.skillKey === courtAllowedSkill) {
+              const count = (state.queues[card.dataset.skillKey] || []).filter(id => id !== "EMPTY").length;
+              if (count >= 4) {
+                skillKey = card.dataset.skillKey;
+                break;
+              }
+            }
+          }
         }
       }
 
