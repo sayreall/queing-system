@@ -10,6 +10,42 @@ const state = {
   pendingMatches: [],
 };
 
+const SCORING_STORAGE_KEY = "dq_scoring_enabled";
+
+function scoringIsEnabled() {
+  const storedValue = localStorage.getItem(SCORING_STORAGE_KEY);
+  return storedValue === null ? true : storedValue === "true";
+}
+
+function rankedPlayers() {
+  return Array.from(state.players.values())
+    .filter((player) => player.status !== "Archived")
+    .map((player) => {
+      const wins = player.wins || 0;
+      const losses = player.losses || 0;
+      const games = wins + losses;
+      return {
+        ...player,
+        wins,
+        losses,
+        games,
+        winRate: games ? wins / games : 0,
+        pointsDiff: player.pointsDiff || 0,
+      };
+    })
+    .filter((player) => player.games > 0)
+    .sort((a, b) => {
+      if (scoringIsEnabled() && b.pointsDiff !== a.pointsDiff) return b.pointsDiff - a.pointsDiff;
+      if (b.winRate !== a.winRate) return b.winRate - a.winRate;
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return b.games - a.games;
+    });
+}
+
+function formatPoints(value) {
+  return value > 0 ? `+${value}` : String(value);
+}
+
 window.showTvError = function(error) {
   const container = document.getElementById("tv-upcoming-matches");
   if (container) {
@@ -257,7 +293,7 @@ function renderUpcomingMatches() {
   
   const newHTML = upcomingMatchesHTML.length > 0 
     ? upcomingMatchesHTML.join("") 
-    : `<div class="col-span-full glass-card text-center text-slate-400 py-8">No players waiting for a match</div>`;
+    : `<div class="col-span-full glass-card tv-upcoming-empty text-center">No players waiting for a match</div>`;
   
   if (window.morphdom) {
     const temp = container.cloneNode(false);
@@ -269,23 +305,19 @@ function renderUpcomingMatches() {
 }
 
 function renderLeaderboards() {
-  const players = Array.from(state.players.values()).filter(p => p.status !== "Archived");
-
-  // Calculate stats for all players
-  const ranked = players.map(p => {
-    const wins = p.wins || 0;
-    const losses = p.losses || 0;
-    const gp = wins + losses;
-    const winPct = gp > 0 ? wins / gp : 0;
-    return { ...p, wins, gp, winPct };
+  const usePoints = scoringIsEnabled();
+  const ranked = rankedPlayers();
+  const rankingMode = document.getElementById("tv-ranking-mode");
+  const rankingDescription = document.getElementById("tv-ranking-description");
+  document.querySelectorAll("[data-tv-primary-label]").forEach((label) => {
+    label.textContent = usePoints ? "Pts Diff" : "Wins";
   });
-
-  // Sort by Wins (descending), then Win% (descending), then least games played
-  ranked.sort((a, b) => {
-    if (b.wins !== a.wins) return b.wins - a.wins;
-    if (b.winPct !== a.winPct) return b.winPct - a.winPct;
-    return a.gp - b.gp;
-  });
+  if (rankingMode) rankingMode.textContent = usePoints ? "Points differential" : "Win rate ranking";
+  if (rankingDescription) {
+    rankingDescription.textContent = usePoints
+      ? "Ranked by points differential, then win rate."
+      : "Ranked by win rate, then wins.";
+  }
 
   // Top 3
   const top3 = ranked.slice(0, 3);
@@ -297,10 +329,10 @@ function renderLeaderboards() {
     const elWinPct = document.getElementById(`leaderboard-${rank}-winpct`);
     if (!elName || !elWins || !elWinPct) return;
     
-    if (player && player.wins > 0) { // Only show if they have at least 1 win
+    if (player) {
       elName.textContent = player.name;
-      elWins.textContent = player.wins;
-      elWinPct.textContent = Math.round(player.winPct * 100) + "%";
+      elWins.textContent = usePoints ? formatPoints(player.pointsDiff) : player.wins;
+      elWinPct.textContent = Math.round(player.winRate * 100) + "%";
     } else {
       elName.textContent = "--";
       elWins.textContent = "0";
@@ -322,6 +354,8 @@ function renderLeaderboards() {
       newHTML = ranked.map((player, index) => {
         const rank = index + 1;
         const rankColor = rank === 1 ? "text-gold" : rank === 2 ? "text-slate-300" : rank === 3 ? "text-amber-600" : "text-slate-500";
+        const primaryValue = usePoints ? formatPoints(player.pointsDiff) : `${player.wins}W`;
+        const primaryLabel = usePoints ? "Pts Diff" : "Wins";
         
         return `
           <div class="flex items-center justify-between p-2 rounded-lg bg-slate-800/40 border border-slate-700/50">
@@ -330,8 +364,8 @@ function renderLeaderboards() {
               <span class="font-semibold text-slate-200 truncate" style="max-width: 140px;" title="${player.name}">${player.name}</span>
             </div>
             <div class="flex flex-col items-end text-[10px] leading-tight">
-              <span class="font-bold text-emerald-400">${player.wins}W - ${player.losses}L</span>
-              <span class="text-slate-400">${Math.round(player.winPct * 100)}% WR</span>
+              <span class="font-bold text-emerald-400">${primaryValue} ${primaryLabel}</span>
+              <span class="text-slate-400">${Math.round(player.winRate * 100)}% WR · ${player.wins}W-${player.losses}L</span>
             </div>
           </div>
         `;
@@ -372,6 +406,10 @@ function startTimerLoop() {
     });
   }, 1000);
 }
+
+window.addEventListener("storage", (event) => {
+  if (event.key === SCORING_STORAGE_KEY) renderLeaderboards();
+});
 
 async function bootstrap() {
 

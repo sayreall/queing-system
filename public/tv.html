@@ -37,6 +37,46 @@
     };
   </script>
   <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .tv-page { min-height: 100vh; }
+    .tv-shell { max-width: 1680px; margin: 0 auto; }
+    .tv-header { position: relative; overflow: hidden; }
+    .tv-header::after { content: ""; position: absolute; width: 32rem; height: 32rem; right: 10%; top: -28rem; border-radius: 999px; background: rgba(245, 196, 42, .10); filter: blur(10px); pointer-events: none; }
+    .tv-eyebrow { color: var(--accent-tl); font-size: .68rem; font-weight: 700; letter-spacing: .32em; text-transform: uppercase; }
+    .tv-title { font-size: clamp(2.25rem, 5vw, 4.4rem); line-height: .9; letter-spacing: .01em; }
+    .tv-live-chip { display: inline-flex; align-items: center; gap: .5rem; margin-top: .85rem; color: var(--text-muted); font-size: .75rem; }
+    .tv-live-dot { width: .5rem; height: .5rem; border-radius: 999px; background: var(--accent-tl); box-shadow: 0 0 0 4px rgba(31, 207, 177, .12); animation: tvPulse 1.8s ease-in-out infinite; }
+    .tv-court { position: relative; min-height: 222px; padding: clamp(1rem, 2vw, 1.45rem); overflow: hidden; transition: border-color .2s ease, transform .2s ease; }
+    .tv-court:hover { transform: translateY(-2px); border-color: rgba(31, 207, 177, .45); }
+    .tv-court::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--accent-tl); opacity: .75; }
+    .tv-court .court-status { padding: .38rem .7rem; font-size: .62rem; font-weight: 700; }
+    .tv-court .court-timer { margin: 1rem 0 .35rem; font-size: clamp(2rem, 3vw, 3.1rem); line-height: 1; }
+    .tv-court .team-grid { gap: .75rem; }
+    .tv-court .team-card { min-height: 5.2rem; padding: .75rem; border-radius: .8rem; }
+    .tv-court .team-player { margin-top: .35rem; font-size: clamp(.82rem, 1.1vw, 1rem); }
+    .tv-section-heading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+    .tv-section-title { font-size: clamp(1.25rem, 2.2vw, 1.8rem); line-height: 1; }
+    .tv-section-copy { margin-top: .35rem; color: var(--text-muted); font-size: .76rem; }
+    .tv-mode { display: inline-flex; align-items: center; gap: .45rem; padding: .42rem .65rem; border: 1px solid rgba(31, 207, 177, .25); border-radius: 999px; background: rgba(31, 207, 177, .08); color: var(--accent-tl); font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .tv-upcoming-empty { min-height: 7.25rem; display: grid; place-items: center; border-style: dashed; color: var(--text-muted); }
+    .tv-podium { align-items: end; }
+    .tv-podium-card { position: relative; min-height: 166px; padding: 1.35rem; overflow: hidden; }
+    .tv-podium-card::after { content: ""; position: absolute; width: 12rem; height: 12rem; right: -6rem; bottom: -8rem; border-radius: 999px; background: currentColor; opacity: .06; }
+    .tv-podium--gold { min-height: 190px; border-color: rgba(245, 196, 42, .6) !important; background: linear-gradient(135deg, rgba(245, 196, 42, .17), rgba(245, 196, 42, .05)) !important; color: var(--accent-gd); }
+    .tv-podium--silver { color: #b6c2d4; }
+    .tv-podium--bronze { color: #e59353; }
+    .tv-podium-card > div:first-child { display: grid; place-items: center; width: 3.1rem; height: 3.1rem; border-radius: 999px; background: currentColor; color: #082525 !important; font-family: Rajdhani, sans-serif; font-size: 1.3rem; font-weight: 700; box-shadow: 0 0 22px currentColor; }
+    .tv-podium--gold > div:first-child { width: 4rem; height: 4rem; font-size: 1.7rem; }
+    .tv-podium-card > p { margin-top: 1rem !important; color: #fff !important; font-family: Rajdhani, sans-serif; font-size: clamp(1.65rem, 2.6vw, 2.5rem) !important; font-weight: 700; line-height: 1; }
+    .tv-podium--gold > p { font-size: clamp(2rem, 3.2vw, 3rem) !important; }
+    .tv-podium-card > div:last-child { display: flex; flex-wrap: wrap; justify-content: center; gap: .55rem; margin-top: .85rem !important; color: #d8e6e1; font-size: .82rem; }
+    .tv-podium-card > div:last-child > span { padding: .28rem .5rem; border-radius: .45rem; background: rgba(4, 28, 28, .36); }
+    .tv-ranking-grid { gap: .65rem; }
+    .tv-ranking-grid > div { min-height: 4.1rem; padding: .75rem 1rem; background: rgba(8, 42, 42, .68); transition: .15s ease; }
+    .tv-ranking-grid > div:hover { transform: translateY(-1px); border-color: rgba(31, 207, 177, .35); }
+    @keyframes tvPulse { 50% { opacity: .45; transform: scale(.8); } }
+    @media (max-width: 767px) { .tv-court { min-height: auto; } }
+  </style>
   <script>
     (function() {
       const club = localStorage.getItem("dq_club_preference");
@@ -60,20 +100,21 @@
   </script>
 </head>
 
-<body class="min-h-screen bg-ink font-body" style="color:#F2E8D5;">
+<body class="tv-page min-h-screen bg-ink font-body" style="color:#F2E8D5;">
   <div class="page-bg"></div>
 
-  <header class="px-8 py-6">
-    <div class="flex items-center justify-between">
+  <header class="tv-header px-4 py-6 sm:px-8 sm:py-9">
+    <div class="tv-shell flex items-start justify-between gap-4">
       <div>
-        <p class="text-sm uppercase tracking-[0.4em] text-slate-400">Live Courts</p>
-        <h1 class="text-2xl md:text-5xl font-display font-semibold" style="color:#F5C42A;">Pickleball Queue Display</h1>
+        <p class="tv-eyebrow">Live courts</p>
+        <h1 class="tv-title mt-2 font-display font-semibold" style="color:#F5C42A;">Pickleball Queue Display</h1>
+        <p class="tv-live-chip"><span class="tv-live-dot"></span> Live session updates</p>
       </div>
       <div id="back-btn-container"></div>
     </div>
   </header>
 
-  <main class="px-8 pb-10">
+  <main class="tv-shell px-4 pb-12 sm:px-8">
     <section class="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3" id="tv-courts">
       <div class="glass-card tv-court" data-tv-court="court-1">
         <div class="flex items-center justify-between">
@@ -134,42 +175,45 @@
       </div>
     </section>
 
-    <section class="mt-6 sm:mt-10 grid gap-4 sm:gap-6 xl:grid-cols-3" id="tv-upcoming-matches">
-      <div class="col-span-full glass-card text-center text-slate-400 py-8" id="upcoming-matches-loading">
+    <section class="mt-8 sm:mt-12" id="tv-upcoming-section">
+      <div class="tv-section-heading"><div><h2 class="tv-section-title font-display font-semibold">Coming up</h2><p class="tv-section-copy">The next matches ready to take the court.</p></div></div>
+      <div class="grid gap-4 sm:gap-6 xl:grid-cols-3" id="tv-upcoming-matches">
+      <div class="col-span-full glass-card tv-upcoming-empty text-center py-8" id="upcoming-matches-loading">
         Loading matches...
+      </div>
       </div>
     </section>
     <section class="mt-6 sm:mt-10 mb-8" id="tv-leaderboards">
-      <h2 class="text-xl sm:text-2xl font-display font-semibold mb-4 text-slate-300">Daily Leaderboard</h2>
-      <div class="grid gap-4 sm:gap-6 md:grid-cols-3">
+      <div class="tv-section-heading"><div><h2 class="tv-section-title font-display font-semibold">Top players</h2><p class="tv-section-copy">Today’s best performers in the current session.</p></div><span class="tv-mode" id="tv-ranking-mode">Win rate ranking</span></div>
+      <div class="tv-podium grid gap-4 sm:gap-6 md:grid-cols-3">
         <!-- 2nd Place -->
-        <div class="glass-card flex flex-col items-center text-center mt-4 sm:mt-8" style="border-color: rgba(148, 163, 184, 0.4); background: rgba(148, 163, 184, 0.05);">
+        <div class="glass-card tv-podium-card tv-podium--silver flex flex-col items-center text-center mt-4 sm:mt-8" style="border-color: rgba(148, 163, 184, 0.4); background: rgba(148, 163, 184, 0.05);">
           <div class="w-12 h-12 rounded-full bg-slate-400 text-slate-900 flex items-center justify-center font-bold text-xl mb-3 shadow-[0_0_15px_rgba(148,163,184,0.5)]">2</div>
           <p class="text-2xl font-display font-semibold text-white truncate w-full" id="leaderboard-2-name">--</p>
           <div class="flex items-center gap-3 mt-2 text-sm">
-            <span class="text-slate-300"><span id="leaderboard-2-wins" class="font-bold text-slate-100">0</span> Wins</span>
+            <span class="text-slate-300"><span id="leaderboard-2-wins" class="font-bold text-slate-100">0</span> <span data-tv-primary-label>Wins</span></span>
             <span class="text-slate-500">|</span>
             <span class="text-slate-300"><span id="leaderboard-2-winpct" class="font-bold text-slate-100">0%</span></span>
           </div>
         </div>
 
         <!-- 1st Place -->
-        <div class="glass-card flex flex-col items-center text-center transform scale-105 shadow-xl" style="border-color: rgba(245, 196, 42, 0.6); background: rgba(245, 196, 42, 0.1);">
+        <div class="glass-card tv-podium-card tv-podium--gold flex flex-col items-center text-center shadow-xl" style="border-color: rgba(245, 196, 42, 0.6); background: rgba(245, 196, 42, 0.1);">
           <div class="w-16 h-16 rounded-full bg-gold text-slate-900 flex items-center justify-center font-bold text-3xl mb-3 shadow-[0_0_20px_rgba(245,196,42,0.6)]">👑</div>
           <p class="text-3xl font-display font-semibold text-white truncate w-full" id="leaderboard-1-name">--</p>
           <div class="flex items-center gap-4 mt-2">
-            <span class="text-gold text-base"><span id="leaderboard-1-wins" class="font-bold text-white">0</span> Wins</span>
+            <span class="text-gold text-base"><span id="leaderboard-1-wins" class="font-bold text-white">0</span> <span data-tv-primary-label>Wins</span></span>
             <span class="text-slate-500">|</span>
             <span class="text-gold text-base"><span id="leaderboard-1-winpct" class="font-bold text-white">0%</span> WR</span>
           </div>
         </div>
 
         <!-- 3rd Place -->
-        <div class="glass-card flex flex-col items-center text-center mt-4 sm:mt-8" style="border-color: rgba(180, 83, 9, 0.4); background: rgba(180, 83, 9, 0.05);">
+        <div class="glass-card tv-podium-card tv-podium--bronze flex flex-col items-center text-center mt-4 sm:mt-8" style="border-color: rgba(180, 83, 9, 0.4); background: rgba(180, 83, 9, 0.05);">
           <div class="w-12 h-12 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-xl mb-3 shadow-[0_0_15px_rgba(180,83,9,0.5)]">3</div>
           <p class="text-2xl font-display font-semibold text-white truncate w-full" id="leaderboard-3-name">--</p>
           <div class="flex items-center gap-3 mt-2 text-sm">
-            <span class="text-slate-300"><span id="leaderboard-3-wins" class="font-bold text-slate-100">0</span> Wins</span>
+            <span class="text-slate-300"><span id="leaderboard-3-wins" class="font-bold text-slate-100">0</span> <span data-tv-primary-label>Wins</span></span>
             <span class="text-slate-500">|</span>
             <span class="text-slate-300"><span id="leaderboard-3-winpct" class="font-bold text-slate-100">0%</span></span>
           </div>
@@ -177,9 +221,9 @@
       </div>
     </section>
     
-    <section class="mt-6 sm:mt-10 mb-10" id="tv-full-rankings">
-      <h2 class="text-lg sm:text-xl font-display font-semibold mb-4 text-slate-400 uppercase tracking-widest">Full Player Rankings</h2>
-      <div id="full-rankings-container" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
+    <section class="mt-10 mb-10" id="tv-full-rankings">
+      <div class="tv-section-heading"><div><h2 class="tv-section-title font-display font-semibold">Full rankings</h2><p class="tv-section-copy" id="tv-ranking-description">Ranked by win rate, then wins.</p></div></div>
+      <div id="full-rankings-container" class="tv-ranking-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
         <!-- JS populates this -->
       </div>
     </section>
