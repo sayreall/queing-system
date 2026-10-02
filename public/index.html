@@ -988,6 +988,29 @@
       </div>
     </div>
 
+    <!-- Lock Partners Modal -->
+    <div id="lock-partners-modal"
+      class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-sm relative">
+        <button id="close-lock-partners-modal" type="button"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+        <h2 class="text-2xl font-display font-semibold mb-2">Lock Partners</h2>
+        <p class="text-sm text-slate-400 mb-6">Choose two players who should always play on the same team.</p>
+
+        <form id="lock-partners-form" class="space-y-4">
+          <div>
+            <label class="block text-sm text-slate-400 mb-1">First Player</label>
+            <select id="lock-partners-player-a" class="input-field w-full" required></select>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1">Partner</label>
+            <select id="lock-partners-player-b" class="input-field w-full" required></select>
+          </div>
+          <button type="submit" class="btn-primary w-full py-3 mt-4 text-sm">Lock This Pair</button>
+        </form>
+      </div>
+    </div>
+
     <!-- Game Limit Modal -->
     <div id="game-limit-modal"
       class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">

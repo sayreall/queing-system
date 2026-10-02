@@ -17,6 +17,7 @@ import {
   updatePlayerSkill,
   updatePlayerGender,
   updatePlayerPracticePartner,
+  clearAllPracticePartners,
   removePlayer,
   archiveAllPlayers,
   archiveSinglePlayer,
@@ -99,7 +100,6 @@ const state = {
   filter: "All",
   automationLock: false,
   editingMatches: new Set(),
-  partnersLocked: localStorage.getItem("dq_partners_locked") === "1",
   // Auto queue top-up is enabled by default. A user can explicitly turn it
   // off, which stores "0" in local storage.
   autoRound: localStorage.getItem("dq_auto_round") !== "0",
@@ -152,21 +152,6 @@ function refreshGameLimitUI() {
   if (button) {
     button.classList.toggle("border-amber-500/60", Boolean(limit));
     button.classList.toggle("text-amber-300", Boolean(limit));
-  }
-}
-
-function refreshPartnerLockUI() {
-  const lockButton = document.getElementById("lock-partners-btn");
-  const unlockButton = document.getElementById("unlock-partners-btn");
-  if (lockButton) {
-    lockButton.disabled = state.partnersLocked;
-    lockButton.classList.toggle("opacity-50", state.partnersLocked);
-    lockButton.classList.toggle("cursor-not-allowed", state.partnersLocked);
-  }
-  if (unlockButton) {
-    unlockButton.disabled = !state.partnersLocked;
-    unlockButton.classList.toggle("opacity-50", !state.partnersLocked);
-    unlockButton.classList.toggle("cursor-not-allowed", !state.partnersLocked);
   }
 }
 
@@ -1527,6 +1512,25 @@ function openPartnerModal(playerId) {
   modal.classList.remove("hidden");
 }
 
+function openLockPartnersModal() {
+  const players = Array.from(state.players.values())
+    .filter((player) => player.status !== "Archived")
+    .sort((a, b) => a.name.localeCompare(b.name));
+  if (players.length < 2) {
+    showToast("Add at least two active players before locking a pair.", "error");
+    return;
+  }
+
+  const playerASelect = document.getElementById("lock-partners-player-a");
+  const playerBSelect = document.getElementById("lock-partners-player-b");
+  const modal = document.getElementById("lock-partners-modal");
+  const options = players.map((player) => `<option value="${player.id}">${player.name}</option>`).join("");
+  playerASelect.innerHTML = options;
+  playerBSelect.innerHTML = options;
+  if (players[1]) playerBSelect.value = players[1].id;
+  modal.classList.remove("hidden");
+}
+
 function openAddPlayerModal(queueKey, matchIndex, slotIndex, courtId = null) {
   _pendingAddSlotInfo = { queueKey, matchIndex, slotIndex, courtId };
   const modal = document.getElementById("add-to-match-modal");
@@ -1716,19 +1720,20 @@ function bindEvents() {
   });
   refreshGameLimitUI();
 
-  document.getElementById("lock-partners-btn")?.addEventListener("click", () => {
-    state.partnersLocked = true;
-    localStorage.setItem("dq_partners_locked", "1");
-    refreshPartnerLockUI();
-    showToast("Fixed partners will stay together in newly generated rounds.");
+  document.getElementById("lock-partners-btn")?.addEventListener("click", openLockPartnersModal);
+  document.getElementById("unlock-partners-btn")?.addEventListener("click", async () => {
+    const confirmed = await showConfirmModal(
+      "Unlock all fixed partners? This removes every saved partner pairing.",
+      "Unlock All Partners"
+    );
+    if (!confirmed) return;
+    try {
+      const cleared = await clearAllPracticePartners();
+      showToast(cleared ? `Unlocked ${cleared} player partner record(s).` : "No fixed partners to unlock.");
+    } catch (error) {
+      showToast(error.message || "Unable to unlock partners.", "error");
+    }
   });
-  document.getElementById("unlock-partners-btn")?.addEventListener("click", () => {
-    state.partnersLocked = false;
-    localStorage.setItem("dq_partners_locked", "0");
-    refreshPartnerLockUI();
-    showToast("Partner lock removed. Fixed partner records are still saved.");
-  });
-  refreshPartnerLockUI();
 
   const partnerModal = document.getElementById("partner-modal");
   const closePartnerBtn = document.getElementById("close-partner-modal");
@@ -1756,6 +1761,32 @@ function bindEvents() {
       }
     });
   }
+
+  const lockPartnersModal = document.getElementById("lock-partners-modal");
+  const lockPartnersForm = document.getElementById("lock-partners-form");
+  const closeLockPartnersModal = () => lockPartnersModal?.classList.add("hidden");
+  document.getElementById("close-lock-partners-modal")?.addEventListener("click", closeLockPartnersModal);
+  lockPartnersModal?.addEventListener("click", (event) => {
+    if (event.target === lockPartnersModal) closeLockPartnersModal();
+  });
+  lockPartnersForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const playerA = document.getElementById("lock-partners-player-a").value;
+    const playerB = document.getElementById("lock-partners-player-b").value;
+    if (!playerA || !playerB || playerA === playerB) {
+      showToast("Choose two different players to lock a pair.", "error");
+      return;
+    }
+    try {
+      await updatePlayerPracticePartner(playerA, playerB);
+      const firstName = state.players.get(playerA)?.name || "Player 1";
+      const secondName = state.players.get(playerB)?.name || "Player 2";
+      showToast(`${firstName} and ${secondName} are now fixed partners.`);
+      closeLockPartnersModal();
+    } catch (error) {
+      showToast(error.message || "Unable to lock partners.", "error");
+    }
+  });
 
   elements.addForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -2022,7 +2053,7 @@ function bindEvents() {
           })),
         ];
         const summary = await generateSmartRound(Array.from(state.players.values()), selectedMode, history, {
-          lockPartners: state.partnersLocked,
+          lockPartners: true,
         });
         const repeatCount = summary.repeatLineups + summary.repeatTeammates + summary.repeatOpponents;
         showToast(
@@ -3115,7 +3146,7 @@ async function bootstrap() {
       ];
       const summary = await generateSmartRound(players, mode, history, {
         preserveExisting: true,
-        lockPartners: state.partnersLocked,
+        lockPartners: true,
       });
       const repeatCount = summary.repeatLineups + summary.repeatTeammates + summary.repeatOpponents;
       showToast(
