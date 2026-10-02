@@ -885,3 +885,160 @@ export async function generateNextRound(playersList, mode = "social_mix") {
 
   await batch.commit();
 }
+
+// Build one round without cloning players to fill a partial card.  The score
+// favours new combinations first, then evenly matched teams.
+const rotationPairKey = (a, b) => [a, b].sort().join("__");
+const rotationLineupKey = (ids) => [...ids].sort().join("__");
+
+function playerPower(player) {
+  const games = (player.wins || 0) + (player.losses || 0);
+  const winRate = games ? (player.wins || 0) / games : 0.5;
+  return Number(playerRatingLabel(player)) + winRate * 0.35;
+}
+
+function pairHistory(playerA, playerB) {
+  return (playerA.playedWith?.[playerB.id] || 0) +
+    (playerB.playedWith?.[playerA.id] || 0);
+}
+
+function sortForRound(players, mode) {
+  const copy = [...players];
+  const tieBreak = () => Math.random() - 0.5;
+  if (mode === "fair_play") {
+    return copy.sort((a, b) => ((a.wins || 0) + (a.losses || 0)) - ((b.wins || 0) + (b.losses || 0)) || tieBreak());
+  }
+  if (mode === "winners_losers") {
+    const score = (player) => player.lastResult === "Win" ? 1 : player.lastResult === "Loss" ? -1 : 0;
+    return copy.sort((a, b) => score(b) - score(a) || tieBreak());
+  }
+  if (mode === "balanced") {
+    return copy.sort((a, b) => playerPower(b) - playerPower(a) || tieBreak());
+  }
+  if (mode === "mixed") {
+    return copy.sort((a, b) => (a.gender === "Female" ? -1 : 0) - (b.gender === "Female" ? -1 : 0) || tieBreak());
+  }
+  return copy.sort(tieBreak);
+}
+
+function chooseGroup(pool, lineupHistory) {
+  const candidates = pool.slice(0, Math.min(8, pool.length));
+  let best = candidates.slice(0, 4);
+  let bestScore = Infinity;
+  for (let a = 0; a < candidates.length - 3; a++) {
+    for (let b = a + 1; b < candidates.length - 2; b++) {
+      for (let c = b + 1; c < candidates.length - 1; c++) {
+        for (let d = c + 1; d < candidates.length; d++) {
+          const group = [candidates[a], candidates[b], candidates[c], candidates[d]];
+          const repeatLineup = lineupHistory.has(rotationLineupKey(group.map((player) => player.id)));
+          let score = repeatLineup ? 10000 : 0;
+          for (let x = 0; x < group.length; x++) {
+            for (let y = x + 1; y < group.length; y++) score += pairHistory(group[x], group[y]) * 10;
+          }
+          // Keep people near the front of the chosen matching mode's order.
+          score += (a + b + c + d) * 0.25;
+          if (score < bestScore) {
+            best = group;
+            bestScore = score;
+          }
+        }
+      }
+    }
+  }
+  return best;
+}
+
+function arrangeBalancedTeams(group, teammateHistory) {
+  const pairings = [
+    [[group[0], group[1]], [group[2], group[3]]],
+    [[group[0], group[2]], [group[1], group[3]]],
+    [[group[0], group[3]], [group[1], group[2]]],
+  ];
+  let best = pairings[0];
+  let bestScore = Infinity;
+  for (const pairing of pairings) {
+    const [teamA, teamB] = pairing;
+    const teamAKey = rotationPairKey(teamA[0].id, teamA[1].id);
+    const teamBKey = rotationPairKey(teamB[0].id, teamB[1].id);
+    const repeats = pairHistory(...teamA) + pairHistory(...teamB) +
+      (teammateHistory.has(teamAKey) ? 100 : 0) +
+      (teammateHistory.has(teamBKey) ? 100 : 0);
+    const balance = Math.abs(
+      playerPower(teamA[0]) + playerPower(teamA[1]) -
+      playerPower(teamB[0]) - playerPower(teamB[1])
+    );
+    const score = repeats * 20 + balance;
+    if (score < bestScore) {
+      best = pairing;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+export async function generateSmartRound(playersList, mode = "social_mix", matchHistory = []) {
+  const eligible = playersList.filter((player) =>
+    player.status === "Waiting" || player.status === "Standby" || player.status === "Playing"
+  );
+  if (!eligible.length) throw new Error("No waiting or standby players available.");
+
+  const lineupHistory = new Set(
+    matchHistory.filter((match) => match.players?.length === 4)
+      .map((match) => rotationLineupKey(match.players))
+  );
+  const teammateHistory = new Set(
+    matchHistory.flatMap((match) => [match.teamA, match.teamB])
+      .filter((team) => team?.length === 2)
+      .map((team) => rotationPairKey(team[0], team[1]))
+  );
+  const queues = Object.fromEntries(SKILLS.map((skill) => [skill.key, []]));
+  eligible.forEach((player) => {
+    const key = skillKeyFromLabel(playerRatingLabel(player));
+    if (key) queues[key].push(player);
+  });
+
+  const summary = { matches: 0, repeatLineups: 0, repeatTeammates: 0, unpaired: 0, repeatedPlayers: 0 };
+  const batch = writeBatch(db);
+  const now = serverTimestamp();
+
+  for (const [skillKey, skillPlayers] of Object.entries(queues)) {
+    const ready = sortForRound(skillPlayers.filter((player) => player.status !== "Playing"), mode);
+    const playing = sortForRound(skillPlayers.filter((player) => player.status === "Playing"), mode);
+    const ordered = [];
+
+    for (const pool of [ready, playing]) {
+      while (pool.length >= 4) {
+        const group = chooseGroup(pool, lineupHistory);
+        const groupIds = group.map((player) => player.id);
+        const lineupKey = rotationLineupKey(groupIds);
+        if (lineupHistory.has(lineupKey)) summary.repeatLineups++;
+        const [teamA, teamB] = arrangeBalancedTeams(group, teammateHistory);
+        [teamA, teamB].forEach((team) => {
+          const key = rotationPairKey(team[0].id, team[1].id);
+          if (teammateHistory.has(key)) summary.repeatTeammates++;
+          teammateHistory.add(key);
+        });
+        lineupHistory.add(lineupKey);
+        ordered.push(...teamA, ...teamB);
+        groupIds.forEach((id) => pool.splice(pool.findIndex((player) => player.id === id), 1));
+        summary.matches++;
+      }
+      summary.unpaired += pool.length;
+      ordered.push(...pool);
+    }
+
+    batch.set(getQueueDocRef(skillKey), {
+      order: ordered.map((player) => player.id),
+      skill: skillLabelFromKey(skillKey),
+      updatedAt: now,
+    }, { merge: true });
+    ordered.forEach((player) => {
+      if (player.status !== "Waiting" && player.status !== "Playing") {
+        batch.update(getTenantDoc("players", player.id), { status: "Waiting", updatedAt: now });
+      }
+    });
+  }
+
+  await batch.commit();
+  return summary;
+}

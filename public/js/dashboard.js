@@ -1,5 +1,6 @@
 import {
   SKILLS,
+  playerRatingLabel,
   ensureQueuesExist,
   addPlayer,
   listenToQueues,
@@ -14,7 +15,7 @@ import {
   removePlayer,
   archiveAllPlayers,
   archiveSinglePlayer,
-  generateNextRound,
+  generateSmartRound,
 } from "./queue.js";
 import {
   ensureCourtsExist,
@@ -218,13 +219,14 @@ function initializeRatingUI() {
 
   const workspaceStyle = document.createElement("style");
   workspaceStyle.textContent = `
-    .queue-workspace #queues-container { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0.75rem; }
+    .queue-workspace #queues-container { display:block; }
+    .queue-workspace #global-match-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0.75rem; }
     @media (max-width: 639px) {
-      .queue-workspace #queues-container { grid-template-columns:1fr; }
+      .queue-workspace #global-match-grid { grid-template-columns:1fr; }
     }
     .queue-workspace #queues-container > .glass-card,
-    .queue-workspace #queues-container .queue-matches-container,
-    .queue-workspace #queues-container .queue-matches-grid { display:contents; }
+    .queue-workspace #queues-container .queue-matches-container { display:contents; }
+    .queue-workspace #queues-container .queue-matches-container > .queue-matches-grid { display:none; }
     .queue-workspace #queues-container > .glass-card > .flex { display:none; }
     .queue-workspace #queues-container .queue-empty { display:none; }
     #compact-player-list { height:480px; scrollbar-gutter:stable; background:rgba(5, 29, 34, .58); }
@@ -276,12 +278,38 @@ function shuffleArray(input) {
   return arr;
 }
 
+function ratingForPlayer(player) {
+  return player ? playerRatingLabel(player) : "—";
+}
+
+function rotationInsight(teamA, teamB) {
+  const players = [...teamA, ...teamB].filter(Boolean);
+  if (players.length !== 4) return { label: "Waiting for players", tone: "text-slate-500" };
+
+  const lineupKey = [...players].sort().join("__");
+  const pairKey = (team) => [...team].sort().join("__");
+  const isRepeatLineup = state.matchLog.some((match) =>
+    match.players?.length === 4 && [...match.players].sort().join("__") === lineupKey
+  );
+  const repeatPartners = state.matchLog.some((match) =>
+    [match.teamA, match.teamB].some((team) =>
+      team?.length === 2 && (pairKey(team) === pairKey(teamA) || pairKey(team) === pairKey(teamB))
+    )
+  );
+  if (isRepeatLineup) return { label: "Repeat lineup", tone: "text-rose-400" };
+  if (repeatPartners) return { label: "Repeat partner", tone: "text-amber-400" };
+  return { label: "Fresh rotation", tone: "text-emerald-400" };
+}
+
 function showToast(message, tone = "info") {
   const toast = document.createElement("div");
   toast.className = "toast";
   toast.textContent = message;
   if (tone === "error") {
     toast.style.borderColor = "rgba(248, 113, 113, 0.6)";
+  } else if (tone === "warning") {
+    toast.style.borderColor = "rgba(251, 191, 36, 0.7)";
+    toast.style.background = "rgba(120, 83, 9, 0.92)";
   }
   elements.toastContainer.appendChild(toast);
   setTimeout(() => toast.remove(), 3200);
@@ -400,6 +428,9 @@ function renderQueues() {
         const matchNumber = matchesBefore + index + 1;
         const isUpNext = matchNumber === 1;
         const isComplete = chunk.length === 4 && chunk.every(id => id && id !== "EMPTY");
+        const rotation = isComplete
+          ? rotationInsight(chunk.slice(0, 2), chunk.slice(2, 4))
+          : { label: "Waiting for players", tone: "text-slate-500" };
         const titleText = isUpNext ? "Up Next · Match 1" : `Match ${matchNumber}`;
         const headerColor = isUpNext ? "text-emerald-400" : "text-slate-400";
         const bgStyles = isUpNext 
@@ -408,6 +439,7 @@ function renderQueues() {
         
         matchCard.className = `match-card rounded-xl p-2 sm:p-3 ${bgStyles} ${isEditing ? "is-editing" : ""}`;
         matchCard.dataset.matchId = matchId;
+        matchCard.dataset.skillKey = skill.key;
         matchCard.innerHTML = `
           <div class="flex items-center justify-between mb-2 border-b border-slate-700/50 pb-1.5 rounded transition-colors">
             <div class="flex items-center gap-1.5 cursor-grab match-card-drag-handle hover:bg-slate-700/30 px-1 -ml-1 rounded">
@@ -416,6 +448,7 @@ function renderQueues() {
             </div>
             <div class="flex items-center gap-2">
               <span class="text-[10px] font-semibold ${isComplete ? "text-green-400" : "text-amber-400"}">${chunk.length}/4</span>
+              <span class="text-[9px] font-semibold ${rotation.tone}">${rotation.label}</span>
               <button class="text-slate-400 hover:text-white px-1 edit-match-btn transition-colors" title="Edit Match">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
               </button>
@@ -462,6 +495,7 @@ function renderQueues() {
               <div class="flex items-center gap-1 overflow-hidden">
                 <span class="drag-handle text-slate-400 cursor-grab hover:text-white px-0.5 text-xs">⋮⋮</span>
                 <span class="font-semibold text-[11px] truncate max-w-[70px] sm:max-w-[90px] cursor-grab" title="${player ? player.name : "Unknown"}">${player ? player.name : "Unknown"}</span>
+                <span class="text-[9px] font-bold text-cyan-300 bg-cyan-400/10 border border-cyan-400/20 px-1 rounded shrink-0" title="Player rating">${ratingForPlayer(player)}</span>
                 ${resultBadge}
               </div>
               <div class="queue-actions hidden items-center gap-0.5 shrink-0">
@@ -510,8 +544,28 @@ function renderQueues() {
     if (waitEl) waitEl.textContent = `Est wait ${wait} mins`;
   });
   
+  renderQueueWorkspaceCards();
+
   // Re-attach sortable after re-render
   setupSortable();
+}
+
+function renderQueueWorkspaceCards() {
+  const queuesContainer = document.getElementById("queues-container");
+  if (!queuesContainer?.closest(".queue-workspace")) return;
+
+  let globalGrid = document.getElementById("global-match-grid");
+  if (!globalGrid) {
+    globalGrid = document.createElement("div");
+    globalGrid.id = "global-match-grid";
+    globalGrid.className = "queue-matches-grid";
+    queuesContainer.appendChild(globalGrid);
+  }
+
+  const cards = Array.from(queuesContainer.querySelectorAll(
+    ".queue-matches-container .match-card"
+  ));
+  globalGrid.replaceChildren(...cards);
 }
 
 
@@ -566,12 +620,14 @@ function renderCourts() {
       const players = court.players || [];
       const teamAIds = players.slice(0, 2);
       const teamBIds = players.slice(2, 4);
+      const rotation = rotationInsight(teamAIds, teamBIds);
       return `
         <div class="glass-card court-card" data-court-id="${cid}" style="border-color:rgba(56,189,248,0.25);">
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 flex-wrap">
               <h3 class="court-title">${courtInfo.name}</h3>
               <span class="court-status active">● LIVE</span>
+              <span class="text-[9px] font-semibold ${rotation.tone}">${rotation.label}</span>
             </div>
             <span class="court-timer font-mono text-xl font-bold text-cyan-300" data-court-timer="${cid}">00:00</span>
           </div>
@@ -579,12 +635,16 @@ function renderCourts() {
             <div class="team-card" style="border-color:rgba(56,189,248,0.3);background:rgba(56,189,248,0.07);">
               <p class="team-label text-cyan-400">Team A</p>
               <p class="team-player mt-2 flex justify-between items-center group"><span>${nameFor(teamAIds[0])}</span><button class="text-slate-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100" data-replace-active="${cid}" data-slot="0" title="Change Player"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button></p>
+              <p class="team-player mt-2 flex justify-between items-center group"><span>${nameFor(teamAIds[0])}</span><span class="text-[9px] text-cyan-300">${ratingForPlayer(state.players.get(teamAIds[0]))}</span><button class="text-slate-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100" data-replace-active="${cid}" data-slot="0" title="Change Player"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button></p>
               <p class="team-player flex justify-between items-center group"><span>${nameFor(teamAIds[1])}</span><button class="text-slate-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100" data-replace-active="${cid}" data-slot="1" title="Change Player"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button></p>
+              <p class="team-player flex justify-between items-center group"><span>${nameFor(teamAIds[1])}</span><span class="text-[9px] text-cyan-300">${ratingForPlayer(state.players.get(teamAIds[1]))}</span><button class="text-slate-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100" data-replace-active="${cid}" data-slot="1" title="Change Player"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button></p>
             </div>
             <div class="team-card" style="border-color:rgba(251,113,133,0.3);background:rgba(251,113,133,0.07);">
               <p class="team-label text-rose-400">Team B</p>
               <p class="team-player mt-2 flex justify-between items-center group"><span>${nameFor(teamBIds[0])}</span><button class="text-slate-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100" data-replace-active="${cid}" data-slot="2" title="Change Player"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button></p>
+              <p class="team-player mt-2 flex justify-between items-center group"><span>${nameFor(teamBIds[0])}</span><span class="text-[9px] text-cyan-300">${ratingForPlayer(state.players.get(teamBIds[0]))}</span><button class="text-slate-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100" data-replace-active="${cid}" data-slot="2" title="Change Player"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button></p>
               <p class="team-player flex justify-between items-center group"><span>${nameFor(teamBIds[1])}</span><button class="text-slate-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100" data-replace-active="${cid}" data-slot="3" title="Change Player"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button></p>
+              <p class="team-player flex justify-between items-center group"><span>${nameFor(teamBIds[1])}</span><span class="text-[9px] text-cyan-300">${ratingForPlayer(state.players.get(teamBIds[1]))}</span><button class="text-slate-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100" data-replace-active="${cid}" data-slot="3" title="Change Player"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button></p>
             </div>
           </div>
           <div class="grid grid-cols-2 gap-2 mt-1">
@@ -1031,6 +1091,72 @@ async function handlePlayerActionClick(event) {
 function setupSortable() {
   if (!window.Sortable) {
     showToast("SortableJS failed to load", "error");
+    return;
+  }
+
+  const globalGrid = document.getElementById("global-match-grid");
+  if (globalGrid) {
+    if (!globalGrid._sortable) {
+      globalGrid._sortable = new Sortable(globalGrid, {
+        animation: 150,
+        draggable: ".match-card",
+        filter: ".queue-item, button, select, input, textarea",
+        preventOnFilter: false,
+        fallbackOnBody: true,
+        forceFallback: true,
+        onMove: (event) => {
+          const targetCard = event.related?.closest(".match-card");
+          return !targetCard || event.dragged.dataset.skillKey === targetCard.dataset.skillKey;
+        },
+        onEnd: async (event) => {
+          const skillKey = event.item.dataset.skillKey;
+          const order = [];
+          globalGrid.querySelectorAll(`.match-card[data-skill-key="${skillKey}"] .queue-item`).forEach((item) => {
+            if (item.dataset.playerId) {
+              order.push(item.dataset.playerId);
+            } else if (item.dataset.action === "open-add-player-modal") {
+              order.push("EMPTY");
+            }
+          });
+          while (order.length > 0 && order[order.length - 1] === "EMPTY") {
+            order.pop();
+          }
+          try {
+            await reorderQueue(skillKey, order);
+          } catch (error) {
+            showToast(error.message || "Failed to reorder matches", "error");
+          }
+        },
+      });
+    }
+
+    globalGrid.querySelectorAll(".team-list").forEach((list) => {
+      if (list._sortable) return;
+
+      const skillKey = list.dataset.queue;
+      list._sortable = new Sortable(list, {
+        group: `queue-${skillKey}`,
+        animation: 150,
+        filter: "button, .add-player-btn",
+        preventOnFilter: false,
+        delay: 150,
+        swap: true,
+        swapClass: "bg-slate-700/80",
+        delayOnTouchOnly: true,
+        touchStartThreshold: 3,
+        onEnd: async () => {
+          const order = [];
+          globalGrid.querySelectorAll(`.match-card[data-skill-key="${skillKey}"] .queue-item`).forEach((item) => {
+            if (item.dataset.playerId) order.push(item.dataset.playerId);
+          });
+          try {
+            await reorderQueue(skillKey, order);
+          } catch (error) {
+            showToast(error.message || "Failed to reorder queue", "error");
+          }
+        },
+      });
+    });
     return;
   }
 
@@ -1682,8 +1808,22 @@ function bindEvents() {
       try {
         confirmMatchingModeBtn.disabled = true;
         confirmMatchingModeBtn.innerHTML = "Generating...";
-        await generateNextRound(Array.from(state.players.values()), selectedMode);
-        showToast("Next round generated successfully!");
+        const history = [
+          ...state.matchLog,
+          ...state.courts.filter((court) => court.status === "Active").map((court) => ({
+            players: court.players || [],
+            teamA: (court.players || []).slice(0, 2),
+            teamB: (court.players || []).slice(2, 4),
+          })),
+        ];
+        const summary = await generateSmartRound(Array.from(state.players.values()), selectedMode, history);
+        const repeatCount = summary.repeatLineups + summary.repeatTeammates;
+        showToast(
+          repeatCount
+            ? "Rotation warning: " + summary.matches + " matches · " + summary.repeatLineups + " repeat lineup(s), " + summary.repeatTeammates + " repeat partner(s)."
+            : "Rotation ready: " + summary.matches + " balanced matches · no repeat lineups or players.",
+          repeatCount ? "warning" : "info"
+        );
         matchingModeModal.classList.add("hidden");
       } catch (error) {
         showToast(error.message || "Failed to generate round.", "error");
@@ -2005,10 +2145,26 @@ function bindEvents() {
     });
     
     const warningEl = document.getElementById("repeat-matchup-warning");
-    if (hasRepeat && new Set([a1, a2, b1, b2]).size === 4) {
-      warningEl.classList.remove("hidden");
-    } else {
+    const selectedIds = [a1, a2, b1, b2];
+    const hasFourPlayers = !selectedIds.includes("") && new Set(selectedIds).size === 4;
+    const pairKey = (left, right) => [left, right].sort().join(",");
+    const currentPairs = new Set([pairKey(a1, a2), pairKey(b1, b2)]);
+    const hasRepeatPartner = state.matchLog.some((match) =>
+      [match.teamA, match.teamB].some((team) => team?.length === 2 && currentPairs.has(pairKey(team[0], team[1])))
+    );
+
+    if (!hasFourPlayers) {
       warningEl.classList.add("hidden");
+      return;
+    }
+
+    warningEl.classList.remove("hidden");
+    if (hasRepeat || hasRepeatPartner) {
+      warningEl.className = "flex items-center gap-1 text-xs text-rose-400 font-semibold bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20";
+      warningEl.textContent = hasRepeat ? "Repeat lineup detected" : "Repeat partner detected";
+    } else {
+      warningEl.className = "flex items-center gap-1 text-xs text-emerald-300 font-semibold bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20";
+      warningEl.textContent = "Fresh lineup · no repeats";
     }
   };
 
@@ -2595,8 +2751,22 @@ async function bootstrap() {
     try {
       const players = Array.from(state.players.values());
       const mode = state.autoRoundMode || "winners_losers";
-      await generateNextRound(players, mode);
-      showToast("Auto round generated! (Mode: " + (state.autoRoundMode || "winners_losers") + ")");
+      const history = [
+        ...state.matchLog,
+        ...state.courts.filter((court) => court.status === "Active").map((court) => ({
+          players: court.players || [],
+          teamA: (court.players || []).slice(0, 2),
+          teamB: (court.players || []).slice(2, 4),
+        })),
+      ];
+      const summary = await generateSmartRound(players, mode, history);
+      const repeatCount = summary.repeatLineups + summary.repeatTeammates;
+      showToast(
+        repeatCount
+          ? "Auto rotation: " + summary.matches + " matches, " + repeatCount + " repeat warning(s)."
+          : "Auto rotation ready: " + summary.matches + " balanced matches with no repeats.",
+        repeatCount ? "warning" : "info"
+      );
 
       // Let auto-assign pick it up naturally
       setTimeout(() => checkAutoAssign(), 500);
@@ -2742,6 +2912,13 @@ async function bootstrap() {
     all.sort((a, b) => (b.endedAt?.seconds || 0) - (a.endedAt?.seconds || 0));
     state.matchLog = all.slice(0, 200);
     renderMatchLog();
+    // Rotation labels are based on completed-match history, so refresh the
+    // visible cards as soon as that history changes.
+    if (state.ready.players && state.ready.queues) {
+      renderQueues();
+      renderPendingMatches();
+      renderNextMatch();
+    }
   };
 
   onSnapshot(query(getTenantCollection("matches"), where("status", "==", "Completed")), (snap) => {
@@ -2765,6 +2942,7 @@ function renderPendingMatches() {
   }
 
   const cardsHtml = state.pendingMatches.map((match, index) => {
+    const rotation = rotationInsight(match.teamA || [], match.teamB || []);
     const buildTeamHtml = (teamIds) => {
       return teamIds.map(id => {
         const p = state.players.get(id);
@@ -2779,6 +2957,7 @@ function renderPendingMatches() {
         return `
           <li class="bg-slate-800 border border-slate-600/50 p-1 rounded flex items-center gap-1 overflow-hidden">
             <span class="font-semibold text-[11px] truncate max-w-[70px] sm:max-w-[90px]" title="${name}">${name}</span>
+            <span class="text-[9px] font-bold text-cyan-300 bg-cyan-400/10 border border-cyan-400/20 px-1 rounded shrink-0">${ratingForPlayer(p)}</span>
             ${resultBadge}
           </li>
         `;
@@ -2790,6 +2969,7 @@ function renderPendingMatches() {
         <div class="flex items-center justify-between mb-2 border-b border-amber-500/30 pb-1.5">
           <h4 class="text-[10px] uppercase tracking-wider font-bold text-amber-400">Custom Match ${index + 1}</h4>
           <span class="text-[10px] font-semibold text-amber-500">Priority</span>
+          <span class="text-[9px] font-semibold ${rotation.tone}">${rotation.label}</span>
         </div>
         
         <div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-stretch">
@@ -2950,6 +3130,7 @@ function buildPreviewTeams(playerIds) {
 
 function buildNextMatchHTML(teamAIds, teamBIds, skillLabel, type, courtReady) {
   const nameFor = id => state.players.get(id)?.name || "Unknown";
+  const rotation = rotationInsight(teamAIds, teamBIds);
 
   const skillColorClass = {
     Beginner: "text-cyan-400",
@@ -2976,6 +3157,7 @@ function buildNextMatchHTML(teamAIds, teamBIds, skillLabel, type, courtReady) {
     return `
       <div class="flex items-center justify-between py-1.5 border-b border-slate-700/50 last:border-0">
         <span class="font-semibold text-slate-100">${p.name}</span>
+        <span class="text-[10px] font-bold text-cyan-300 bg-cyan-400/10 border border-cyan-400/20 px-1.5 py-0.5 rounded">${ratingForPlayer(p)}</span>
         <div class="flex items-center gap-2">
           ${wBadge} ${lBadge}
         </div>
@@ -2988,6 +3170,7 @@ function buildNextMatchHTML(teamAIds, teamBIds, skillLabel, type, courtReady) {
         <span class="text-xs uppercase tracking-widest font-bold text-emerald-400">Next Match</span>
         ${typeTag}
         <span class="px-2 py-0.5 rounded-full text-xs font-bold border border-slate-600 ${skillColorClass}">${skillLabel}</span>
+        <span class="px-2 py-0.5 rounded-full text-xs font-bold border border-slate-600 ${rotation.tone}">${rotation.label}</span>
         ${courtTag}
       </div>
       <div class="grid grid-cols-2 gap-3">
