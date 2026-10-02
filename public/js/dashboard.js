@@ -142,7 +142,6 @@ function initializeRatingUI() {
   const counts = document.querySelector("#stat-queues > div");
   if (counts) {
     counts.innerHTML = ratings.map((rating) =>
-      `<span class="badge badge-beginner" data-queue-count="${rating.key}">${rating.label} 0</span>`
       `<span class="badge badge-beginner" data-queue-count="${rating.key}">${rating.label} · ${rating.rank} 0</span>`
     ).join("");
   }
@@ -152,18 +151,17 @@ function initializeRatingUI() {
     queues.innerHTML = ratings.map((rating) => `
       <div class="glass-card" data-skill-card="${rating.key}">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div><h3 class="queue-title text-cyan-400">Rating ${rating.label} Queue</h3>
-          <div><h3 class="queue-title text-cyan-400">${rating.label} · ${rating.rank} Queue</h3>
+          <div>
+            <h3 class="queue-title text-cyan-400">${rating.label} · ${rating.rank} Queue</h3>
             <p class="queue-meta"><span data-queue-total="${rating.key}">0 waiting</span><span class="mx-2 text-slate-500">|</span><span data-queue-wait="${rating.key}">Est wait 0 mins</span></p>
-          </div><span class="skill-pill skill-beginner">${rating.label}</span>
-          </div><span class="skill-pill skill-beginner">${rating.rank}</span>
+          </div>
+          <span class="skill-pill skill-beginner">${rating.rank}</span>
         </div>
         <div class="queue-matches-container" data-queue="${rating.key}" id="queue-${rating.key}"></div>
       </div>`).join("");
   }
 
   const filter = document.getElementById("player-filter");
-  if (filter) filter.innerHTML = `<option value="All">All ratings</option>${ratings.map((rating) => `<option value="${rating.label}">${rating.label}</option>`).join("")}<option value="Archived">Archived Status</option>`;
   if (filter) filter.innerHTML = `<option value="All">All ratings</option>${ratings.map((rating) => `<option value="${rating.label}">${rating.label} · ${rating.rank}</option>`).join("")}<option value="Archived">Archived Status</option>`;
 
   const activeExtra = [elements.playersBodyIntermediate, elements.playersBodyAdvanced];
