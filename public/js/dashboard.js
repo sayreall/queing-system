@@ -1,4 +1,5 @@
 import {
+  RATINGS,
   SKILLS,
   playerRatingLabel,
   ratingRankLabel,
@@ -162,7 +163,7 @@ function initializeRatingUI() {
   }
 
   const filter = document.getElementById("player-filter");
-  if (filter) filter.innerHTML = `<option value="All">All ratings</option>${ratings.map((rating) => `<option value="${rating.label}">${rating.label} · ${rating.rank}</option>`).join("")}<option value="Archived">Archived Status</option>`;
+  if (filter) filter.innerHTML = `<option value="All">All ratings</option>${RATINGS.map((rating) => `<option value="${rating.label}">${rating.label} · ${rating.rank}</option>`).join("")}<option value="Archived">Archived Status</option>`;
 
   const activeExtra = [elements.playersBodyIntermediate, elements.playersBodyAdvanced];
   const doneExtra = [elements.donePlayersBodyIntermediate, elements.donePlayersBodyAdvanced];
@@ -916,7 +917,7 @@ function renderPlayers() {
                 <p class="compact-player__stats">${games} GP · <span class="text-emerald-400">${player.wins ?? 0}W</span> <span class="text-rose-400">${player.losses ?? 0}L</span>${getWaitTime(player)}</p>
               </div>
               <select class="compact-player__rating input-field text-xs py-1 px-1.5 w-16" data-player-rating="${player.id}" aria-label="${player.name} rating">
-                ${SKILLS.map((rating) => `<option value="${rating.label}" ${player.rating === rating.label ? "selected" : ""}>${rating.label}</option>`).join("")}
+                ${RATINGS.map((rating) => `<option value="${rating.label}" ${player.rating === rating.label ? "selected" : ""}>${rating.label}</option>`).join("")}
               </select>
               <span class="compact-player__status px-2 py-1 rounded whitespace-nowrap">${player.status}</span>
               <div class="compact-player__actions"><button class="compact-player__action compact-player__action--out" data-player-absent="${player.id}" title="Mark absent or return to queue" ${isUnavailable ? "disabled" : ""}>${isUnavailable ? "In match" : (player.status === "Absent" || player.status === "Standby" ? "Return" : "Out")}</button>
@@ -972,11 +973,11 @@ function renderPlayers() {
         <td class="text-blue-400 font-semibold">${((player.wins ?? 0) + (player.losses ?? 0)) > 0 ? Math.round(((player.wins ?? 0) / ((player.wins ?? 0) + (player.losses ?? 0))) * 100) + '%' : '—'}</td>
         <td>
           <select class="input-field" data-player-skill="${player.id}" aria-label="Rating">
-            ${SKILLS.map(
-              (skill) =>
-                `<option value="${skill.label}" ${
-                  player.rating === skill.label ? "selected" : ""
-                }>${skill.label}</option>`
+            ${RATINGS.map(
+              (rating) =>
+                `<option value="${rating.label}" ${
+                  player.rating === rating.label ? "selected" : ""
+                }>${rating.label}</option>`
             ).join("")}
           </select>
         </td>
@@ -1077,11 +1078,11 @@ function renderPlayers() {
         <td class="text-blue-400 font-semibold">${((player.wins ?? 0) + (player.losses ?? 0)) > 0 ? Math.round(((player.wins ?? 0) / ((player.wins ?? 0) + (player.losses ?? 0))) * 100) + '%' : '—'}</td>
         <td>
           <select class="input-field" data-player-skill="${player.id}">
-            ${SKILLS.map(
-              (skill) =>
-                `<option value="${skill.label}" ${
-                  player.rating === skill.label ? "selected" : ""
-                }>${skill.label}</option>`
+            ${RATINGS.map(
+              (rating) =>
+                `<option value="${rating.label}" ${
+                  player.rating === rating.label ? "selected" : ""
+                }>${rating.label}</option>`
             ).join("")}
           </select>
         </td>
@@ -2931,7 +2932,7 @@ async function bootstrap() {
       const currentVal = filterEl.value;
       const staticOptions = `
         <option value="All">All ratings</option>
-        ${SKILLS.map((rating) => `<option value="${rating.label}">${rating.label}</option>`).join("")}
+        ${RATINGS.map((rating) => `<option value="${rating.label}">${rating.label}</option>`).join("")}
       `;
       let archiveOptions = `<option value="Archived">All Archived</option>`;
       Array.from(archiveDates).sort((a, b) => new Date(b) - new Date(a)).forEach(dateStr => {

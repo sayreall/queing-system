@@ -48,9 +48,11 @@ export const RATINGS = [
   { label: "5.0", key: "rating-5-0", rank: "Advanced" },
 ];
 
-// Retained as an internal alias while the rest of the queue/court code uses
-// its existing helper names. Every label is now a rating, never a skill level.
-export const SKILLS = RATINGS;
+export const SKILLS = [
+  { label: "2.0 & 2.5", key: "rating-bracket-1", rank: "Novice" },
+  { label: "3.0, 3.5, 4.0", key: "rating-bracket-2", rank: "Intermediate" },
+  { label: "4.5 & 5.0", key: "rating-bracket-3", rank: "Advanced" }
+];
 
 const skillByKey = new Map(SKILLS.map((skill) => [skill.key, skill.label]));
 const skillByLabel = new Map(
@@ -87,7 +89,13 @@ export function ratingRankLabel(input) {
 
 export function skillKeyFromLabel(label) {
   if (!label) return null;
-  const match = skillByLabel.get(label.toLowerCase());
+  const lbl = label.toLowerCase();
+  
+  if (lbl === "2.0" || lbl === "2.5") return "rating-bracket-1";
+  if (lbl === "3.0" || lbl === "3.5" || lbl === "4.0") return "rating-bracket-2";
+  if (lbl === "4.5" || lbl === "5.0") return "rating-bracket-3";
+  
+  const match = skillByLabel.get(lbl);
   return match ? match.key : null;
 }
 
