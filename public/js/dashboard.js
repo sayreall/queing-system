@@ -229,7 +229,7 @@ function initializeRatingUI() {
     .queue-workspace .match-card > div:first-child > div:last-child { flex-wrap:wrap; justify-content:flex-end; }
     .queue-workspace .match-card .match-card-drag-handle h4 { font-size:.72rem; }
     .queue-workspace .match-card .match-teams { gap:.7rem; }
-    .queue-workspace .match-card .match-teams > div { padding:.6rem; border-radius:.75rem; }
+    .queue-workspace .match-card .match-teams > div { padding:.6rem; border-radius:.75rem; min-width:0; }
     .queue-workspace .match-card .team-list { min-height:5.5rem; }
     .queue-workspace .match-card .team-list > * + * { margin-top:.45rem; }
     .queue-workspace .match-card .queue-item {
@@ -238,7 +238,7 @@ function initializeRatingUI() {
       border-radius:.55rem;
       gap:.35rem;
     }
-    .queue-workspace .match-card .queue-item .font-semibold { font-size:.84rem; line-height:1.2; max-width:8.25rem; }
+    .queue-workspace .match-card .queue-item .font-semibold { font-size:.84rem; line-height:1.2; }
     .queue-workspace .match-card .queue-item .drag-handle { font-size:.9rem; }
     .queue-workspace .match-card .queue-item .rating-badge { font-size:.68rem; padding:.15rem .3rem; white-space:nowrap; }
     .queue-workspace .match-card .queue-actions button { padding:.22rem; }
@@ -253,7 +253,7 @@ function initializeRatingUI() {
       .queue-workspace .match-card .match-teams { grid-template-columns:1fr !important; gap:.5rem; }
       .queue-workspace .match-card .match-teams > div:nth-child(2) { min-height:1.25rem; padding:0; }
       .queue-workspace .match-card .team-list { min-height:0; }
-      .queue-workspace .match-card .queue-item .font-semibold { max-width:calc(100vw - 12.5rem); font-size:.88rem; }
+      .queue-workspace .match-card .queue-item .font-semibold { font-size:.88rem; }
       .queue-workspace .match-card .queue-item .rating-rank { display:none; }
     }
     .queue-workspace #queues-container > .glass-card,
@@ -528,11 +528,10 @@ function renderQueues() {
               : "";
 
             item.innerHTML = `
-              <div class="flex items-center gap-1 overflow-hidden">
-                <span class="drag-handle text-slate-400 cursor-grab hover:text-white px-0.5 text-xs">⋮⋮</span>
-                <span class="font-semibold text-[11px] truncate max-w-[70px] sm:max-w-[90px] cursor-grab" title="${player ? player.name : "Unknown"}">${player ? player.name : "Unknown"}</span>
-                <span class="text-[9px] font-bold text-cyan-300 bg-cyan-400/10 border border-cyan-400/20 px-1 rounded shrink-0" title="Player rating">${ratingForPlayer(player)}</span>
-                <span class="rating-badge text-[9px] font-bold text-cyan-300 bg-cyan-400/10 border border-cyan-400/20 px-1 rounded shrink-0" title="${ratingForPlayer(player)} · ${rankForPlayer(player)}">${ratingForPlayer(player)} <span class="rating-rank">· ${rankForPlayer(player)}</span></span>
+              <div class="flex items-center gap-1 overflow-hidden min-w-0">
+                <span class="drag-handle text-slate-400 cursor-grab hover:text-white px-0.5 text-xs shrink-0">⋮⋮</span>
+                <span class="font-semibold text-[11px] truncate flex-1 cursor-grab" title="${player ? player.name : "Unknown"}">${player ? player.name : "Unknown"}</span>
+                <span class="rating-badge text-[9px] font-bold text-cyan-300 bg-cyan-400/10 border border-cyan-400/20 px-1 rounded shrink-0 truncate max-w-[65px]" title="${ratingForPlayer(player)} · ${rankForPlayer(player)}">${ratingForPlayer(player)}<span class="rating-rank hidden lg:inline"> · ${rankForPlayer(player)}</span></span>
                 ${resultBadge}
               </div>
               <div class="queue-actions hidden items-center gap-0.5 shrink-0">
