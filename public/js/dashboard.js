@@ -173,8 +173,19 @@ function initializeRatingUI() {
 
   const compactList = document.createElement("div");
   compactList.id = "compact-player-list";
-  compactList.className = "mt-5 border border-slate-700/50 rounded-xl overflow-y-auto max-h-[620px]";
-  compactList.innerHTML = `<p class="p-4 text-sm text-slate-500">Loading players...</p>`;
+  compactList.className = "waiting-player-card mt-5 border border-slate-700/50 rounded-xl overflow-hidden max-h-[620px]";
+  compactList.innerHTML = `
+    <div class="waiting-player-card__header">
+      <div>
+        <h3 class="waiting-player-card__title">Waiting to Play <span id="compact-player-count">(0)</span></h3>
+        <p class="waiting-player-card__meta" id="compact-player-summary">Loading queue...</p>
+      </div>
+      <button type="button" class="waiting-player-card__add" id="compact-add-player" title="Add player">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+        <span>Add player</span>
+      </button>
+    </div>
+    <div class="waiting-player-card__list"><p class="p-4 text-sm text-slate-500">Loading players...</p></div>`;
   compactList.addEventListener("click", handlePlayerActionClick);
   compactList.addEventListener("change", async (event) => {
     const playerId = event.target.dataset.playerRating;
@@ -187,6 +198,9 @@ function initializeRatingUI() {
     }
   });
   document.getElementById("custom-match-panel")?.after(compactList);
+  document.getElementById("compact-add-player")?.addEventListener("click", () => {
+    document.getElementById("open-add-player-modal")?.click();
+  });
 
   const queueContainer = document.getElementById("queues-container");
   const queueSection = queueContainer?.closest("section");
@@ -210,10 +224,40 @@ function initializeRatingUI() {
     .queue-workspace #queues-container .queue-matches-grid { display:contents; }
     .queue-workspace #queues-container > .glass-card > .flex { display:none; }
     .queue-workspace #queues-container .queue-empty { display:none; }
-    #compact-player-list { height:480px; overflow-y:scroll; scrollbar-gutter:stable; }
-    #compact-player-list .compact-player { display:grid; grid-template-columns:1.5rem minmax(0,1fr) auto auto auto; gap:0.65rem; align-items:center; padding:0.7rem 0.8rem; border-bottom:1px solid rgba(51,65,85,.55); }
+    #compact-player-list { height:480px; scrollbar-gutter:stable; background:rgba(5, 29, 34, .58); }
+    #compact-player-list .waiting-player-card__header { min-height:64px; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.75rem .9rem; border-bottom:1px solid rgba(51,65,85,.7); background:linear-gradient(135deg, rgba(15,38,53,.96), rgba(8,28,39,.92)); }
+    #compact-player-list .waiting-player-card__title { margin:0; color:#f1f5f9; font-size:.76rem; font-weight:800; line-height:1.15; letter-spacing:.035em; text-transform:uppercase; }
+    #compact-player-list .waiting-player-card__title span { color:#94a3b8; font-weight:600; }
+    #compact-player-list .waiting-player-card__meta { margin:.28rem 0 0; color:#64748b; font-size:.64rem; }
+    #compact-player-list .waiting-player-card__add { display:inline-flex; align-items:center; gap:.38rem; flex:none; padding:.42rem .6rem; border:1px solid rgba(71,85,105,.72); border-radius:.42rem; background:rgba(15,23,42,.5); color:#e2e8f0; font-size:.65rem; font-weight:700; transition:border-color .18s ease, background .18s ease, color .18s ease; }
+    #compact-player-list .waiting-player-card__add:hover { border-color:rgba(52,211,153,.7); background:rgba(16,185,129,.12); color:#a7f3d0; }
+    #compact-player-list .waiting-player-card__add svg { width:.82rem; height:.82rem; }
+    #compact-player-list .waiting-player-card__list { height:416px; overflow-y:scroll; }
+    #compact-player-list .compact-player { display:grid; grid-template-columns:1.5rem minmax(0,1fr) auto auto auto; gap:.65rem; align-items:center; min-height:58px; padding:.62rem .8rem; border-bottom:1px solid rgba(51,65,85,.55); transition:background .18s ease; }
+    #compact-player-list .compact-player:hover { background:rgba(30,41,59,.28); }
+    #compact-player-list .compact-player__rank { align-self:start; padding-top:.12rem; color:#34d399; font-size:.86rem; line-height:1; }
+    #compact-player-list .compact-player__name { margin:0; color:#f8fafc; font-size:.76rem; font-weight:750; line-height:1.2; }
+    #compact-player-list .compact-player__stats { margin:.24rem 0 0; color:#94a3b8; font-size:.62rem; line-height:1.1; }
+    #compact-player-list .compact-player__rating { min-width:4.65rem; border-color:rgba(71,85,105,.8); background:rgba(15,23,42,.68); color:#e2e8f0; }
+    #compact-player-list .compact-player__status { border-color:rgba(71,85,105,.8); background:rgba(30,41,59,.75); color:#e2e8f0; font-size:.62rem; font-weight:650; }
+    #compact-player-list .compact-player__actions { display:flex; align-items:center; gap:.5rem; white-space:nowrap; }
+    #compact-player-list .compact-player__action { padding:0; border:0; background:transparent; font-size:.64rem; font-weight:650; transition:color .18s ease; }
+    #compact-player-list .compact-player__action--out { color:#cbd5e1; }
+    #compact-player-list .compact-player__action--out:hover { color:#fda4af; }
+    #compact-player-list .compact-player__action--done { color:#fcd34d; }
+    #compact-player-list .compact-player__action--done:hover { color:#fde68a; }
+    #compact-player-list .compact-player__action:disabled { cursor:not-allowed; color:#475569; }
     #compact-player-list .compact-player:last-child { border-bottom:0; }
-    @media (max-width: 640px) { #compact-player-list .compact-player { grid-template-columns:1.5rem minmax(0,1fr) auto; } #compact-player-list .compact-player select { grid-column:2; } }
+    @media (max-width: 640px) {
+      #compact-player-list .waiting-player-card__add span { display:none; }
+      #compact-player-list .waiting-player-card__add { padding:.48rem; }
+      #compact-player-list .compact-player { grid-template-columns:1.35rem minmax(0,1fr) auto; grid-template-rows:auto auto; gap:.35rem .55rem; padding:.7rem; }
+      #compact-player-list .compact-player > :nth-child(1) { grid-row:1 / span 2; }
+      #compact-player-list .compact-player > :nth-child(2) { grid-column:2; grid-row:1; }
+      #compact-player-list .compact-player > :nth-child(3) { grid-column:2; grid-row:2; width:4.6rem; }
+      #compact-player-list .compact-player > :nth-child(4) { grid-column:3; grid-row:1; }
+      #compact-player-list .compact-player > :nth-child(5) { grid-column:3; grid-row:2; justify-self:end; gap:0.45rem; }
+    }
   `;
   document.head.appendChild(workspaceStyle);
 }
@@ -730,22 +774,31 @@ function renderPlayers() {
   const compactList = document.getElementById("compact-player-list");
   if (compactList) {
     const compactRows = filteredRows;
-    compactList.innerHTML = compactRows.length
+    const queuedCount = compactRows.filter((player) => player.status === "Waiting" || player.status === "Stacked").length;
+    const countLabel = compactList.querySelector("#compact-player-count");
+    const summaryLabel = compactList.querySelector("#compact-player-summary");
+    const list = compactList.querySelector(".waiting-player-card__list");
+    if (countLabel) countLabel.textContent = `(${compactRows.length})`;
+    if (summaryLabel) {
+      summaryLabel.textContent = `${queuedCount} queued · ${Math.max(0, compactRows.length - queuedCount)} in match or unavailable`;
+    }
+    if (!list) return;
+    list.innerHTML = compactRows.length
       ? compactRows.map((player, index) => {
           const games = (player.wins ?? 0) + (player.losses ?? 0);
           const isUnavailable = player.status === "Playing" || player.status === "Stacked";
           return `
             <div class="compact-player">
-              <span class="font-bold text-emerald-400">${index + 1}</span>
-              <div class="min-w-0"><p class="font-semibold text-sm truncate">${player.name}</p>
-                <p class="text-[11px] text-slate-400">${games} games · <span class="text-emerald-400">${player.wins ?? 0}W</span> <span class="text-rose-400">${player.losses ?? 0}L</span>${getWaitTime(player)}</p>
+              <span class="compact-player__rank">${index + 1}</span>
+              <div class="min-w-0"><p class="compact-player__name truncate">${player.name}</p>
+                <p class="compact-player__stats">${games} GP · <span class="text-emerald-400">${player.wins ?? 0}W</span> <span class="text-rose-400">${player.losses ?? 0}L</span>${getWaitTime(player)}</p>
               </div>
-              <select class="input-field text-xs py-1 px-1.5 w-16" data-player-rating="${player.id}" aria-label="${player.name} rating">
+              <select class="compact-player__rating input-field text-xs py-1 px-1.5 w-16" data-player-rating="${player.id}" aria-label="${player.name} rating">
                 ${SKILLS.map((rating) => `<option value="${rating.label}" ${player.rating === rating.label ? "selected" : ""}>${rating.label}</option>`).join("")}
               </select>
-              <span class="text-xs px-2 py-1 rounded border border-slate-700 bg-slate-800 whitespace-nowrap">${player.status}</span>
-              <div class="flex items-center gap-2"><button class="text-xs text-slate-300 hover:text-white" data-player-absent="${player.id}" ${isUnavailable ? "disabled" : ""}>${isUnavailable ? "In match" : (player.status === "Absent" || player.status === "Standby" ? "Return" : "Absent")}</button>
-              <button class="text-xs text-amber-300 hover:text-amber-100" data-player-done="${player.id}" ${isUnavailable ? "disabled" : ""}>Done</button></div>
+              <span class="compact-player__status px-2 py-1 rounded whitespace-nowrap">${player.status}</span>
+              <div class="compact-player__actions"><button class="compact-player__action compact-player__action--out" data-player-absent="${player.id}" title="Mark absent or return to queue" ${isUnavailable ? "disabled" : ""}>${isUnavailable ? "In match" : (player.status === "Absent" || player.status === "Standby" ? "Return" : "Out")}</button>
+              <button class="compact-player__action compact-player__action--done" data-player-done="${player.id}" title="Mark done playing" ${isUnavailable ? "disabled" : ""}>Done</button></div>
             </div>`;
         }).join("")
       : `<p class="p-4 text-sm text-slate-500">No players match the current filter.</p>`;
