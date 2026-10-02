@@ -212,13 +212,15 @@ function initializeRatingUI() {
   const queueSection = queueContainer?.closest("section");
   const queueDestination = document.querySelector("#players-body-beginner")?.closest(".glass-subcard");
   if (queueContainer && queueDestination) {
-    queueDestination.innerHTML = `
+    const queueWrapper = document.createElement("div");
+    queueWrapper.className = "mb-6 border-b border-slate-700/50 pb-6 queue-workspace";
+    queueWrapper.innerHTML = `
       <div class="flex items-center justify-between gap-3 mb-4">
         <div><h3 class="text-lg font-display font-semibold">Next Matches</h3><p class="text-xs text-slate-400">All generated matches in one queue</p></div>
         <span class="text-xs text-emerald-400">Up next</span>
       </div>`;
-    queueDestination.appendChild(queueContainer);
-    queueDestination.classList.add("queue-workspace");
+    queueWrapper.appendChild(queueContainer);
+    queueDestination.insertBefore(queueWrapper, queueDestination.firstChild);
     if (queueSection) queueSection.style.display = "none";
   }
 
@@ -581,67 +583,8 @@ function renderQueues() {
     if (countEl) countEl.textContent = `${count} waiting`;
     if (waitEl) waitEl.textContent = `Est wait ${wait} mins`;
   });
-  
-  renderQueueWorkspaceCards();
-
   // Re-attach sortable after re-render
   setupSortable();
-}
-
-function renderQueueWorkspaceCards() {
-  const queuesContainer = document.getElementById("queues-container");
-  if (!queuesContainer?.closest(".queue-workspace")) return;
-
-  let globalGrid = document.getElementById("global-match-grid");
-  if (!globalGrid) {
-    globalGrid = document.createElement("div");
-    globalGrid.id = "global-match-grid";
-    globalGrid.className = "queue-matches-grid";
-    queuesContainer.appendChild(globalGrid);
-  }
-
-  const cards = Array.from(queuesContainer.querySelectorAll(
-    ".queue-matches-container .match-card"
-  ));
-  
-  try {
-    const savedOrder = JSON.parse(localStorage.getItem("globalMatchOrder") || "[]");
-    if (savedOrder.length > 0) {
-      cards.sort((a, b) => {
-        const idxA = savedOrder.indexOf(a.dataset.matchId);
-        const idxB = savedOrder.indexOf(b.dataset.matchId);
-        if (idxA === -1 && idxB === -1) return 0;
-        if (idxA === -1) return 1;
-        if (idxB === -1) return -1;
-        return idxA - idxB;
-      });
-    }
-  } catch(e) {}
-  
-  // Re-number titles based on global order
-  cards.forEach((card, index) => {
-    const isUpNext = index === 0;
-    const titleText = isUpNext ? "Up Next · Match 1" : `Match ${index + 1}`;
-    const headerColor = isUpNext ? "text-emerald-400" : "text-slate-400";
-    
-    const h4 = card.querySelector(".match-card-drag-handle h4");
-    if (h4) {
-      h4.textContent = titleText.toUpperCase();
-      h4.className = `text-[10px] uppercase tracking-wider font-bold ${headerColor}`;
-    }
-    
-    const svg = card.querySelector(".match-card-drag-handle svg");
-    if (svg) svg.setAttribute("class", headerColor);
-    
-    card.classList.remove("border-slate-700/60", "bg-slate-800/20", "border-emerald-500/30", "bg-emerald-500/5", "shadow-lg", "shadow-emerald-500/5");
-    if (isUpNext) {
-      card.classList.add("border-emerald-500/30", "bg-emerald-500/5", "shadow-lg", "shadow-emerald-500/5");
-    } else {
-      card.classList.add("border-slate-700/60", "bg-slate-800/20");
-    }
-  });
-
-  globalGrid.replaceChildren(...cards);
 }
 
 
@@ -1149,82 +1092,6 @@ function setupSortable() {
     return;
   }
 
-  const globalGrid = document.getElementById("global-match-grid");
-  if (globalGrid) {
-    if (!globalGrid._sortable) {
-      globalGrid._sortable = new Sortable(globalGrid, {
-        animation: 150,
-        draggable: ".match-card",
-        filter: ".queue-item, button, select, input, textarea",
-        preventOnFilter: false,
-        fallbackOnBody: true,
-        forceFallback: true,
-        onMove: (event) => {
-          return true; // Allow match cards to be dragged anywhere freely
-        },
-        onEnd: async (event) => {
-          const globalOrder = [];
-          Array.from(globalGrid.children).forEach(child => {
-            if (child.dataset.matchId) {
-              globalOrder.push(child.dataset.matchId);
-            }
-          });
-          localStorage.setItem("globalMatchOrder", JSON.stringify(globalOrder));
-
-          const skillKey = event.item.dataset.skillKey;
-          const order = [];
-          globalGrid.querySelectorAll(`.match-card[data-skill-key="${skillKey}"] .queue-item`).forEach((item) => {
-            if (item.dataset.playerId) {
-              order.push(item.dataset.playerId);
-            } else if (item.dataset.action === "open-add-player-modal") {
-              order.push("EMPTY");
-            }
-          });
-          while (order.length > 0 && order[order.length - 1] === "EMPTY") {
-            order.pop();
-          }
-          
-          renderNextMatch();
-          
-          try {
-            await reorderQueue(skillKey, order);
-          } catch (error) {
-            showToast(error.message || "Failed to reorder matches", "error");
-          }
-        },
-      });
-    }
-
-    globalGrid.querySelectorAll(".team-list").forEach((list) => {
-      if (list._sortable) return;
-
-      const skillKey = list.dataset.queue;
-      list._sortable = new Sortable(list, {
-        group: `queue-${skillKey}`, // Revert to only allowing dragging within same skill queue
-        animation: 150,
-        filter: "button, .add-player-btn",
-        preventOnFilter: false,
-        delay: 150,
-        swap: true,
-        swapClass: "bg-slate-700/80",
-        delayOnTouchOnly: true,
-        touchStartThreshold: 3,
-        onEnd: async () => {
-          const order = [];
-          globalGrid.querySelectorAll(`.match-card[data-skill-key="${skillKey}"] .queue-item`).forEach((item) => {
-            if (item.dataset.playerId) order.push(item.dataset.playerId);
-          });
-          try {
-            await reorderQueue(skillKey, order);
-          } catch (error) {
-            showToast(error.message || "Failed to reorder queue", "error");
-          }
-        },
-      });
-    });
-    return;
-  }
-
   document.querySelectorAll(".queue-matches-container").forEach((container) => {
     const skillKey = container.dataset.queue;
     
@@ -1232,13 +1099,13 @@ function setupSortable() {
     container.querySelectorAll(".queue-matches-grid").forEach((grid) => {
       if (grid._sortable) return;
       grid._sortable = new Sortable(grid, {
-        group: `queue-grid-${skillKey}`,
+        group: 'queue-grid',
         animation: 150,
         handle: '.match-card-drag-handle',
         delay: 150,
         delayOnTouchOnly: true,
         touchStartThreshold: 3,
-        onEnd: async (e) => {
+        onSort: async (e) => {
           const order = [];
           container.querySelectorAll(".queue-item").forEach((item) => {
             if (item.dataset.playerId) {
@@ -1265,7 +1132,7 @@ function setupSortable() {
       if (list._sortable) return;
 
       list._sortable = new Sortable(list, {
-        group: `queue-${skillKey}`, // Allows dragging between match cards in this skill queue
+        group: 'queue-players',
         animation: 150,
         filter: 'button, .add-player-btn',
         preventOnFilter: false,
@@ -1274,7 +1141,7 @@ function setupSortable() {
         swapClass: 'bg-slate-700/80',
         delayOnTouchOnly: true,
         touchStartThreshold: 3,
-        onEnd: async (e) => {
+        onSort: async (e) => {
           // Rebuild the entire order array from ALL match cards in this skill's container
           const order = [];
           container.querySelectorAll(".queue-item").forEach((item) => {
