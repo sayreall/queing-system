@@ -424,7 +424,7 @@
           <div>
             <h2 class="text-xl font-display font-semibold">Player Management <span id="total-players-count"
                 class="text-slate-400 text-base font-normal ml-2"></span></h2>
-            <p class="text-sm text-slate-400">Add, edit, or manage player availability</p>
+            <p class="text-sm text-slate-400">Click a player name to view details and edit their information</p>
           </div>
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center w-full sm:w-auto">
             <button id="open-saved-players-modal" class="btn-primary" style="background: rgba(31, 207, 177, 0.2); border-color: rgba(31, 207, 177, 0.4); color: #1fcfb1;">Saved Players</button>
@@ -954,6 +954,57 @@
     </div>
 
     <!-- Partner Modal -->
+    <div id="player-details-modal"
+      class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-lg relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <button id="close-player-details-modal" type="button"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+        <div class="pr-8">
+          <p class="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Player profile</p>
+          <h2 id="player-details-title" class="mt-1 text-2xl font-display font-semibold">Player details</h2>
+          <p id="player-details-summary" class="mt-1 text-sm text-slate-400">Review and update this player's information.</p>
+        </div>
+
+        <form id="player-details-form" class="mt-6 space-y-4">
+          <input id="player-details-id" type="hidden">
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block text-sm text-slate-300">Name
+              <input id="player-details-name" class="input-field mt-1 w-full" required maxlength="80" autocomplete="off">
+            </label>
+            <label class="block text-sm text-slate-300">Rating
+              <select id="player-details-rating" class="input-field mt-1 w-full" required></select>
+            </label>
+          </div>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block text-sm text-slate-300">Gender
+              <select id="player-details-gender" class="input-field mt-1 w-full">
+                <option value="Unspecified">Unspecified</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </label>
+            <label class="block text-sm text-slate-300">Location
+              <input id="player-details-location" class="input-field mt-1 w-full" maxlength="80" autocomplete="off" placeholder="Optional">
+            </label>
+          </div>
+          <label class="block text-sm text-slate-300">Fixed partner
+            <select id="player-details-partner" class="input-field mt-1 w-full">
+              <option value="">None</option>
+            </select>
+          </label>
+          <div class="grid grid-cols-3 gap-2 rounded-xl border border-slate-700/60 bg-slate-900/30 p-3 text-center text-xs">
+            <div><span class="block text-slate-500">Status</span><strong id="player-details-status" class="mt-1 block text-slate-200">—</strong></div>
+            <div><span class="block text-slate-500">Games</span><strong id="player-details-games" class="mt-1 block text-purple-300">0</strong></div>
+            <div><span class="block text-slate-500">Record</span><strong id="player-details-record" class="mt-1 block text-emerald-300">0W · 0L</strong></div>
+          </div>
+          <div class="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+            <button id="cancel-player-details-btn" type="button" class="btn-secondary">Cancel</button>
+            <button id="save-player-details-btn" type="submit" class="btn-primary">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <div id="partner-modal"
       class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
       <div class="glass-card w-full max-w-sm relative">

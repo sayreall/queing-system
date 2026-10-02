@@ -528,6 +528,26 @@ export async function updatePlayerGender(playerId, newGender) {
   });
 }
 
+export async function updatePlayerProfile(playerId, { name, location }) {
+  const trimmedName = normalizeName(name || "");
+  const normalizedLocation = normalizeName(location || "");
+  if (!trimmedName) throw new Error("Player name is required.");
+
+  const nameLower = trimmedName.toLowerCase();
+  const matchingPlayers = await getDocs(
+    query(getTenantCollection("players"), where("nameLower", "==", nameLower))
+  );
+  const hasDuplicate = matchingPlayers.docs.some((snapshot) => snapshot.id !== playerId);
+  if (hasDuplicate) throw new Error("A player with this name already exists.");
+
+  await updateDoc(getTenantDoc("players", playerId), {
+    name: trimmedName,
+    nameLower,
+    location: normalizedLocation,
+    updatedAt: serverTimestamp(),
+  });
+}
+
 export async function updatePlayerPracticePartner(playerId, partnerId) {
   const playerRef = getTenantDoc("players", playerId);
   await runTransaction(db, async (tx) => {

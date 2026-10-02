@@ -16,6 +16,7 @@ import {
   activatePlayerToStandby,
   updatePlayerSkill,
   updatePlayerGender,
+  updatePlayerProfile,
   updatePlayerPracticePartner,
   removePlayer,
   archiveAllPlayers,
@@ -958,7 +959,7 @@ function renderPlayers() {
           return `
             <div class="compact-player">
               <span class="compact-player__rank">${index + 1}</span>
-              <div class="min-w-0"><p class="compact-player__name truncate">${player.name}</p>
+              <div class="min-w-0"><button type="button" class="compact-player__name block w-full truncate text-left hover:text-cyan-300 transition-colors" data-player-details="${player.id}" title="View and edit ${player.name}">${player.name}</button>
                 <p class="compact-player__stats">${games} GP · <span class="text-emerald-400">${player.wins ?? 0}W</span> <span class="text-rose-400">${player.losses ?? 0}L</span>${getWaitTime(player)}</p>
               </div>
               <select class="compact-player__rating input-field text-xs py-1 px-1.5 w-16" data-player-rating="${player.id}" aria-label="${player.name} rating">
@@ -977,7 +978,7 @@ function renderPlayers() {
         <td class="py-3 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
         <td class="font-semibold">
           <div class="flex items-center flex-wrap gap-2">
-            <span>${player.name}</span>
+            <button type="button" class="text-left hover:text-cyan-300 hover:underline underline-offset-4 transition-colors" data-player-details="${player.id}" title="View and edit ${player.name}">${player.name}</button>
             ${player.practicePartner && state.players.get(player.practicePartner)
               ? `<span class="text-[10px] px-1.5 py-0.5 rounded border border-purple-400/40 text-purple-300 bg-purple-500/10 align-middle" title="Fixed Partner">🔗 ${state.players.get(player.practicePartner).name}</span>`
               : ''}
@@ -1082,7 +1083,7 @@ function renderPlayers() {
         <td class="py-3 text-center text-slate-500 text-xs font-mono">${idx + 1}</td>
         <td class="font-semibold">
           <div class="flex items-center flex-wrap gap-2">
-            <span>${player.name}</span>
+            <button type="button" class="text-left hover:text-cyan-300 hover:underline underline-offset-4 transition-colors" data-player-details="${player.id}" title="View and edit ${player.name}">${player.name}</button>
             ${player.practicePartner && state.players.get(player.practicePartner)
               ? `<span class="text-[10px] px-1.5 py-0.5 rounded border border-purple-400/40 text-purple-300 bg-purple-500/10 align-middle" title="Fixed Partner">&#x1F517; ${state.players.get(player.practicePartner).name}</span>`
               : ''}
@@ -1150,10 +1151,16 @@ function renderPlayers() {
 async function handlePlayerActionClick(event) {
   const btn = event.target.closest('button');
   if (!btn) return;
+  const details = btn.getAttribute("data-player-details");
   const absent = btn.getAttribute("data-player-absent");
   const remove = btn.getAttribute("data-player-remove");
   const done = btn.getAttribute("data-player-done");
   const setupPartner = btn.getAttribute("data-player-setup-partner");
+
+  if (details) {
+    openPlayerDetailsModal(details);
+    return;
+  }
   
   if (setupPartner) {
     openPartnerModal(setupPartner);
@@ -1485,6 +1492,46 @@ function startTimerLoop() {
 
 let _pendingAddSlotInfo = null;
 
+function openPlayerDetailsModal(playerId) {
+  const player = state.players.get(playerId);
+  const modal = document.getElementById("player-details-modal");
+  if (!player || !modal) return;
+
+  const wins = player.wins || 0;
+  const losses = player.losses || 0;
+  const gender = String(player.gender || "").toLowerCase();
+  const normalizedGender = gender === "male" || gender === "m"
+    ? "Male"
+    : gender === "female" || gender === "f"
+      ? "Female"
+      : "Unspecified";
+
+  document.getElementById("player-details-id").value = player.id;
+  document.getElementById("player-details-title").textContent = player.name;
+  document.getElementById("player-details-summary").textContent = "Update player information and partner preferences.";
+  document.getElementById("player-details-name").value = player.name || "";
+  document.getElementById("player-details-location").value = player.location || "";
+  document.getElementById("player-details-gender").value = normalizedGender;
+  document.getElementById("player-details-status").textContent = player.status || "Unknown";
+  document.getElementById("player-details-games").textContent = wins + losses;
+  document.getElementById("player-details-record").textContent = `${wins}W · ${losses}L`;
+
+  const ratingSelect = document.getElementById("player-details-rating");
+  ratingSelect.innerHTML = RATINGS.map((rating) =>
+    `<option value="${rating.label}" ${player.rating === rating.label ? "selected" : ""}>${rating.label}</option>`
+  ).join("");
+
+  const partnerSelect = document.getElementById("player-details-partner");
+  partnerSelect.innerHTML = [`<option value="">None</option>`, ...Array.from(state.players.values())
+    .filter((candidate) => candidate.id !== player.id && candidate.status !== "Archived")
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((candidate) => `<option value="${candidate.id}" ${player.practicePartner === candidate.id ? "selected" : ""}>${candidate.name}</option>`)
+  ].join("");
+
+  modal.classList.remove("hidden");
+  document.getElementById("player-details-name")?.focus();
+}
+
 function openPartnerModal(playerId) {
   const player = state.players.get(playerId);
   if (!player) return;
@@ -1761,6 +1808,49 @@ function bindEvents() {
 
   document.getElementById("lock-partners-btn")?.addEventListener("click", openLockPartnersModal);
   document.getElementById("unlock-partners-btn")?.addEventListener("click", openUnlockPartnersModal);
+  const playerDetailsModal = document.getElementById("player-details-modal");
+  const playerDetailsForm = document.getElementById("player-details-form");
+  const closePlayerDetailsModal = () => playerDetailsModal?.classList.add("hidden");
+
+  document.getElementById("close-player-details-modal")?.addEventListener("click", closePlayerDetailsModal);
+  document.getElementById("cancel-player-details-btn")?.addEventListener("click", closePlayerDetailsModal);
+  playerDetailsModal?.addEventListener("click", (event) => {
+    if (event.target === playerDetailsModal) closePlayerDetailsModal();
+  });
+  playerDetailsForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const playerId = document.getElementById("player-details-id").value;
+    const player = state.players.get(playerId);
+    if (!player) {
+      showToast("This player is no longer available.", "error");
+      closePlayerDetailsModal();
+      return;
+    }
+
+    const name = document.getElementById("player-details-name").value;
+    const location = document.getElementById("player-details-location").value;
+    const rating = document.getElementById("player-details-rating").value;
+    const gender = document.getElementById("player-details-gender").value;
+    const partnerId = document.getElementById("player-details-partner").value;
+    const saveButton = document.getElementById("save-player-details-btn");
+
+    try {
+      if (saveButton) saveButton.disabled = true;
+      await updatePlayerProfile(playerId, { name, location });
+      if (rating !== player.rating) await updatePlayerSkill(playerId, rating);
+      const currentGender = String(player.gender || "Unspecified").toLowerCase();
+      if (currentGender !== gender.toLowerCase()) await updatePlayerGender(playerId, gender);
+      if ((player.practicePartner || "") !== partnerId) await updatePlayerPracticePartner(playerId, partnerId);
+      showToast("Player details updated");
+      closePlayerDetailsModal();
+    } catch (error) {
+      console.error("Unable to update player details", error);
+      showToast(error.message || "Unable to update player details.", "error");
+    } finally {
+      if (saveButton) saveButton.disabled = false;
+    }
+  });
+
   const partnerModal = document.getElementById("partner-modal");
   const closePartnerBtn = document.getElementById("close-partner-modal");
   const partnerForm = document.getElementById("partner-form");
