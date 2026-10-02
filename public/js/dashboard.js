@@ -3,6 +3,7 @@ import {
   SKILLS,
   playerRatingLabel,
   ratingRankLabel,
+  skillKeyFromLabel,
   ensureQueuesExist,
   addPlayer,
   listenToQueues,
@@ -107,6 +108,37 @@ const state = {
     pendingMatches: false,
   },
 };
+
+const SCORING_STORAGE_KEY = "dq_scoring_enabled";
+
+function scoringIsEnabled() {
+  const storedValue = localStorage.getItem(SCORING_STORAGE_KEY);
+  // Keep the dashboard's pre-existing "Scoring: ON" behavior for clubs that
+  // have not selected a preference yet.
+  return storedValue === null ? true : storedValue === "true";
+}
+
+function refreshScoringUI() {
+  const scoringEnabled = scoringIsEnabled();
+  const headerLabel = document.getElementById("header-scoring-label");
+  const headerButton = document.getElementById("toggle-scoring-btn");
+  const rankingToggle = document.getElementById("ranking-scoring-toggle");
+  const rankingLabel = document.getElementById("ranking-scoring-label");
+
+  if (headerLabel) headerLabel.textContent = `Scoring: ${scoringEnabled ? "ON" : "OFF"}`;
+  if (headerButton) {
+    headerButton.setAttribute("aria-pressed", String(scoringEnabled));
+    headerButton.classList.toggle("border-purple-500/60", scoringEnabled);
+    headerButton.classList.toggle("text-purple-300", scoringEnabled);
+  }
+  if (rankingToggle) rankingToggle.checked = scoringEnabled;
+  if (rankingLabel) rankingLabel.textContent = scoringEnabled ? "Pts diff" : "Win rate";
+}
+
+function setScoringEnabled(enabled) {
+  localStorage.setItem(SCORING_STORAGE_KEY, String(enabled));
+  refreshScoringUI();
+}
 
 const style = document.createElement('style');
 style.textContent = `
@@ -1576,18 +1608,41 @@ function openWinnerModal(courtId) {
   const teamBNames = [nameFor(players[2]), nameFor(players[3])].filter(n => n !== "Unknown" && n !== "--");
 
   const modal = document.getElementById("winner-modal");
+  const scoreFields = document.getElementById("winner-score-fields");
+  const teamAScore = document.getElementById("winner-team-a-score");
+  const teamBScore = document.getElementById("winner-team-b-score");
   document.getElementById("winner-team-a-names").textContent = teamANames.join(" & ") || "Team A";
   document.getElementById("winner-team-b-names").textContent = teamBNames.join(" & ") || "Team B";
+  scoreFields?.classList.toggle("hidden", !scoringIsEnabled());
+  if (teamAScore) teamAScore.value = "";
+  if (teamBScore) teamBScore.value = "";
   modal.classList.remove("hidden");
 }
 
 async function confirmFinishMatch(winnerTeam) {
+  let score = null;
+  if (scoringIsEnabled() && winnerTeam) {
+    const teamAScoreValue = document.getElementById("winner-team-a-score")?.value;
+    const teamBScoreValue = document.getElementById("winner-team-b-score")?.value;
+    const teamAScore = Number(teamAScoreValue);
+    const teamBScore = Number(teamBScoreValue);
+    if (teamAScoreValue === "" || teamBScoreValue === "" || !Number.isInteger(teamAScore) || teamAScore < 0 || !Number.isInteger(teamBScore) || teamBScore < 0) {
+      showToast("Enter a whole-number score for both teams.", "error");
+      return;
+    }
+    if ((winnerTeam === "teamA" && teamAScore <= teamBScore) || (winnerTeam === "teamB" && teamBScore <= teamAScore)) {
+      showToast("The selected winner must have the higher score.", "error");
+      return;
+    }
+    score = { teamA: teamAScore, teamB: teamBScore };
+  }
+
   const courtId = _pendingFinishCourtId;
   _pendingFinishCourtId = null;
   document.getElementById("winner-modal").classList.add("hidden");
 
   try {
-    await finishMatch(courtId, winnerTeam);
+    await finishMatch(courtId, winnerTeam, score);
     showToast("Match finished" + (winnerTeam ? ` — ${winnerTeam === "teamA" ? "Team A" : "Team B"} wins!` : ""));
   } catch (error) {
     console.error("Finish match failed", error);
@@ -2021,6 +2076,10 @@ function bindEvents() {
     if (finishCourtBtn) {
       const courtId = finishCourtBtn.dataset.finishCourt;
       const winner = finishCourtBtn.dataset.winner || null;
+      if (scoringIsEnabled()) {
+        openWinnerModal(courtId);
+        return;
+      }
       try {
         await finishMatch(courtId, winner || null);
         const msg = winner === "teamA" ? "Team A wins! 🏆" : winner === "teamB" ? "Team B wins! 🏆" : "Match ended.";
@@ -2461,7 +2520,7 @@ function bindEvents() {
   const closeRankingBtn = document.getElementById("close-ranking-modal");
   const rankingTbody = document.getElementById("ranking-tbody");
 
-  const openRankingModal = () => {
+  const openBasicRankingModal = () => {
     if (!rankingModal || !rankingTbody) return;
 
     const allPlayers = Array.from(state.players.values()).filter(p => p.status !== "Archived" && ((p.wins || 0) + (p.losses || 0)) > 0);
@@ -2508,8 +2567,117 @@ function bindEvents() {
     if (window.innerWidth < 768 && window.toggleMobileMenu) window.toggleMobileMenu();
   };
 
+  const rankingContent = document.getElementById("ranking-content");
+  const rankingToggle = document.getElementById("ranking-scoring-toggle");
+  const rankingTabOverall = document.getElementById("ranking-tab-overall");
+  const rankingTabCategory = document.getElementById("ranking-tab-category");
+  let currentRankingTab = "overall";
+
+  const rankedPlayers = () => {
+    const usePoints = scoringIsEnabled();
+    return Array.from(state.players.values())
+      .filter((player) => player.status !== "Archived" && ((player.wins || 0) + (player.losses || 0)) > 0)
+      .sort((a, b) => {
+        const aGames = (a.wins || 0) + (a.losses || 0);
+        const bGames = (b.wins || 0) + (b.losses || 0);
+        const aRate = aGames ? (a.wins || 0) / aGames : 0;
+        const bRate = bGames ? (b.wins || 0) / bGames : 0;
+        if (usePoints && (b.pointsDiff || 0) !== (a.pointsDiff || 0)) return (b.pointsDiff || 0) - (a.pointsDiff || 0);
+        if (bRate !== aRate) return bRate - aRate;
+        if ((b.wins || 0) !== (a.wins || 0)) return (b.wins || 0) - (a.wins || 0);
+        return bGames - aGames;
+      });
+  };
+
+  const rankingTable = (players, limit, compact = false) => {
+    const usePoints = scoringIsEnabled();
+    const rows = players.slice(0, limit);
+    if (!rows.length) return `<p class="py-8 text-center text-sm text-slate-500">No completed matches yet.</p>`;
+
+    const cell = compact ? "px-2 py-2 text-[10px]" : "px-3 py-2.5 text-xs md:text-sm";
+    return `<div class="overflow-x-auto rounded-lg border border-slate-700/50 bg-slate-950/20">
+      <table class="w-full whitespace-nowrap text-left">
+        <thead class="border-b border-slate-700/50 bg-slate-800/80 text-[10px] uppercase tracking-wide text-slate-400">
+          <tr>
+            <th class="${cell} w-10 text-center">#</th><th class="${cell}">Player</th><th class="${cell}">Skill</th>
+            <th class="${cell} text-center">Games</th><th class="${cell} text-center">Wins</th><th class="${cell} text-center">Losses</th>
+            ${usePoints ? `<th class="${cell} text-center text-emerald-400">${compact ? "Pts" : "Pts Diff"}</th>` : ""}
+            <th class="${cell} text-center text-cyan-300">Win Rate</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/70">
+          ${rows.map((player, index) => {
+            const games = (player.wins || 0) + (player.losses || 0);
+            const winRate = games ? Math.round(((player.wins || 0) / games) * 100) : 0;
+            const points = player.pointsDiff || 0;
+            const rank = index === 0 ? "&#x1F451;" : index === 1 ? "&#x1F948;" : index === 2 ? "&#x1F949;" : index + 1;
+            const pointsText = points > 0 ? `+${points}` : points;
+            return `<tr class="transition-colors hover:bg-slate-800/40">
+              <td class="${cell} text-center font-bold text-slate-300">${rank}</td>
+              <td class="${cell} max-w-40 truncate font-semibold text-white" title="${player.name}">${player.name}</td>
+              <td class="${cell} text-slate-400">${ratingForPlayer(player)}</td>
+              <td class="${cell} text-center text-slate-300">${games}</td>
+              <td class="${cell} text-center font-semibold text-emerald-400">${player.wins || 0}</td>
+              <td class="${cell} text-center font-semibold text-rose-400">${player.losses || 0}</td>
+              ${usePoints ? `<td class="${cell} text-center font-bold ${points >= 0 ? "text-emerald-400" : "text-rose-400"}">${pointsText}</td>` : ""}
+              <td class="${cell} text-center font-bold text-cyan-300">${winRate}%</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>`;
+  };
+
+  const renderRankingContent = () => {
+    if (!rankingContent) return;
+    const players = rankedPlayers();
+    const activeTab = "w-36 rounded-full bg-purple-600 px-4 py-2 text-xs font-bold text-white shadow-lg transition-colors";
+    const inactiveTab = "w-36 rounded-full px-4 py-2 text-xs font-bold text-slate-400 transition-colors hover:text-white";
+    if (rankingTabOverall) rankingTabOverall.className = currentRankingTab === "overall" ? activeTab : inactiveTab;
+    if (rankingTabCategory) rankingTabCategory.className = currentRankingTab === "category" ? activeTab : inactiveTab;
+
+    if (currentRankingTab === "overall") {
+      rankingContent.innerHTML = rankingTable(players, 10);
+      return;
+    }
+
+    const cardTones = ["border-cyan-500/35 bg-cyan-500/5", "border-fuchsia-500/35 bg-fuchsia-500/5", "border-amber-500/35 bg-amber-500/5"];
+    rankingContent.innerHTML = `<div class="grid grid-cols-1 gap-4 lg:grid-cols-3">${SKILLS.map((skill, index) => {
+      const categoryPlayers = players.filter((player) => skillKeyFromLabel(ratingForPlayer(player)) === skill.key);
+      return `<section class="overflow-hidden rounded-xl border ${cardTones[index]}">
+        <h3 class="border-b border-slate-700/50 bg-slate-800/70 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white">${skill.label} <span class="ml-1 text-slate-400">${skill.rank}</span></h3>
+        ${rankingTable(categoryPlayers, 3, true)}
+      </section>`;
+    }).join("")}</div>`;
+  };
+
+  const openRankingModal = () => {
+    if (!rankingModal || !rankingContent) return;
+    refreshScoringUI();
+    renderRankingContent();
+    rankingModal.classList.remove("hidden");
+    if (window.innerWidth < 768 && window.toggleMobileMenu) window.toggleMobileMenu();
+  };
+
   viewRankingBtn?.addEventListener("click", openRankingModal);
   headerTopPlayersBtn?.addEventListener("click", openRankingModal);
+  rankingTabOverall?.addEventListener("click", () => {
+    currentRankingTab = "overall";
+    renderRankingContent();
+  });
+  rankingTabCategory?.addEventListener("click", () => {
+    currentRankingTab = "category";
+    renderRankingContent();
+  });
+  rankingToggle?.addEventListener("change", (event) => {
+    setScoringEnabled(event.target.checked);
+    renderRankingContent();
+  });
+  document.getElementById("toggle-scoring-btn")?.addEventListener("click", () => {
+    setScoringEnabled(!scoringIsEnabled());
+    if (!rankingModal?.classList.contains("hidden")) renderRankingContent();
+  });
+  refreshScoringUI();
 
   closeRankingBtn?.addEventListener("click", () => {
     rankingModal.classList.add("hidden");

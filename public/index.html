@@ -260,8 +260,9 @@
             Game Limit
           </button>
 
-          <button class="btn-secondary text-xs px-3 py-2 flex items-center gap-2 border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-slate-300 transition-colors">
-            Scoring: ON
+          <button id="toggle-scoring-btn" type="button" aria-pressed="true"
+            class="btn-secondary text-xs px-3 py-2 flex items-center gap-2 border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-slate-300 transition-colors">
+            <span id="header-scoring-label">Scoring: ON</span>
           </button>
 
           <button id="header-top-players-btn" class="btn-secondary text-xs px-3 py-2 flex items-center gap-2 border border-yellow-500/40 bg-yellow-500/10 hover:bg-yellow-500/20 rounded-lg text-yellow-400 font-semibold transition-colors" title="View Ranking">
@@ -997,6 +998,15 @@
         <h2 class="text-2xl font-display font-semibold mb-1">Match Finished!</h2>
         <p class="text-sm text-slate-400 mb-6">Who won this match?</p>
 
+        <div id="winner-score-fields" class="hidden grid grid-cols-2 gap-3 mb-5">
+          <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">Team A score
+            <input id="winner-team-a-score" type="number" min="0" step="1" inputmode="numeric" class="input-field mt-1 w-full text-center text-lg font-bold" placeholder="0">
+          </label>
+          <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">Team B score
+            <input id="winner-team-b-score" type="number" min="0" step="1" inputmode="numeric" class="input-field mt-1 w-full text-center text-lg font-bold" placeholder="0">
+          </label>
+        </div>
+
         <div class="grid gap-4 sm:grid-cols-2 mb-4">
           <button id="winner-team-a-btn"
             class="flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all cursor-pointer"
@@ -1067,30 +1077,33 @@
     <!-- Ranking Modal -->
     <div id="ranking-modal"
       class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div class="glass-card w-full max-w-3xl relative max-h-[90vh] flex flex-col">
-        <button id="close-ranking-modal"
-          class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
-        <h2 class="text-2xl font-display font-semibold mb-2" style="color:#F5C42A;">Player Ranking</h2>
-        <p class="text-sm text-slate-400 mb-4">Top players sorted by Win Percentage and Matches Played.</p>
-        <div
-          class="overflow-y-auto overflow-x-auto flex-1 border border-slate-700/50 rounded-lg custom-scrollbar bg-slate-900/40">
-          <table class="w-full text-sm whitespace-nowrap relative">
-            <thead class="text-left text-slate-400 sticky top-0 z-10"
-              style="background: rgba(12, 50, 50, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
-              <tr>
-                <th class="py-3 px-4 text-center w-12">Rank</th>
-                <th class="py-3 px-4">Player</th>
-                <th class="py-3 px-4">Skill</th>
-                <th class="py-3 px-4 text-center text-purple-400">GP</th>
-                <th class="py-3 px-4 text-center text-green-400">W</th>
-                <th class="py-3 px-4 text-center text-red-400">L</th>
-                <th class="py-3 px-4 text-center text-blue-400">Win %</th>
-              </tr>
-            </thead>
-            <tbody id="ranking-tbody">
-              <!-- Rendered via JS -->
-            </tbody>
-          </table>
+      <div class="glass-card w-full max-w-5xl relative max-h-[90vh] flex flex-col p-5 md:p-6 border-slate-700/60 bg-slate-900/95 shadow-2xl overflow-hidden rounded-xl">
+        <button id="close-ranking-modal" class="absolute top-4 right-4 z-10 text-3xl leading-none text-slate-400 hover:text-white">&times;</button>
+        <div class="flex items-center justify-between gap-4 mb-5 pr-8">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl" aria-hidden="true">🏆</span>
+            <div>
+              <h2 class="text-xl md:text-2xl font-display font-bold text-white tracking-wide uppercase">Top Players</h2>
+              <p class="text-xs md:text-sm text-slate-400">Current session standings</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 rounded-full border border-slate-700/60 bg-slate-800/80 px-3 py-1.5">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Scoring</span>
+            <label class="relative inline-flex cursor-pointer items-center">
+              <input type="checkbox" id="ranking-scoring-toggle" class="sr-only peer">
+              <span class="h-5 w-9 rounded-full bg-slate-600 peer-checked:bg-purple-500 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all peer-checked:after:translate-x-full"></span>
+            </label>
+            <span id="ranking-scoring-label" class="w-14 text-center text-[11px] font-bold uppercase tracking-wider text-white">Win rate</span>
+          </div>
+        </div>
+        <div class="mb-5 flex justify-center">
+          <div class="inline-flex rounded-full border border-slate-700/60 bg-slate-800/80 p-1">
+            <button id="ranking-tab-overall" type="button" class="w-36 rounded-full bg-purple-600 px-4 py-2 text-xs font-bold text-white shadow-lg transition-colors">Overall Top 10</button>
+            <button id="ranking-tab-category" type="button" class="w-36 rounded-full px-4 py-2 text-xs font-bold text-slate-400 transition-colors hover:text-white">Category Top 3</button>
+          </div>
+        </div>
+        <div id="ranking-content" class="custom-scrollbar flex-1 overflow-y-auto overflow-x-auto pr-1">
+          <!-- Rendered via JS -->
         </div>
       </div>
     </div>
@@ -1153,7 +1166,7 @@
   <div id="toast-container"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-  <script type="module" src="js/dashboard.js?v=14"></script>
+  <script type="module" src="js/dashboard.js?v=15"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

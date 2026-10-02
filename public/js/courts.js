@@ -390,7 +390,7 @@ export async function toggleCourtStatus(courtId) {
   });
 }
 
-export async function finishMatch(courtId, winnerTeam = null) {
+export async function finishMatch(courtId, winnerTeam = null, score = null) {
   const courtRef = getTenantDoc("courts", courtId);
 
   await runTransaction(db, async (tx) => {
@@ -416,7 +416,7 @@ export async function finishMatch(courtId, winnerTeam = null) {
 
     // ── PHASE 2: ALL WRITES ────────────────────────────────────────────────
     if (matchSnap.exists()) {
-      tx.set(matchRef, { status: "Completed", endedAt: now, updatedAt: now, winner: winnerTeam }, { merge: true });
+      tx.set(matchRef, { status: "Completed", endedAt: now, updatedAt: now, winner: winnerTeam, score }, { merge: true });
     }
 
     const lastTeamPairs = [];
@@ -449,6 +449,7 @@ export async function finishMatch(courtId, winnerTeam = null) {
       const playerId = snap.id;
       let wins = player.wins || 0;
       let losses = player.losses || 0;
+      let pointsDiff = player.pointsDiff || 0;
       let lastResult = null;
 
       if (winnerTeam === "teamA" && teamA.includes(playerId)) { wins++; lastResult = "Win"; }
@@ -456,7 +457,13 @@ export async function finishMatch(courtId, winnerTeam = null) {
       else if (winnerTeam === "teamA" && teamB.includes(playerId)) { losses++; lastResult = "Loss"; }
       else if (winnerTeam === "teamB" && teamA.includes(playerId)) { losses++; lastResult = "Loss"; }
 
-      tx.set(playerRefs[idx], { status: "Standby", currentMatchId: null, playedWith, wins, losses, lastResult, lastMatchEndedAt: now, updatedAt: now }, { merge: true });
+      if (score && Number.isFinite(score.teamA) && Number.isFinite(score.teamB)) {
+        const teamScore = teamA.includes(playerId) ? score.teamA : score.teamB;
+        const opponentScore = teamA.includes(playerId) ? score.teamB : score.teamA;
+        pointsDiff += teamScore - opponentScore;
+      }
+
+      tx.set(playerRefs[idx], { status: "Standby", currentMatchId: null, playedWith, wins, losses, pointsDiff, lastResult, lastMatchEndedAt: now, updatedAt: now }, { merge: true });
     });
   });
 
