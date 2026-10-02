@@ -601,6 +601,21 @@ function renderQueueWorkspaceCards() {
   const cards = Array.from(queuesContainer.querySelectorAll(
     ".queue-matches-container .match-card"
   ));
+  
+  try {
+    const savedOrder = JSON.parse(localStorage.getItem("globalMatchOrder") || "[]");
+    if (savedOrder.length > 0) {
+      cards.sort((a, b) => {
+        const idxA = savedOrder.indexOf(a.dataset.matchId);
+        const idxB = savedOrder.indexOf(b.dataset.matchId);
+        if (idxA === -1 && idxB === -1) return 0;
+        if (idxA === -1) return 1;
+        if (idxB === -1) return -1;
+        return idxA - idxB;
+      });
+    }
+  } catch(e) {}
+
   globalGrid.replaceChildren(...cards);
 }
 
@@ -629,7 +644,22 @@ function renderCourts() {
     if (aA !== bA) return aA - bA;
     return b.count - a.count;
   });
-  const bestQueue = hasPending ? { key: "custom", label: "Custom", count: state.pendingMatches.length * 4 } : (queueOptions[0] || null);
+
+  let bestQueue = hasPending ? { key: "custom", label: "Custom", count: state.pendingMatches.length * 4 } : null;
+  if (!bestQueue) {
+    const globalGrid = document.getElementById("global-match-grid");
+    if (globalGrid && globalGrid.children.length > 0) {
+      const firstCard = globalGrid.children[0];
+      const skillKey = firstCard.dataset.skillKey;
+      const count = (state.queues[skillKey] || []).filter(id => id !== "EMPTY").length;
+      if (count >= 4) {
+        bestQueue = { key: skillKey, label: SKILLS.find(s => s.key === skillKey)?.label || "Unknown", count };
+      }
+    }
+    if (!bestQueue) {
+      bestQueue = queueOptions[0] || null;
+    }
+  }
   const totalQueued = SKILLS.reduce((s, sk) => s + (state.queues[sk.key] || []).filter(id => id !== "EMPTY").length, 0);
 
   const nameFor = id => (id && state.players.get(id)?.name) || "--";
@@ -1140,6 +1170,14 @@ function setupSortable() {
           return true; // Allow match cards to be dragged anywhere freely
         },
         onEnd: async (event) => {
+          const globalOrder = [];
+          Array.from(globalGrid.children).forEach(child => {
+            if (child.dataset.matchId) {
+              globalOrder.push(child.dataset.matchId);
+            }
+          });
+          localStorage.setItem("globalMatchOrder", JSON.stringify(globalOrder));
+
           const skillKey = event.item.dataset.skillKey;
           const order = [];
           globalGrid.querySelectorAll(`.match-card[data-skill-key="${skillKey}"] .queue-item`).forEach((item) => {
@@ -1152,6 +1190,9 @@ function setupSortable() {
           while (order.length > 0 && order[order.length - 1] === "EMPTY") {
             order.pop();
           }
+          
+          renderNextMatch();
+          
           try {
             await reorderQueue(skillKey, order);
           } catch (error) {
@@ -3078,19 +3119,34 @@ function renderNextMatch() {
     players: state.queues[skill.key] || [],
   })).filter(q => q.players.length >= 4);
 
-  if (!queueOptions.length) {
-    container.innerHTML = "";
-    return;
+  let chosen = null;
+  const globalGrid = document.getElementById("global-match-grid");
+  if (globalGrid && globalGrid.children.length > 0) {
+    const firstCard = globalGrid.children[0];
+    const skillKey = firstCard.dataset.skillKey;
+    const players = state.queues[skillKey] || [];
+    if (players.filter(id => id !== "EMPTY").length >= 4) {
+      chosen = {
+        key: skillKey,
+        label: SKILLS.find(s => s.key === skillKey)?.label || "Unknown",
+        players: players
+      };
+    }
   }
 
-  queueOptions.sort((a, b) => {
-    const aActive = activeTally[a.label] || 0;
-    const bActive = activeTally[b.label] || 0;
-    if (aActive !== bActive) return aActive - bActive;
-    return b.players.length - a.players.length;
-  });
-
-  const chosen = queueOptions[0];
+  if (!chosen) {
+    if (!queueOptions.length) {
+      container.innerHTML = "";
+      return;
+    }
+    queueOptions.sort((a, b) => {
+      const aActive = activeTally[a.label] || 0;
+      const bActive = activeTally[b.label] || 0;
+      if (aActive !== bActive) return aActive - bActive;
+      return b.players.length - a.players.length;
+    });
+    chosen = queueOptions[0];
+  }
 
   // Exclude players who are currently playing on an active court
   const activePlayers = new Set(
