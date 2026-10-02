@@ -220,9 +220,37 @@ function initializeRatingUI() {
   const workspaceStyle = document.createElement("style");
   workspaceStyle.textContent = `
     .queue-workspace #queues-container { display:block; }
-    .queue-workspace #global-match-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0.75rem; }
-    @media (max-width: 639px) {
+    .queue-workspace #global-match-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+    .queue-workspace .match-card { min-width:0; padding:1rem !important; border-radius:1rem; }
+    .queue-workspace .match-card > div:first-child { min-height:2rem; margin-bottom:.75rem; padding-bottom:.55rem; }
+    .queue-workspace .match-card > div:first-child > div:last-child { flex-wrap:wrap; justify-content:flex-end; }
+    .queue-workspace .match-card .match-card-drag-handle h4 { font-size:.72rem; }
+    .queue-workspace .match-card .match-teams { gap:.7rem; }
+    .queue-workspace .match-card .match-teams > div { padding:.6rem; border-radius:.75rem; }
+    .queue-workspace .match-card .team-list { min-height:5.5rem; }
+    .queue-workspace .match-card .team-list > * + * { margin-top:.45rem; }
+    .queue-workspace .match-card .queue-item {
+      min-height:2.6rem;
+      padding:.45rem .55rem;
+      border-radius:.55rem;
+      gap:.35rem;
+    }
+    .queue-workspace .match-card .queue-item .font-semibold { font-size:.84rem; line-height:1.2; max-width:8.25rem; }
+    .queue-workspace .match-card .queue-item .drag-handle { font-size:.9rem; }
+    .queue-workspace .match-card .queue-item [title="Player rating"] { font-size:.68rem; padding:.15rem .3rem; }
+    .queue-workspace .match-card .queue-actions button { padding:.22rem; }
+    @media (max-width: 899px) {
       .queue-workspace #global-match-grid { grid-template-columns:1fr; }
+    }
+    @media (max-width: 520px) {
+      .queue-workspace .match-card { padding:.75rem !important; }
+      .queue-workspace .match-card > div:first-child { gap:.45rem; }
+      .queue-workspace .match-card > div:first-child > div:last-child { width:100%; justify-content:space-between; }
+      .queue-workspace .match-card .match-card-drag-handle h4 { font-size:.66rem; }
+      .queue-workspace .match-card .match-teams { grid-template-columns:1fr !important; gap:.5rem; }
+      .queue-workspace .match-card .match-teams > div:nth-child(2) { min-height:1.25rem; padding:0; }
+      .queue-workspace .match-card .team-list { min-height:0; }
+      .queue-workspace .match-card .queue-item .font-semibold { max-width:calc(100vw - 12.5rem); font-size:.88rem; }
     }
     .queue-workspace #queues-container > .glass-card,
     .queue-workspace #queues-container .queue-matches-container { display:contents; }
@@ -455,7 +483,7 @@ function renderQueues() {
             </div>
           </div>
           
-          <div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-stretch">
+          <div class="match-teams grid grid-cols-[1fr_auto_1fr] gap-2 items-stretch">
             <div class="bg-slate-900/60 rounded-lg border border-slate-700/50 p-1.5">
                <div class="text-[9px] text-slate-500 font-bold uppercase mb-1 text-center">Team A</div>
                <ul class="team-list space-y-1 min-h-[32px]" data-queue="${skill.key}"></ul>
