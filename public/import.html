@@ -29,32 +29,70 @@
       };
     </script>
     <link rel="stylesheet" href="css/styles.css" />
+    <style>
+      .import-page { min-height: 100vh; }
+      .import-shell { max-width: 1440px; margin: 0 auto; }
+      .import-hero { position: relative; overflow: hidden; }
+      .import-hero::after { content: ""; position: absolute; width: 340px; height: 340px; right: -120px; top: -250px; border-radius: 999px; background: rgba(31, 207, 177, .12); pointer-events: none; }
+      .import-kicker { color: var(--accent-tl); font-size: .7rem; font-weight: 700; letter-spacing: .24em; text-transform: uppercase; }
+      .import-title { font-size: clamp(2rem, 5vw, 3.4rem); line-height: .95; }
+      .import-workspace { position: relative; padding: clamp(1rem, 3vw, 2rem); overflow: hidden; }
+      .import-workspace::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: linear-gradient(90deg, var(--accent-tl), var(--accent-gd), transparent 80%); opacity: .8; }
+      .import-heading { font-size: 1.45rem; line-height: 1; }
+      .import-step { display: inline-flex; align-items: center; gap: .55rem; color: var(--text-muted); font-size: .75rem; }
+      .import-step-number { display: grid; width: 1.5rem; height: 1.5rem; place-items: center; border: 1px solid rgba(31, 207, 177, .35); border-radius: 999px; color: var(--accent-tl); font-weight: 700; }
+      .import-source { min-height: 232px; padding: clamp(1rem, 2.4vw, 1.65rem); border: 1px dashed rgba(31, 207, 177, .45); border-radius: 18px; background: linear-gradient(145deg, rgba(31, 207, 177, .12), rgba(10, 40, 40, .3)); display: flex; flex-direction: column; justify-content: center; }
+      .import-file-input { min-width: min(100%, 360px); padding: .45rem; border-color: rgba(31, 207, 177, .35); }
+      .import-file-input::file-selector-button { margin-right: .8rem; border: 0; border-radius: 8px; padding: .5rem .7rem; background: rgba(31, 207, 177, .18); color: var(--text-base); font-weight: 700; cursor: pointer; }
+      .import-formats { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.35rem; }
+      .import-format { padding: .35rem .6rem; border: 1px solid rgba(245, 196, 42, .18); border-radius: 999px; color: var(--text-muted); font-size: .7rem; }
+      .import-preview { margin-top: 1.5rem; padding: 0; overflow: hidden; }
+      .import-preview-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.1rem clamp(1rem, 2.4vw, 1.5rem); border-bottom: 1px solid rgba(245, 196, 42, .12); }
+      .import-preview-label { display: flex; align-items: center; gap: .7rem; }
+      .import-preview-dot { width: .55rem; height: .55rem; border-radius: 999px; background: var(--accent-or); box-shadow: 0 0 0 4px rgba(232, 90, 26, .12); }
+      .import-preview-help { color: var(--text-muted); font-size: .75rem; }
+      .import-table-wrap { margin: 0; max-height: 480px; border: 0; border-radius: 0; }
+      .import-page #import-table th { padding: .85rem 1rem; color: #b6c8c1; font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+      .import-page #import-table td { padding: .9rem 1rem; }
+      .import-page #import-table tbody tr { transition: background .15s ease; }
+      .import-page #import-table tbody tr:hover { background: rgba(31, 207, 177, .045); }
+      .import-summary { min-height: 1.25rem; padding: .85rem clamp(1rem, 2.4vw, 1.5rem); border-top: 1px solid rgba(245, 196, 42, .1); color: var(--text-muted); }
+      .import-save[disabled] { cursor: not-allowed; opacity: .5; box-shadow: none; }
+      @media (max-width: 640px) { .import-preview-top > div:last-child { width: 100%; justify-content: space-between; } .import-preview-top .btn-primary { flex: 1; } }
+    </style>
   </head>
-  <body class="min-h-screen bg-ink text-slate-100 font-body">
+  <body class="import-page min-h-screen bg-ink text-slate-100 font-body">
     <div class="page-bg"></div>
 
-    <header class="px-6 py-6 md:px-10 md:py-8">
-      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <header class="px-4 py-6 sm:px-6 md:px-10 md:py-10">
+      <div class="import-shell import-hero flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
-          <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Player Import</p>
-          <h1 class="text-3xl md:text-4xl font-display font-semibold">Import Players</h1>
+          <p class="import-kicker">Roster workspace</p>
+          <h1 class="import-title mt-2 font-display font-semibold">Import Players</h1>
+          <p class="mt-3 max-w-xl text-sm leading-6 text-slate-400">Bring a roster in from a spreadsheet or Reclub, review it once, then save everyone with confidence.</p>
         </div>
-        <a class="btn-secondary" href="index.html">Back to Dashboard</a>
+        <a class="btn-secondary" href="index.html">← Back to Dashboard</a>
       </div>
     </header>
 
-    <main class="px-4 pb-10 sm:px-6 md:px-10">
-      <div class="glass-card">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <main class="import-shell px-4 pb-12 sm:px-6 md:px-10">
+      <div class="glass-card import-workspace">
+        <div class="grid gap-5 lg:grid-cols-[.85fr_1.15fr] lg:items-center">
           <div>
-            <h2 class="text-xl font-display font-semibold">Upload Spreadsheet</h2>
+            <div class="flex flex-wrap gap-x-5 gap-y-2 mb-5">
+              <span class="import-step"><span class="import-step-number">1</span> Choose source</span>
+              <span class="import-step"><span class="import-step-number">2</span> Check preview</span>
+              <span class="import-step"><span class="import-step-number">3</span> Save roster</span>
+            </div>
+            <h2 class="import-heading font-display font-semibold">Add your player list</h2>
             <p class="text-sm text-slate-400">Upload .xlsx or .csv files with Name, Rating, Gender, and Location columns. Rating must be 2.0–5.0 in 0.5 steps.</p>
           </div>
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <input type="file" id="import-file" class="input-field w-full max-w-full overflow-hidden text-ellipsis" accept=".xlsx,.csv" />
+          <div class="import-source gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <input type="file" id="import-file" class="input-field import-file-input w-full max-w-full overflow-hidden text-ellipsis" accept=".xlsx,.csv" />
             <a class="btn-secondary" href="import-template.xlsx" download>Excel Template</a>
             <a class="btn-secondary" href="import-template.csv" download>CSV Template</a>
             <button id="open-reclub-modal" class="btn-secondary" style="border-color: rgba(31, 207, 177, 0.4); color: #1fcfb1;">Import from Reclub</button>
+            <div class="import-formats w-full"><span class="import-format">.XLSX</span><span class="import-format">.CSV</span><span class="import-format">Name + Rating required</span></div>
           </div>
         </div>
 
@@ -77,9 +115,9 @@
           </div>
         </div>
 
-        <div class="mt-6 glass-subcard">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-display">Preview</h3>
+        <div class="glass-subcard import-preview">
+          <div class="import-preview-top">
+            <div class="import-preview-label"><span class="import-preview-dot"></span><div><h3 class="text-lg font-display font-semibold">Roster preview</h3><p class="import-preview-help">Review any issues before saving.</p></div></div>
             <div class="flex items-center gap-4">
               <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
                 <input type="checkbox" id="add-to-queue-checkbox" class="rounded bg-slate-800 border-slate-700 text-cyan-500 focus:ring-cyan-500">
@@ -88,7 +126,7 @@
               <button class="btn-primary" id="import-save" disabled>Save Players</button>
             </div>
           </div>
-          <div class="mt-4 overflow-x-auto overflow-y-auto max-h-[350px] md:max-h-[500px] border border-slate-700/30 rounded-lg custom-scrollbar">
+          <div class="import-table-wrap overflow-x-auto overflow-y-auto custom-scrollbar">
             <table class="w-full text-sm relative" id="import-table"><thead class="text-left text-slate-400 sticky top-0 z-10" style="background: rgba(18, 26, 43, 0.98); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
                 <tr>
                   <th class="py-2">Name</th>
@@ -105,7 +143,7 @@
               </tbody>
             </table>
           </div>
-          <p class="mt-3 text-xs text-slate-400" id="import-summary"></p>
+          <p class="import-summary text-xs" id="import-summary" aria-live="polite"></p>
         </div>
       </div>
     </main>
