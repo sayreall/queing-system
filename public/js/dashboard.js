@@ -2954,6 +2954,18 @@ function bindEvents() {
           title: 'Dashboard Stats',
           intro: 'This top bar gives you a bird\'s-eye view of your session: total waiting players, active matches, available courts, and queue sizes.',
           position: 'bottom'
+        },
+        {
+          element: document.querySelector('#lock-partners-btn'),
+          title: 'Fixed Partners',
+          intro: 'Use <b>Lock Partners</b> to choose two players who should stay on the same team whenever rounds are generated.',
+          position: 'bottom'
+        },
+        {
+          element: document.querySelector('#unlock-partners-btn'),
+          title: 'Unlock One Pair',
+          intro: 'Click <b>Unlock Partner</b> and select the pair to remove. Only that selected pairing is unlocked; every other fixed pair stays together.',
+          position: 'bottom'
         }
       ];
 

@@ -564,25 +564,6 @@ export async function updatePlayerPracticePartner(playerId, partnerId) {
   });
 }
 
-export async function clearAllPracticePartners() {
-  const snapshot = await getDocs(getTenantCollection("players"));
-  const playerDocs = snapshot.docs.filter((playerDoc) => playerDoc.data().practicePartner);
-  if (!playerDocs.length) return 0;
-
-  // Firestore batches allow at most 500 writes. Chunking keeps this safe for
-  // large player lists while clearing every side of each fixed partnership.
-  const commits = [];
-  for (let index = 0; index < playerDocs.length; index += 450) {
-    const batch = writeBatch(db);
-    playerDocs.slice(index, index + 450).forEach((playerDoc) => {
-      batch.update(playerDoc.ref, { practicePartner: null, updatedAt: serverTimestamp() });
-    });
-    commits.push(batch.commit());
-  }
-  await Promise.all(commits);
-  return playerDocs.length;
-}
-
 export async function markPlayerAbsent(playerId, absent) {
   const playerRef = getTenantDoc("players", playerId);
 
