@@ -170,6 +170,40 @@ function initializeRatingUI() {
   document.querySelectorAll("th").forEach((header) => {
     if (header.textContent.trim() === "Skill") header.textContent = "Rating";
   });
+
+  const compactList = document.createElement("div");
+  compactList.id = "compact-player-list";
+  compactList.className = "mt-5 border border-slate-700/50 rounded-xl overflow-y-auto max-h-[620px]";
+  compactList.innerHTML = `<p class="p-4 text-sm text-slate-500">Loading players...</p>`;
+  compactList.addEventListener("click", handlePlayerActionClick);
+  document.getElementById("custom-match-panel")?.after(compactList);
+
+  const queueContainer = document.getElementById("queues-container");
+  const queueSection = queueContainer?.closest("section");
+  const queueDestination = document.querySelector("#players-body-beginner")?.closest(".glass-subcard");
+  if (queueContainer && queueDestination) {
+    queueDestination.innerHTML = `
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <div><h3 class="text-lg font-display font-semibold">Next Matches</h3><p class="text-xs text-slate-400">All generated matches in one queue</p></div>
+        <span class="text-xs text-emerald-400">Up next</span>
+      </div>`;
+    queueDestination.appendChild(queueContainer);
+    queueDestination.classList.add("queue-workspace");
+    if (queueSection) queueSection.style.display = "none";
+  }
+
+  const workspaceStyle = document.createElement("style");
+  workspaceStyle.textContent = `
+    .queue-workspace #queues-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:0.75rem; }
+    .queue-workspace #queues-container > .glass-card,
+    .queue-workspace #queues-container .queue-matches-container,
+    .queue-workspace #queues-container .queue-matches-grid { display:contents; }
+    .queue-workspace #queues-container > .glass-card > .flex { display:none; }
+    .queue-workspace #queues-container .queue-empty { display:none; }
+    #compact-player-list .compact-player { display:grid; grid-template-columns:1.5rem minmax(0,1fr) auto auto; gap:0.65rem; align-items:center; padding:0.7rem 0.8rem; border-bottom:1px solid rgba(51,65,85,.55); }
+    #compact-player-list .compact-player:last-child { border-bottom:0; }
+  `;
+  document.head.appendChild(workspaceStyle);
 }
 
 initializeRatingUI();
@@ -680,6 +714,26 @@ function renderPlayers() {
     }
     return "";
   };
+
+  const compactList = document.getElementById("compact-player-list");
+  if (compactList) {
+    const compactRows = filteredRows;
+    compactList.innerHTML = compactRows.length
+      ? compactRows.map((player, index) => {
+          const games = (player.wins ?? 0) + (player.losses ?? 0);
+          const isUnavailable = player.status === "Playing" || player.status === "Stacked";
+          return `
+            <div class="compact-player">
+              <span class="font-bold text-emerald-400">${index + 1}</span>
+              <div class="min-w-0"><p class="font-semibold text-sm truncate">${player.name}</p>
+                <p class="text-[11px] text-slate-400">${games} games · <span class="text-emerald-400">${player.wins ?? 0}W</span> <span class="text-rose-400">${player.losses ?? 0}L</span>${getWaitTime(player)}</p>
+              </div>
+              <span class="text-xs px-2 py-1 rounded border border-slate-700 bg-slate-800 whitespace-nowrap">${player.status}</span>
+              <button class="text-xs text-slate-300 hover:text-white" data-player-absent="${player.id}" ${isUnavailable ? "disabled" : ""}>${isUnavailable ? "In match" : (player.status === "Absent" || player.status === "Standby" ? "Return" : "Absent")}</button>
+            </div>`;
+        }).join("")
+      : `<p class="p-4 text-sm text-slate-500">No players match the current filter.</p>`;
+  }
 
   const generateRowHTML = (player, idx) => `
       <tr class="border-t border-slate-800/60">
