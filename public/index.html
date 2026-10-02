@@ -809,15 +809,15 @@
 
         <div class="overflow-y-auto pr-2" id="matching-mode-list">
 
-          <!-- Balanced -->
+          <!-- Smart Balance -->
           <label
             class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
-            <input type="radio" name="matching_mode" value="balanced" class="peer sr-only">
+            <input type="radio" name="matching_mode" value="smart" class="peer sr-only" checked>
             <div
               class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all">
             </div>
             <div class="flex items-center gap-2 mb-1 relative z-10">
-              <h3 class="text-base font-semibold text-white">Balanced</h3>
+              <h3 class="text-base font-semibold text-white">Smart Balance</h3>
               <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
                 style="background: rgba(31,207,177,0.2); color: #1fcfb1;">Recommended</span>
               <svg class="w-5 h-5 ml-auto opacity-0 peer-checked:opacity-100 transition-opacity" style="color: #1fcfb1;"
@@ -825,8 +825,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p class="text-sm text-slate-400 relative z-10">Balances teams by win ratio. Avoids repeat matchups when
-              possible.</p>
+            <p class="text-sm text-slate-400 relative z-10">Balances games played, team strength, repeat partners, and repeat opponents.</p>
           </label>
 
           <!-- Fair Play -->
@@ -853,7 +852,7 @@
           <!-- Social Mix -->
           <label
             class="block cursor-pointer relative bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition hover:border-beginner hover:bg-slate-800/80 mb-3">
-            <input type="radio" name="matching_mode" value="social_mix" class="peer sr-only" checked>
+            <input type="radio" name="matching_mode" value="social_mix" class="peer sr-only">
             <div
               class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-beginner peer-checked:bg-beginner/10 pointer-events-none transition-all">
             </div>
@@ -1184,7 +1183,7 @@
   <div id="toast-container"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-  <script type="module" src="js/dashboard.js?v=16"></script>
+  <script type="module" src="js/dashboard.js?v=17"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

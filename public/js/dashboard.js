@@ -100,7 +100,7 @@ const state = {
   automationLock: false,
   editingMatches: new Set(),
   autoRound: false,
-  autoRoundMode: localStorage.getItem("dq_auto_round_mode") || "winners_losers",
+  autoRoundMode: localStorage.getItem("dq_auto_round_mode") || "smart",
   prevCourtStatuses: {}, // tracks { courtId: "Active" | "Available" | "Inactive" }
   autoRoundLock: false,
   ready: {
@@ -1973,7 +1973,7 @@ function bindEvents() {
     });
 
     confirmMatchingModeBtn?.addEventListener("click", async () => {
-      const selectedMode = document.querySelector('input[name="matching_mode"]:checked')?.value || 'social_mix';
+      const selectedMode = document.querySelector('input[name="matching_mode"]:checked')?.value || 'smart';
       
       // Persist chosen mode for Auto Round to reuse
       state.autoRoundMode = selectedMode;
@@ -1991,11 +1991,11 @@ function bindEvents() {
           })),
         ];
         const summary = await generateSmartRound(Array.from(state.players.values()), selectedMode, history);
-        const repeatCount = summary.repeatLineups + summary.repeatTeammates;
+        const repeatCount = summary.repeatLineups + summary.repeatTeammates + summary.repeatOpponents;
         showToast(
           repeatCount
-            ? "Rotation warning: " + summary.matches + " matches · " + summary.repeatLineups + " repeat lineup(s), " + summary.repeatTeammates + " repeat partner(s)."
-            : "Rotation ready: " + summary.matches + " balanced matches · no repeat lineups or players.",
+            ? "Smart rotation: " + summary.matches + " matches · " + summary.repeatLineups + " repeat lineup(s), " + summary.repeatTeammates + " repeat partner(s), " + summary.repeatOpponents + " repeat opponent(s)."
+            : "Smart rotation ready: " + summary.matches + " balanced matches · no repeat lineups, partners, or opponents.",
           repeatCount ? "warning" : "info"
         );
         matchingModeModal.classList.add("hidden");
@@ -2027,6 +2027,7 @@ function bindEvents() {
     }
     if (autoRoundModeLabel) {
       const modeNames = {
+        smart: "Smart Balance",
         winners_losers: "Winners/Losers",
         social_mix: "Social Mix",
         balanced: "Balanced",
@@ -3064,7 +3065,7 @@ async function bootstrap() {
     state.autoRoundLock = true;
     try {
       const players = Array.from(state.players.values());
-      const mode = state.autoRoundMode || "winners_losers";
+      const mode = state.autoRoundMode || "smart";
       const history = [
         ...state.matchLog,
         ...state.courts.filter((court) => court.status === "Active").map((court) => ({
@@ -3074,11 +3075,11 @@ async function bootstrap() {
         })),
       ];
       const summary = await generateSmartRound(players, mode, history);
-      const repeatCount = summary.repeatLineups + summary.repeatTeammates;
+      const repeatCount = summary.repeatLineups + summary.repeatTeammates + summary.repeatOpponents;
       showToast(
         repeatCount
-          ? "Auto rotation: " + summary.matches + " matches, " + repeatCount + " repeat warning(s)."
-          : "Auto rotation ready: " + summary.matches + " balanced matches with no repeats.",
+          ? "Smart auto rotation: " + summary.matches + " matches, " + repeatCount + " repeat warning(s)."
+          : "Smart auto rotation ready: " + summary.matches + " balanced matches with no repeats.",
         repeatCount ? "warning" : "info"
       );
 

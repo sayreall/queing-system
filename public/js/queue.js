@@ -933,14 +933,15 @@ function playerPower(player) {
   return Number(playerRatingLabel(player)) + winRate * 0.35;
 }
 
-function pairHistory(playerA, playerB) {
-  return (playerA.playedWith?.[playerB.id] || 0) +
-    (playerB.playedWith?.[playerA.id] || 0);
-}
-
 function sortForRound(players, mode) {
   const copy = [...players];
   const tieBreak = () => Math.random() - 0.5;
+  if (mode === "smart") {
+    return copy.sort((a, b) => {
+      const gameDifference = ((a.wins || 0) + (a.losses || 0)) - ((b.wins || 0) + (b.losses || 0));
+      return gameDifference || playerPower(a) - playerPower(b) || tieBreak();
+    });
+  }
   if (mode === "fair_play") {
     return copy.sort((a, b) => ((a.wins || 0) + (a.losses || 0)) - ((b.wins || 0) + (b.losses || 0)) || tieBreak());
   }
@@ -957,8 +958,35 @@ function sortForRound(players, mode) {
   return copy.sort(tieBreak);
 }
 
-function chooseGroup(pool, lineupHistory) {
-  const candidates = pool.slice(0, Math.min(8, pool.length));
+function pairCount(history, playerA, playerB) {
+  return history.get(rotationPairKey(playerA.id, playerB.id)) || 0;
+}
+
+function addPair(history, playerA, playerB) {
+  const key = rotationPairKey(playerA.id, playerB.id);
+  history.set(key, (history.get(key) || 0) + 1);
+}
+
+function pairingScore(teamA, teamB, teammateHistory, opponentHistory, mode) {
+  const teammateRepeats = pairCount(teammateHistory, teamA[0], teamA[1]) +
+    pairCount(teammateHistory, teamB[0], teamB[1]);
+  const opponentRepeats = teamA.reduce((count, playerA) =>
+    count + teamB.reduce((total, playerB) => total + pairCount(opponentHistory, playerA, playerB), 0), 0);
+  const teamBalance = Math.abs(
+    playerPower(teamA[0]) + playerPower(teamA[1]) -
+    playerPower(teamB[0]) - playerPower(teamB[1])
+  );
+  const balanceWeight = mode === "social_mix" ? 8 : 18;
+  return {
+    score: teammateRepeats * 900 + opponentRepeats * 260 + teamBalance * balanceWeight,
+    teammateRepeats,
+    opponentRepeats,
+    teamBalance,
+  };
+}
+
+function chooseGroup(pool, lineupHistory, teammateHistory, opponentHistory, mode) {
+  const candidates = pool.slice(0, Math.min(10, pool.length));
   let best = candidates.slice(0, 4);
   let bestScore = Infinity;
   for (let a = 0; a < candidates.length - 3; a++) {
@@ -967,12 +995,14 @@ function chooseGroup(pool, lineupHistory) {
         for (let d = c + 1; d < candidates.length; d++) {
           const group = [candidates[a], candidates[b], candidates[c], candidates[d]];
           const repeatLineup = lineupHistory.has(rotationLineupKey(group.map((player) => player.id)));
-          let score = repeatLineup ? 10000 : 0;
-          for (let x = 0; x < group.length; x++) {
-            for (let y = x + 1; y < group.length; y++) score += pairHistory(group[x], group[y]) * 10;
-          }
-          // Keep people near the front of the chosen matching mode's order.
-          score += (a + b + c + d) * 0.25;
+          const pairing = arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode);
+          const gamesAboveFirst = group.reduce((total, player) =>
+            total + ((player.wins || 0) + (player.losses || 0)), 0) -
+            4 * ((candidates[0].wins || 0) + (candidates[0].losses || 0));
+          const fairnessWeight = mode === "smart" || mode === "fair_play" ? 55 : 2;
+          let score = (repeatLineup ? 100000 : 0) + pairing.score + Math.max(0, gamesAboveFirst) * fairnessWeight;
+          // Keep people near the front of the selected mode when scores tie.
+          score += (a + b + c + d) * 0.15;
           if (score < bestScore) {
             best = group;
             bestScore = score;
@@ -984,56 +1014,91 @@ function chooseGroup(pool, lineupHistory) {
   return best;
 }
 
-function arrangeBalancedTeams(group, teammateHistory) {
+function arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode) {
   const pairings = [
     [[group[0], group[1]], [group[2], group[3]]],
     [[group[0], group[2]], [group[1], group[3]]],
     [[group[0], group[3]], [group[1], group[2]]],
   ];
   let best = pairings[0];
-  let bestScore = Infinity;
+  let bestDetails = null;
   for (const pairing of pairings) {
     const [teamA, teamB] = pairing;
-    const teamAKey = rotationPairKey(teamA[0].id, teamA[1].id);
-    const teamBKey = rotationPairKey(teamB[0].id, teamB[1].id);
-    const repeats = pairHistory(...teamA) + pairHistory(...teamB) +
-      (teammateHistory.has(teamAKey) ? 100 : 0) +
-      (teammateHistory.has(teamBKey) ? 100 : 0);
-    const balance = Math.abs(
-      playerPower(teamA[0]) + playerPower(teamA[1]) -
-      playerPower(teamB[0]) - playerPower(teamB[1])
-    );
-    const score = repeats * 20 + balance;
-    if (score < bestScore) {
+    const details = pairingScore(teamA, teamB, teammateHistory, opponentHistory, mode);
+    if (!bestDetails || details.score < bestDetails.score) {
       best = pairing;
-      bestScore = score;
+      bestDetails = details;
     }
   }
-  return best;
+  return { teamA: best[0], teamB: best[1], ...bestDetails };
+}
+
+// Keep an incomplete queued card together when a new round is generated.
+// Queue cards are represented by every four positions in the flat queue order;
+// an open position is stored as "EMPTY". Without this, the round generator
+// treats the three people on such a card as loose players and reshuffles them.
+function getLockedThreePlayerCards(playersList) {
+  const playerById = new Map(playersList.map((player) => [player.id, player]));
+  const locked = Object.fromEntries(SKILLS.map((skill) => [skill.key, []]));
+  const playerIds = new Set();
+
+  for (const skill of SKILLS) {
+    const order = queueState.get(skill.key) || [];
+    for (let index = 0; index < order.length; index += 4) {
+      const card = order.slice(index, index + 4);
+      if (card.length !== 4) continue;
+
+      const filledIds = card.filter((id) => id && id !== "EMPTY");
+      const cardPlayers = filledIds.map((id) => playerById.get(id));
+      const canKeepCard = filledIds.length === 3 &&
+        cardPlayers.every((player) =>
+          player &&
+          (player.status === "Waiting" || player.status === "Standby") &&
+          canPlayAnotherMatch(player)
+        );
+
+      if (!canKeepCard) continue;
+
+      // Preserve both the three players' order and the empty slot so the UI
+      // continues to show the same pending match.
+      locked[skill.key].push(...card.map((id) => id === "EMPTY" ? "EMPTY" : playerById.get(id)));
+      filledIds.forEach((id) => playerIds.add(id));
+    }
+  }
+
+  return { locked, playerIds };
 }
 
 export async function generateSmartRound(playersList, mode = "social_mix", matchHistory = []) {
+  const lockedCards = getLockedThreePlayerCards(playersList);
   const eligible = playersList.filter((player) =>
+    !lockedCards.playerIds.has(player.id) &&
     (player.status === "Waiting" || player.status === "Standby" || player.status === "Playing") && canPlayAnotherMatch(player)
   );
-  if (!eligible.length) throw new Error(getGameLimit() ? "All available players have reached the game limit." : "No waiting or standby players available.");
+  if (!eligible.length && !lockedCards.playerIds.size) {
+    throw new Error(getGameLimit() ? "All available players have reached the game limit." : "No waiting or standby players available.");
+  }
 
   const lineupHistory = new Set(
     matchHistory.filter((match) => match.players?.length === 4)
       .map((match) => rotationLineupKey(match.players))
   );
-  const teammateHistory = new Set(
-    matchHistory.flatMap((match) => [match.teamA, match.teamB])
-      .filter((team) => team?.length === 2)
-      .map((team) => rotationPairKey(team[0], team[1]))
-  );
+  const teammateHistory = new Map();
+  const opponentHistory = new Map();
+  matchHistory.forEach((match) => {
+    const teamA = (match.teamA || []).map((id) => ({ id }));
+    const teamB = (match.teamB || []).map((id) => ({ id }));
+    if (teamA.length === 2) addPair(teammateHistory, teamA[0], teamA[1]);
+    if (teamB.length === 2) addPair(teammateHistory, teamB[0], teamB[1]);
+    teamA.forEach((playerA) => teamB.forEach((playerB) => addPair(opponentHistory, playerA, playerB)));
+  });
   const queues = Object.fromEntries(SKILLS.map((skill) => [skill.key, []]));
   eligible.forEach((player) => {
     const key = skillKeyFromLabel(playerRatingLabel(player));
     if (key) queues[key].push(player);
   });
 
-  const summary = { matches: 0, repeatLineups: 0, repeatTeammates: 0, unpaired: 0, repeatedPlayers: 0 };
+  const summary = { matches: 0, repeatLineups: 0, repeatTeammates: 0, repeatOpponents: 0, unpaired: 0, repeatedPlayers: 0, totalBalance: 0 };
   const batch = writeBatch(db);
   const now = serverTimestamp();
 
@@ -1052,20 +1117,24 @@ export async function generateSmartRound(playersList, mode = "social_mix", match
     // once they hit the cap.
     const ready = prioritizeFairPlay(skillPlayers.filter((player) => player.status !== "Playing"));
     const playing = prioritizeFairPlay(skillPlayers.filter((player) => player.status === "Playing"));
-    const ordered = [];
+    // Locked cards are put ahead of the newly generated matches and retain
+    // their EMPTY position, keeping the original three players together.
+    const ordered = [...lockedCards.locked[skillKey]];
 
     for (const pool of [ready, playing]) {
       while (pool.length >= 4) {
-        const group = chooseGroup(pool, lineupHistory);
+        const group = chooseGroup(pool, lineupHistory, teammateHistory, opponentHistory, mode);
         const groupIds = group.map((player) => player.id);
         const lineupKey = rotationLineupKey(groupIds);
         if (lineupHistory.has(lineupKey)) summary.repeatLineups++;
-        const [teamA, teamB] = arrangeBalancedTeams(group, teammateHistory);
-        [teamA, teamB].forEach((team) => {
-          const key = rotationPairKey(team[0].id, team[1].id);
-          if (teammateHistory.has(key)) summary.repeatTeammates++;
-          teammateHistory.add(key);
-        });
+        const matchup = arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode);
+        const { teamA, teamB } = matchup;
+        summary.repeatTeammates += matchup.teammateRepeats;
+        summary.repeatOpponents += matchup.opponentRepeats;
+        summary.totalBalance += matchup.teamBalance;
+        addPair(teammateHistory, teamA[0], teamA[1]);
+        addPair(teammateHistory, teamB[0], teamB[1]);
+        teamA.forEach((playerA) => teamB.forEach((playerB) => addPair(opponentHistory, playerA, playerB)));
         lineupHistory.add(lineupKey);
         ordered.push(...teamA, ...teamB);
         groupIds.forEach((id) => pool.splice(pool.findIndex((player) => player.id === id), 1));
@@ -1076,12 +1145,12 @@ export async function generateSmartRound(playersList, mode = "social_mix", match
     }
 
     batch.set(getQueueDocRef(skillKey), {
-      order: ordered.map((player) => player.id),
+      order: ordered.map((player) => player === "EMPTY" ? "EMPTY" : player.id),
       skill: skillLabelFromKey(skillKey),
       updatedAt: now,
     }, { merge: true });
     ordered.forEach((player) => {
-      if (player.status !== "Waiting" && player.status !== "Playing") {
+      if (player !== "EMPTY" && player.status !== "Waiting" && player.status !== "Playing") {
         batch.update(getTenantDoc("players", player.id), { status: "Waiting", updatedAt: now });
       }
     });
