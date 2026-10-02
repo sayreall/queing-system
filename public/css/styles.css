@@ -316,20 +316,30 @@ body {
 
 /* ===== Court ===== */
 
+@media (min-width: 1024px) {
+  .court-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .court-card {
   display: grid;
-  gap: 12px;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(10, 20, 20, 0.3);
 }
 
 .court-title {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 600;
 }
 
 .court-status {
-  padding: 4px 10px;
+  padding: 3px 7px;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   background: rgba(168, 196, 190, 0.12);
@@ -342,7 +352,7 @@ body {
 }
 
 .court-timer {
-  font-size: 1.4rem;
+  font-size: 1.1rem;
   font-weight: 600;
   letter-spacing: 0.1em;
   color: var(--accent-gd);
@@ -352,15 +362,15 @@ body {
 
 .team-grid {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .team-card {
   background: rgba(10, 40, 40, 0.8);
   border: 1px solid rgba(245, 196, 42, 0.15);
-  border-radius: 14px;
-  padding: 12px;
+  border-radius: 10px;
+  padding: 8px;
 }
 
 .team-label {
@@ -371,10 +381,22 @@ body {
 }
 
 .team-player {
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  margin-top: 4px;
+  margin-top: 3px;
   color: var(--text-base);
+}
+
+.court-card .btn-primary,
+.court-card .btn-secondary {
+  min-height: 32px;
+  padding: 7px 10px;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+}
+
+.court-card .input-field {
+  font-size: 0.7rem;
 }
 
 /* ===== TV Queue ===== */
