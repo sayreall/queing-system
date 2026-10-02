@@ -474,7 +474,12 @@ export async function updatePlayerSkill(playerId, newSkill) {
     const currentKey = skillKeyFromLabel(playerRatingLabel(player));
     const nextKey = skillKeyFromLabel(normalizedSkill);
 
-    if (currentKey === nextKey) return;
+    // Ratings in the same bracket share a queue, but the player's individual
+    // rating must still be saved (for example, 2.0 → 2.5).
+    if (currentKey === nextKey) {
+      tx.update(playerRef, { rating: normalizedSkill, updatedAt: serverTimestamp() });
+      return;
+    }
 
     const currentQueueRef = getQueueDocRef(currentKey);
     const nextQueueRef = getQueueDocRef(nextKey);
@@ -1033,10 +1038,10 @@ function arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode) {
   return { teamA: best[0], teamB: best[1], ...bestDetails };
 }
 
-// Keep an incomplete queued card together when a new round is generated.
+// Reserve an incomplete queued card when a new round is generated.
 // Queue cards are represented by every four positions in the flat queue order;
-// an open position is stored as "EMPTY". Without this, the round generator
-// treats the three people on such a card as loose players and reshuffles them.
+// an open position is stored as "EMPTY". The generator fills that position
+// first, instead of reshuffling the three players already on the card.
 function getLockedThreePlayerCards(playersList) {
   const playerById = new Map(playersList.map((player) => [player.id, player]));
   const locked = Object.fromEntries(SKILLS.map((skill) => [skill.key, []]));
@@ -1059,9 +1064,9 @@ function getLockedThreePlayerCards(playersList) {
 
       if (!canKeepCard) continue;
 
-      // Preserve both the three players' order and the empty slot so the UI
-      // continues to show the same pending match.
-      locked[skill.key].push(...card.map((id) => id === "EMPTY" ? "EMPTY" : playerById.get(id)));
+      // Preserve both the three players' order and the empty slot so it can
+      // be filled before any new matches are built.
+      locked[skill.key].push(card.map((id) => id === "EMPTY" ? "EMPTY" : playerById.get(id)));
       filledIds.forEach((id) => playerIds.add(id));
     }
   }
@@ -1117,9 +1122,20 @@ export async function generateSmartRound(playersList, mode = "social_mix", match
     // once they hit the cap.
     const ready = prioritizeFairPlay(skillPlayers.filter((player) => player.status !== "Playing"));
     const playing = prioritizeFairPlay(skillPlayers.filter((player) => player.status === "Playing"));
-    // Locked cards are put ahead of the newly generated matches and retain
-    // their EMPTY position, keeping the original three players together.
-    const ordered = [...lockedCards.locked[skillKey]];
+    const ordered = [];
+
+    // Complete existing three-player cards before assembling fresh matches.
+    // Only ready players are used so someone currently on court is never
+    // assigned to an empty queued slot.
+    for (const card of lockedCards.locked[skillKey]) {
+      const emptySlot = card.indexOf("EMPTY");
+      const replacement = ready.shift();
+      if (emptySlot !== -1 && replacement) {
+        card[emptySlot] = replacement;
+        summary.matches++;
+      }
+      ordered.push(...card);
+    }
 
     for (const pool of [ready, playing]) {
       while (pool.length >= 4) {
