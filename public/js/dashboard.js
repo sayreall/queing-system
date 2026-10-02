@@ -2462,6 +2462,8 @@ function bindEvents() {
   const rankingTbody = document.getElementById("ranking-tbody");
 
   const openRankingModal = () => {
+    if (!rankingModal || !rankingTbody) return;
+
     const allPlayers = Array.from(state.players.values()).filter(p => p.status !== "Archived" && ((p.wins || 0) + (p.losses || 0)) > 0);
     
     allPlayers.sort((a, b) => {
@@ -2492,7 +2494,7 @@ function bindEvents() {
         <tr class="border-t border-slate-800/60 hover:bg-slate-800/20">
           <td class="py-3 px-4 text-center font-bold text-lg text-slate-300">${rankIcon}</td>
           <td class="py-3 px-4 font-semibold text-white">${player.name}</td>
-          <td class="py-3 px-4 text-slate-400 text-xs">${player.skill}</td>
+          <td class="py-3 px-4 text-slate-400 text-xs">${ratingForPlayer(player)}</td>
           <td class="py-3 px-4 text-center text-purple-400 font-semibold">${gp}</td>
           <td class="py-3 px-4 text-center text-green-400 font-semibold">${player.wins || 0}</td>
           <td class="py-3 px-4 text-center text-red-400 font-semibold">${player.losses || 0}</td>
