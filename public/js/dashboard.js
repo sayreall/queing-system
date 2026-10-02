@@ -4,6 +4,8 @@ import {
   playerRatingLabel,
   ratingRankLabel,
   skillKeyFromLabel,
+  getGameLimit,
+  setGameLimit,
   ensureQueuesExist,
   addPlayer,
   listenToQueues,
@@ -138,6 +140,17 @@ function refreshScoringUI() {
 function setScoringEnabled(enabled) {
   localStorage.setItem(SCORING_STORAGE_KEY, String(enabled));
   refreshScoringUI();
+}
+
+function refreshGameLimitUI() {
+  const limit = getGameLimit();
+  const label = document.getElementById("game-limit-label");
+  const button = document.getElementById("game-limit-btn");
+  if (label) label.textContent = limit ? `Game Limit: ${limit}` : "Game Limit: Off";
+  if (button) {
+    button.classList.toggle("border-amber-500/60", Boolean(limit));
+    button.classList.toggle("text-amber-300", Boolean(limit));
+  }
 }
 
 const style = document.createElement('style');
@@ -1651,6 +1664,41 @@ async function confirmFinishMatch(winnerTeam) {
 }
 
 function bindEvents() {
+  const gameLimitBtn = document.getElementById("game-limit-btn");
+  const gameLimitModal = document.getElementById("game-limit-modal");
+  const gameLimitInput = document.getElementById("game-limit-input");
+  const closeGameLimitModal = () => gameLimitModal?.classList.add("hidden");
+
+  gameLimitBtn?.addEventListener("click", () => {
+    const limit = getGameLimit();
+    if (gameLimitInput) gameLimitInput.value = limit ? String(limit) : "";
+    gameLimitModal?.classList.remove("hidden");
+    gameLimitInput?.focus();
+  });
+  document.getElementById("close-game-limit-modal")?.addEventListener("click", closeGameLimitModal);
+  gameLimitModal?.addEventListener("click", (event) => {
+    if (event.target === gameLimitModal) closeGameLimitModal();
+  });
+  document.getElementById("save-game-limit-btn")?.addEventListener("click", () => {
+    const rawValue = gameLimitInput?.value.trim() || "";
+    const limit = Number(rawValue);
+    if (!rawValue || !Number.isInteger(limit) || limit < 1) {
+      showToast("Enter a whole-number game limit of at least 1, or use Turn Off.", "error");
+      return;
+    }
+    setGameLimit(limit);
+    refreshGameLimitUI();
+    closeGameLimitModal();
+    showToast(`Game limit set to ${limit} games per player.`);
+  });
+  document.getElementById("clear-game-limit-btn")?.addEventListener("click", () => {
+    setGameLimit(null);
+    refreshGameLimitUI();
+    closeGameLimitModal();
+    showToast("Game limit turned off.");
+  });
+  refreshGameLimitUI();
+
   const partnerModal = document.getElementById("partner-modal");
   const closePartnerBtn = document.getElementById("close-partner-modal");
   const partnerForm = document.getElementById("partner-form");

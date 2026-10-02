@@ -34,7 +34,7 @@ const runTransaction = async (db, callback) => {
   await callback(txMock);
   batch.commit(); // Don't await so it returns instantly for offline UI!
 };
-import { SKILLS, playerRatingLabel, skillLabelFromKey, getQueueDocRef, skillKeyFromLabel, markPlayerAbsent } from "./queue.js";
+import { SKILLS, playerRatingLabel, skillLabelFromKey, getQueueDocRef, skillKeyFromLabel, markPlayerAbsent, canPlayAnotherMatch, getGameLimit } from "./queue.js";
 
 export const COURTS = [
   { id: "court-1", name: "Court 1" },
@@ -185,6 +185,7 @@ export async function assignMatchToCourt(courtId, skillKey) {
       if (!snap.exists()) continue;
       const data = snap.data();
       if (data.status !== "Waiting" && data.status !== "Standby" && data.status !== "Playing") continue;
+      if (!canPlayAnotherMatch(data)) continue;
       playerDataMap.set(snap.id, {
         id: snap.id,
         status: data.status,
@@ -210,7 +211,10 @@ export async function assignMatchToCourt(courtId, skillKey) {
       tx.set(queueRef, { skill: skillLabel, order: cleanOrder, updatedAt: now }, { merge: true });
     }
 
-    if (cleanOrder.length < 4) return;
+    if (cleanOrder.length < 4) {
+      if (getGameLimit()) throw new Error("Not enough players below the game limit to start this match.");
+      return;
+    }
 
     // ── Take exactly the top 4 players in the exact queue order ─────────────
     const selectedIds = cleanOrder.slice(0, 4);
@@ -292,6 +296,9 @@ export async function replaceActiveCourtPlayer(courtId, slotIndex, newPlayerId) 
       newPlayerSnap = await tx.get(newPlayerRef);
       if (newPlayerSnap.exists() && newPlayerSnap.data().status === "Playing") {
          throw new Error("Cannot add a player who is already playing on another court.");
+      }
+      if (newPlayerSnap.exists() && !canPlayAnotherMatch(newPlayerSnap.data())) {
+         throw new Error("This player has reached the game limit for this session.");
       }
       
       if (oldPlayerId) {
@@ -476,6 +483,8 @@ export async function queueCustomMatch(playerIds, teamA, teamB) {
   await runTransaction(db, async (tx) => {
     const playerRefs = playerIds.map(id => getTenantDoc("players", id));
     const playerSnaps = await Promise.all(playerRefs.map(ref => tx.get(ref)));
+    const limitedPlayer = playerSnaps.find((snap) => snap.exists() && !canPlayAnotherMatch(snap.data()));
+    if (limitedPlayer) throw new Error("A selected player has reached the game limit for this session.");
     
     const queuesToUpdate = new Map();
     

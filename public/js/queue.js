@@ -60,6 +60,29 @@ const skillByLabel = new Map(
 );
 
 const queueState = new Map();
+const GAME_LIMIT_STORAGE_KEY = "dq_game_limit";
+
+export function getGameLimit() {
+  const value = Number(localStorage.getItem(GAME_LIMIT_STORAGE_KEY));
+  return Number.isInteger(value) && value > 0 ? value : null;
+}
+
+export function setGameLimit(limit) {
+  if (Number.isInteger(limit) && limit > 0) {
+    localStorage.setItem(GAME_LIMIT_STORAGE_KEY, String(limit));
+  } else {
+    localStorage.removeItem(GAME_LIMIT_STORAGE_KEY);
+  }
+}
+
+export function canPlayAnotherMatch(player, limit = getGameLimit()) {
+  if (!limit) return true;
+  const completedGames = (player.wins || 0) + (player.losses || 0);
+  // A player already on court will complete one more game before their next
+  // queued match can begin.
+  const gamesCommitted = completedGames + (player.status === "Playing" ? 1 : 0);
+  return gamesCommitted < limit;
+}
 
 export function normalizeSkill(input) {
   const rating = normalizeRating(input);
@@ -991,9 +1014,9 @@ function arrangeBalancedTeams(group, teammateHistory) {
 
 export async function generateSmartRound(playersList, mode = "social_mix", matchHistory = []) {
   const eligible = playersList.filter((player) =>
-    player.status === "Waiting" || player.status === "Standby" || player.status === "Playing"
+    (player.status === "Waiting" || player.status === "Standby" || player.status === "Playing") && canPlayAnotherMatch(player)
   );
-  if (!eligible.length) throw new Error("No waiting or standby players available.");
+  if (!eligible.length) throw new Error(getGameLimit() ? "All available players have reached the game limit." : "No waiting or standby players available.");
 
   const lineupHistory = new Set(
     matchHistory.filter((match) => match.players?.length === 4)
@@ -1015,8 +1038,20 @@ export async function generateSmartRound(playersList, mode = "social_mix", match
   const now = serverTimestamp();
 
   for (const [skillKey, skillPlayers] of Object.entries(queues)) {
-    const ready = sortForRound(skillPlayers.filter((player) => player.status !== "Playing"), mode);
-    const playing = sortForRound(skillPlayers.filter((player) => player.status === "Playing"), mode);
+    const prioritizeFairPlay = (players) => {
+      const ordered = sortForRound(players, mode);
+      if (!getGameLimit()) return ordered;
+      return ordered.sort((a, b) => {
+        const aGames = (a.wins || 0) + (a.losses || 0);
+        const bGames = (b.wins || 0) + (b.losses || 0);
+        return aGames - bGames;
+      });
+    };
+    // With a game cap enabled, everyone with fewer completed games is placed
+    // first. This keeps the round balanced rather than only stopping players
+    // once they hit the cap.
+    const ready = prioritizeFairPlay(skillPlayers.filter((player) => player.status !== "Playing"));
+    const playing = prioritizeFairPlay(skillPlayers.filter((player) => player.status === "Playing"));
     const ordered = [];
 
     for (const pool of [ready, playing]) {

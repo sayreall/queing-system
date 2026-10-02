@@ -256,8 +256,8 @@
             Pause
           </button>
           
-          <button class="btn-secondary text-xs px-3 py-2 flex items-center gap-2 border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-slate-300 transition-colors">
-            Game Limit
+          <button id="game-limit-btn" type="button" class="btn-secondary text-xs px-3 py-2 flex items-center gap-2 border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-slate-300 transition-colors">
+            <span id="game-limit-label">Game Limit: Off</span>
           </button>
 
           <button id="toggle-scoring-btn" type="button" aria-pressed="true"
@@ -989,6 +989,24 @@
       </div>
     </div>
 
+    <!-- Game Limit Modal -->
+    <div id="game-limit-modal"
+      class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="glass-card w-full max-w-sm relative">
+        <button id="close-game-limit-modal" type="button"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+        <h2 class="text-xl font-display font-semibold mb-2">Game Limit</h2>
+        <p class="text-sm text-slate-400 mb-5">Set the maximum completed games per player for this session. Players at the limit are skipped for new matches.</p>
+        <label class="block text-sm font-semibold text-slate-300 mb-1" for="game-limit-input">Games per player</label>
+        <input id="game-limit-input" type="number" min="1" step="1" inputmode="numeric" class="input-field w-full" placeholder="No limit">
+        <p class="mt-2 text-xs text-slate-500">Leave empty to turn the limit off.</p>
+        <div class="mt-6 flex justify-end gap-3">
+          <button id="clear-game-limit-btn" type="button" class="btn-secondary text-sm">Turn Off</button>
+          <button id="save-game-limit-btn" type="button" class="btn-primary text-sm">Save Limit</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Winner Selection Modal -->
     <div id="winner-modal"
       class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
@@ -1166,7 +1184,7 @@
   <div id="toast-container"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-  <script type="module" src="js/dashboard.js?v=15"></script>
+  <script type="module" src="js/dashboard.js?v=16"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
