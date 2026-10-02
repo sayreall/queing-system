@@ -99,6 +99,7 @@ const state = {
   filter: "All",
   automationLock: false,
   editingMatches: new Set(),
+  partnersLocked: localStorage.getItem("dq_partners_locked") === "1",
   // Auto queue top-up is enabled by default. A user can explicitly turn it
   // off, which stores "0" in local storage.
   autoRound: localStorage.getItem("dq_auto_round") !== "0",
@@ -151,6 +152,21 @@ function refreshGameLimitUI() {
   if (button) {
     button.classList.toggle("border-amber-500/60", Boolean(limit));
     button.classList.toggle("text-amber-300", Boolean(limit));
+  }
+}
+
+function refreshPartnerLockUI() {
+  const lockButton = document.getElementById("lock-partners-btn");
+  const unlockButton = document.getElementById("unlock-partners-btn");
+  if (lockButton) {
+    lockButton.disabled = state.partnersLocked;
+    lockButton.classList.toggle("opacity-50", state.partnersLocked);
+    lockButton.classList.toggle("cursor-not-allowed", state.partnersLocked);
+  }
+  if (unlockButton) {
+    unlockButton.disabled = !state.partnersLocked;
+    unlockButton.classList.toggle("opacity-50", !state.partnersLocked);
+    unlockButton.classList.toggle("cursor-not-allowed", !state.partnersLocked);
   }
 }
 
@@ -1700,6 +1716,20 @@ function bindEvents() {
   });
   refreshGameLimitUI();
 
+  document.getElementById("lock-partners-btn")?.addEventListener("click", () => {
+    state.partnersLocked = true;
+    localStorage.setItem("dq_partners_locked", "1");
+    refreshPartnerLockUI();
+    showToast("Fixed partners will stay together in newly generated rounds.");
+  });
+  document.getElementById("unlock-partners-btn")?.addEventListener("click", () => {
+    state.partnersLocked = false;
+    localStorage.setItem("dq_partners_locked", "0");
+    refreshPartnerLockUI();
+    showToast("Partner lock removed. Fixed partner records are still saved.");
+  });
+  refreshPartnerLockUI();
+
   const partnerModal = document.getElementById("partner-modal");
   const closePartnerBtn = document.getElementById("close-partner-modal");
   const partnerForm = document.getElementById("partner-form");
@@ -1991,7 +2021,9 @@ function bindEvents() {
             teamB: (court.players || []).slice(2, 4),
           })),
         ];
-        const summary = await generateSmartRound(Array.from(state.players.values()), selectedMode, history);
+        const summary = await generateSmartRound(Array.from(state.players.values()), selectedMode, history, {
+          lockPartners: state.partnersLocked,
+        });
         const repeatCount = summary.repeatLineups + summary.repeatTeammates + summary.repeatOpponents;
         showToast(
           repeatCount
@@ -3055,9 +3087,11 @@ async function bootstrap() {
     if (pendingMatches > 3) return;
 
     const queuedPlayerIds = new Set(queuedOrders.flat().filter((id) => id && id !== "EMPTY"));
+    const gameLimit = getGameLimit();
     const hasUnqueuedPlayers = Array.from(state.players.values()).some((player) =>
       !queuedPlayerIds.has(player.id) &&
-      (player.status === "Waiting" || player.status === "Standby" || player.status === "Playing")
+      (player.status === "Waiting" || player.status === "Standby" || player.status === "Playing") &&
+      (!gameLimit || ((player.wins || 0) + (player.losses || 0) + (player.status === "Playing" ? 1 : 0)) < gameLimit)
     );
     if (!hasUnqueuedPlayers) return;
 
@@ -3079,7 +3113,10 @@ async function bootstrap() {
           teamB: (court.players || []).slice(2, 4),
         })),
       ];
-      const summary = await generateSmartRound(players, mode, history, { preserveExisting: true });
+      const summary = await generateSmartRound(players, mode, history, {
+        preserveExisting: true,
+        lockPartners: state.partnersLocked,
+      });
       const repeatCount = summary.repeatLineups + summary.repeatTeammates + summary.repeatOpponents;
       showToast(
         repeatCount

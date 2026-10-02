@@ -972,25 +972,36 @@ function addPair(history, playerA, playerB) {
   history.set(key, (history.get(key) || 0) + 1);
 }
 
-function pairingScore(teamA, teamB, teammateHistory, opponentHistory, mode) {
+function areFixedPartners(playerA, playerB) {
+  return playerA?.practicePartner === playerB?.id || playerB?.practicePartner === playerA?.id;
+}
+
+function pairingScore(teamA, teamB, teammateHistory, opponentHistory, mode, lockPartners = false) {
   const teammateRepeats = pairCount(teammateHistory, teamA[0], teamA[1]) +
     pairCount(teammateHistory, teamB[0], teamB[1]);
   const opponentRepeats = teamA.reduce((count, playerA) =>
     count + teamB.reduce((total, playerB) => total + pairCount(opponentHistory, playerA, playerB), 0), 0);
+  const splitFixedPartners = lockPartners
+    ? teamA.reduce((count, playerA) => count + teamB.filter((playerB) => areFixedPartners(playerA, playerB)).length, 0)
+    : 0;
   const teamBalance = Math.abs(
     playerPower(teamA[0]) + playerPower(teamA[1]) -
     playerPower(teamB[0]) - playerPower(teamB[1])
   );
   const balanceWeight = mode === "social_mix" ? 8 : 18;
   return {
-    score: teammateRepeats * 900 + opponentRepeats * 260 + teamBalance * balanceWeight,
+    // A fixed pair should never be placed on opposing teams while partner
+    // locking is active. The large penalty still allows a fallback lineup
+    // when a pair cannot be kept together for any other reason.
+    score: splitFixedPartners * 1000000 + teammateRepeats * 900 + opponentRepeats * 260 + teamBalance * balanceWeight,
     teammateRepeats,
     opponentRepeats,
+    splitFixedPartners,
     teamBalance,
   };
 }
 
-function chooseGroup(pool, lineupHistory, teammateHistory, opponentHistory, mode) {
+function chooseGroup(pool, lineupHistory, teammateHistory, opponentHistory, mode, lockPartners = false) {
   const candidates = pool.slice(0, Math.min(10, pool.length));
   let best = candidates.slice(0, 4);
   let bestScore = Infinity;
@@ -1000,12 +1011,18 @@ function chooseGroup(pool, lineupHistory, teammateHistory, opponentHistory, mode
         for (let d = c + 1; d < candidates.length; d++) {
           const group = [candidates[a], candidates[b], candidates[c], candidates[d]];
           const repeatLineup = lineupHistory.has(rotationLineupKey(group.map((player) => player.id)));
-          const pairing = arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode);
+          const pairing = arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode, lockPartners);
+          const missingFixedPartners = lockPartners
+            ? group.reduce((count, player) => {
+                const partner = candidates.find((candidate) => areFixedPartners(player, candidate));
+                return count + (partner && !group.includes(partner) ? 1 : 0);
+              }, 0)
+            : 0;
           const gamesAboveFirst = group.reduce((total, player) =>
             total + ((player.wins || 0) + (player.losses || 0)), 0) -
             4 * ((candidates[0].wins || 0) + (candidates[0].losses || 0));
           const fairnessWeight = mode === "smart" || mode === "fair_play" ? 55 : 2;
-          let score = (repeatLineup ? 100000 : 0) + pairing.score + Math.max(0, gamesAboveFirst) * fairnessWeight;
+          let score = (repeatLineup ? 100000 : 0) + missingFixedPartners * 1000000 + pairing.score + Math.max(0, gamesAboveFirst) * fairnessWeight;
           // Keep people near the front of the selected mode when scores tie.
           score += (a + b + c + d) * 0.15;
           if (score < bestScore) {
@@ -1019,7 +1036,7 @@ function chooseGroup(pool, lineupHistory, teammateHistory, opponentHistory, mode
   return best;
 }
 
-function arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode) {
+function arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode, lockPartners = false) {
   const pairings = [
     [[group[0], group[1]], [group[2], group[3]]],
     [[group[0], group[2]], [group[1], group[3]]],
@@ -1029,7 +1046,7 @@ function arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode) {
   let bestDetails = null;
   for (const pairing of pairings) {
     const [teamA, teamB] = pairing;
-    const details = pairingScore(teamA, teamB, teammateHistory, opponentHistory, mode);
+    const details = pairingScore(teamA, teamB, teammateHistory, opponentHistory, mode, lockPartners);
     if (!bestDetails || details.score < bestDetails.score) {
       best = pairing;
       bestDetails = details;
@@ -1076,6 +1093,7 @@ function getLockedQueuedCards(playersList, preserveExisting = false) {
 
 export async function generateSmartRound(playersList, mode = "social_mix", matchHistory = [], options = {}) {
   const lockedCards = getLockedQueuedCards(playersList, options.preserveExisting === true);
+  const lockPartners = options.lockPartners === true;
   const eligible = playersList.filter((player) =>
     !lockedCards.playerIds.has(player.id) &&
     (player.status === "Waiting" || player.status === "Standby" || player.status === "Playing") && canPlayAnotherMatch(player)
@@ -1139,11 +1157,11 @@ export async function generateSmartRound(playersList, mode = "social_mix", match
 
     for (const pool of [ready, playing]) {
       while (pool.length >= 4) {
-        const group = chooseGroup(pool, lineupHistory, teammateHistory, opponentHistory, mode);
+        const group = chooseGroup(pool, lineupHistory, teammateHistory, opponentHistory, mode, lockPartners);
         const groupIds = group.map((player) => player.id);
         const lineupKey = rotationLineupKey(groupIds);
         if (lineupHistory.has(lineupKey)) summary.repeatLineups++;
-        const matchup = arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode);
+        const matchup = arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode, lockPartners);
         const { teamA, teamB } = matchup;
         summary.repeatTeammates += matchup.teammateRepeats;
         summary.repeatOpponents += matchup.opponentRepeats;
