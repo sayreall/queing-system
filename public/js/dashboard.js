@@ -17,7 +17,6 @@ import {
   updatePlayerSkill,
   updatePlayerGender,
   updatePlayerPracticePartner,
-  clearAllPracticePartners,
   removePlayer,
   archiveAllPlayers,
   archiveSinglePlayer,
@@ -1531,6 +1530,34 @@ function openLockPartnersModal() {
   modal.classList.remove("hidden");
 }
 
+function openUnlockPartnersModal() {
+  const playerById = state.players;
+  const seenPairs = new Set();
+  const pairs = Array.from(playerById.values())
+    .filter((player) => player.practicePartner && playerById.has(player.practicePartner))
+    .map((player) => {
+      const partner = playerById.get(player.practicePartner);
+      const pairKey = [player.id, partner.id].sort().join("|");
+      if (seenPairs.has(pairKey)) return null;
+      seenPairs.add(pairKey);
+      return { player, partner };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.player.name.localeCompare(b.player.name));
+
+  if (!pairs.length) {
+    showToast("No fixed partners to unlock.");
+    return;
+  }
+
+  const select = document.getElementById("unlock-partners-player");
+  const modal = document.getElementById("unlock-partners-modal");
+  select.innerHTML = pairs
+    .map(({ player, partner }) => `<option value="${player.id}">${player.name} &amp; ${partner.name}</option>`)
+    .join("");
+  modal.classList.remove("hidden");
+}
+
 function openAddPlayerModal(queueKey, matchIndex, slotIndex, courtId = null) {
   _pendingAddSlotInfo = { queueKey, matchIndex, slotIndex, courtId };
   const modal = document.getElementById("add-to-match-modal");
@@ -1721,20 +1748,7 @@ function bindEvents() {
   refreshGameLimitUI();
 
   document.getElementById("lock-partners-btn")?.addEventListener("click", openLockPartnersModal);
-  document.getElementById("unlock-partners-btn")?.addEventListener("click", async () => {
-    const confirmed = await showConfirmModal(
-      "Unlock all fixed partners? This removes every saved partner pairing.",
-      "Unlock All Partners"
-    );
-    if (!confirmed) return;
-    try {
-      const cleared = await clearAllPracticePartners();
-      showToast(cleared ? `Unlocked ${cleared} player partner record(s).` : "No fixed partners to unlock.");
-    } catch (error) {
-      showToast(error.message || "Unable to unlock partners.", "error");
-    }
-  });
-
+  document.getElementById("unlock-partners-btn")?.addEventListener("click", openUnlockPartnersModal);
   const partnerModal = document.getElementById("partner-modal");
   const closePartnerBtn = document.getElementById("close-partner-modal");
   const partnerForm = document.getElementById("partner-form");
@@ -1785,6 +1799,32 @@ function bindEvents() {
       closeLockPartnersModal();
     } catch (error) {
       showToast(error.message || "Unable to lock partners.", "error");
+    }
+  });
+
+  const unlockPartnersModal = document.getElementById("unlock-partners-modal");
+  const unlockPartnersForm = document.getElementById("unlock-partners-form");
+  const closeUnlockPartnersModal = () => unlockPartnersModal?.classList.add("hidden");
+  document.getElementById("close-unlock-partners-modal")?.addEventListener("click", closeUnlockPartnersModal);
+  unlockPartnersModal?.addEventListener("click", (event) => {
+    if (event.target === unlockPartnersModal) closeUnlockPartnersModal();
+  });
+  unlockPartnersForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const playerId = document.getElementById("unlock-partners-player").value;
+    const player = state.players.get(playerId);
+    const partner = player ? state.players.get(player.practicePartner) : null;
+    if (!player || !partner) {
+      showToast("That fixed partner pair is no longer available.", "error");
+      closeUnlockPartnersModal();
+      return;
+    }
+    try {
+      await updatePlayerPracticePartner(playerId, "");
+      showToast(`${player.name} and ${partner.name} are no longer fixed partners.`);
+      closeUnlockPartnersModal();
+    } catch (error) {
+      showToast(error.message || "Unable to unlock this partner pair.", "error");
     }
   });
 
