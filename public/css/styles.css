@@ -1164,7 +1164,7 @@ body[data-dashboard-theme="custom"] {
 }
 
 body[data-dashboard-theme="custom"] #sidebar {
-  background: var(--theme-panel) !important;
+  background: linear-gradient(180deg, var(--theme-sidebar), var(--theme-panel)) !important;
   border-color: var(--theme-border) !important;
 }
 
