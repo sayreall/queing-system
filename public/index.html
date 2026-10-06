@@ -198,6 +198,18 @@
           TV</span>
       </button>
 
+      <button id="open-settings-btn"
+        class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white"
+        title="Settings">
+        <svg class="w-6 h-6 flex-shrink-0 text-violet-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35A1.724 1.724 0 005.382 7.75c-.94-1.543.826-3.31 2.37-2.37.996.607 2.296.07 2.573-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span
+          class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">Settings</span>
+      </button>
+
       <div class="mt-auto"></div>
 
       <button id="guide-btn"
@@ -678,6 +690,58 @@
         </div>
       </div>
     </section>
+
+    <!-- Account Settings Modal -->
+    <div id="settings-modal"
+      class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm"
+      role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+      <div class="glass-card settings-modal-card w-full max-w-md relative">
+        <button id="close-settings-modal" type="button"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl leading-none"
+          aria-label="Close settings">&times;</button>
+        <div class="pr-8">
+          <p class="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Account settings</p>
+          <h2 id="settings-modal-title" class="mt-1 text-2xl font-display font-semibold">Profile &amp; dashboard</h2>
+          <p class="mt-1 text-sm text-slate-400">Personalize the dashboard for this account.</p>
+        </div>
+
+        <section class="settings-profile mt-6" aria-labelledby="settings-profile-heading">
+          <div id="settings-avatar" class="settings-avatar" aria-hidden="true">P</div>
+          <div class="min-w-0">
+            <h3 id="settings-profile-heading" class="font-semibold text-white truncate">Loading profile…</h3>
+            <p id="settings-profile-email" class="text-sm text-slate-400 truncate"></p>
+            <p id="settings-profile-club" class="mt-1 text-xs text-cyan-300"></p>
+          </div>
+        </section>
+
+        <section class="mt-7" aria-labelledby="dashboard-color-heading">
+          <div class="flex items-baseline justify-between gap-3 mb-3">
+            <div>
+              <h3 id="dashboard-color-heading" class="font-display text-xl font-semibold">Dashboard color</h3>
+              <p class="mt-1 text-sm text-slate-400">Only your dashboard design will change.</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Dashboard color">
+            <label class="theme-choice">
+              <input type="radio" name="dashboard-theme" value="teal" class="sr-only" checked>
+              <span class="theme-choice-card">
+                <span class="theme-preview theme-preview--teal" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="theme-choice-label">Deuce teal</span>
+                <span class="theme-choice-description">Classic court tones</span>
+              </span>
+            </label>
+            <label class="theme-choice">
+              <input type="radio" name="dashboard-theme" value="violet" class="sr-only">
+              <span class="theme-choice-card">
+                <span class="theme-preview theme-preview--violet" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="theme-choice-label">Midnight violet</span>
+                <span class="theme-choice-description">Cool, high-contrast tones</span>
+              </span>
+            </label>
+          </div>
+        </section>
+      </div>
+    </div>
 
     <!-- Match Log Modal -->
     <div id="match-log-modal"
@@ -1259,7 +1323,7 @@
   <div id="toast-container"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-  <script type="module" src="js/dashboard.js?v=18"></script>
+  <script type="module" src="js/dashboard.js?v=19"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

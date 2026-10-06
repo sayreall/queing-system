@@ -23,6 +23,32 @@
   --border:    rgba(245, 196, 42, 0.18);
 }
 
+/* Account-selected dashboard palette. This is deliberately scoped to index.html's
+   body attribute so shared displays and other accounts retain their own design. */
+body[data-dashboard-theme="violet"] {
+  --bg-base: #17122c;
+  --bg-card: #241d43;
+  --bg-sub: #1b1636;
+  --accent-or: #e35d91;
+  --accent-gd: #b69cff;
+  --accent-tl: #67c6ff;
+  --text-base: #f5f3ff;
+  --text-muted: #c6bddf;
+  --border: rgba(182, 156, 255, 0.24);
+}
+
+body[data-dashboard-theme="violet"] #sidebar {
+  background: rgba(36, 29, 67, 0.96) !important;
+  border-color: rgba(182, 156, 255, 0.22) !important;
+}
+
+body[data-dashboard-theme="violet"] .page-bg {
+  background-image:
+    radial-gradient(circle at 15% 10%, rgba(103, 198, 255, 0.18), transparent 35%),
+    radial-gradient(circle at 85% 5%, rgba(227, 93, 145, 0.16), transparent 35%),
+    radial-gradient(circle at 50% 90%, rgba(182, 156, 255, 0.1), transparent 40%);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -160,6 +186,99 @@ body {
   border: 1px solid rgba(245, 196, 42, 0.12);
   border-radius: 16px;
   padding: 16px;
+}
+
+/* ===== Account settings ===== */
+
+.settings-profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(12, 50, 50, 0.58);
+}
+
+body[data-dashboard-theme="violet"] .settings-profile {
+  background: rgba(27, 22, 54, 0.72);
+}
+
+.settings-avatar {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-tl), var(--accent-gd));
+  color: #102526;
+  font-family: "Rajdhani", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.theme-choice {
+  display: block;
+  cursor: pointer;
+}
+
+.theme-choice-card {
+  display: block;
+  height: 100%;
+  padding: 10px;
+  border: 1px solid rgba(168, 196, 190, 0.3);
+  border-radius: 14px;
+  background: rgba(10, 40, 40, 0.55);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.theme-choice:hover .theme-choice-card {
+  transform: translateY(-1px);
+  border-color: rgba(31, 207, 177, 0.65);
+}
+
+.theme-choice input:focus-visible + .theme-choice-card {
+  outline: 3px solid rgba(103, 198, 255, 0.45);
+  outline-offset: 3px;
+}
+
+.theme-choice input:checked + .theme-choice-card {
+  border-color: var(--accent-tl);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-tl) 20%, transparent), 0 10px 20px rgba(0, 0, 0, 0.16);
+}
+
+.theme-preview {
+  display: flex;
+  gap: 4px;
+  height: 46px;
+  padding: 7px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  border-radius: 9px;
+}
+
+.theme-preview i { display: block; border-radius: 5px; }
+.theme-preview i:first-child { width: 21%; }
+.theme-preview i:nth-child(2) { width: 49%; }
+.theme-preview i:last-child { width: 30%; }
+.theme-preview--teal { background: #0a2e2e; }
+.theme-preview--teal i:first-child { background: #0f3d3d; }
+.theme-preview--teal i:nth-child(2) { background: #1fcfb1; }
+.theme-preview--teal i:last-child { background: #e85a1a; }
+.theme-preview--violet { background: #17122c; }
+.theme-preview--violet i:first-child { background: #241d43; }
+.theme-preview--violet i:nth-child(2) { background: #67c6ff; }
+.theme-preview--violet i:last-child { background: #e35d91; }
+
+.theme-choice-label,
+.theme-choice-description { display: block; }
+.theme-choice-label { color: var(--text-base); font-size: 0.85rem; font-weight: 700; }
+.theme-choice-description { margin-top: 2px; color: var(--text-muted); font-size: 0.72rem; }
+
+body[data-dashboard-theme="violet"] .theme-choice-card {
+  background: rgba(27, 22, 54, 0.72);
+  border-color: rgba(198, 189, 223, 0.25);
 }
 
 /* ===== Buttons ===== */

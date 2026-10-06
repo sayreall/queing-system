@@ -37,11 +37,49 @@ import {
 } from "./courts.js";
 import { 
   db, collection, query, where, orderBy, limit, onSnapshot,
-  auth, onAuthStateChanged, signOut, doc, getDoc
+  auth, onAuthStateChanged, signOut, doc, getDoc, updateDoc
 , getTenantCollection, getTenantDoc} from "./firebase.js";
 import { startAutoLogout, stopAutoLogout } from "./auto-logout.js";
 
 const AVG_MATCH_MINUTES = 15;
+
+const DASHBOARD_THEMES = new Set(["teal", "violet"]);
+let activeSettingsUser = null;
+
+function dashboardThemeStorageKey(userId) {
+  return `dq_dashboard_theme_${userId}`;
+}
+
+function normalizeDashboardTheme(theme) {
+  return DASHBOARD_THEMES.has(theme) ? theme : "teal";
+}
+
+function applyDashboardTheme(theme) {
+  const selectedTheme = normalizeDashboardTheme(theme);
+  document.body.dataset.dashboardTheme = selectedTheme;
+  document.querySelectorAll('input[name="dashboard-theme"]').forEach((input) => {
+    input.checked = input.value === selectedTheme;
+  });
+}
+
+function populateSettingsProfile(user, profile = {}) {
+  activeSettingsUser = user;
+  const displayName = (profile.name || user.displayName || user.email || "Account").trim();
+  const initial = displayName.charAt(0).toUpperCase() || "A";
+  const clubName = profile.club ? `${profile.club.charAt(0).toUpperCase()}${profile.club.slice(1)} club` : "PicklQ account";
+
+  const profileName = document.getElementById("settings-profile-heading");
+  const profileEmail = document.getElementById("settings-profile-email");
+  const profileClub = document.getElementById("settings-profile-club");
+  const avatar = document.getElementById("settings-avatar");
+  if (profileName) profileName.textContent = displayName;
+  if (profileEmail) profileEmail.textContent = user.email || "";
+  if (profileClub) profileClub.textContent = clubName;
+  if (avatar) avatar.textContent = initial;
+
+  const savedTheme = localStorage.getItem(dashboardThemeStorageKey(user.uid));
+  applyDashboardTheme(profile.dashboardTheme || savedTheme || "teal");
+}
 
 function getMorphOpts() {
   return {
@@ -2744,6 +2782,47 @@ function bindEvents() {
   if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
   if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleMobileMenu);
 
+  // Account settings: profile summary plus a private, per-account dashboard palette.
+  const settingsModal = document.getElementById("settings-modal");
+  const openSettingsBtn = document.getElementById("open-settings-btn");
+  const closeSettingsBtn = document.getElementById("close-settings-modal");
+  const closeSettingsModal = () => settingsModal?.classList.add("hidden");
+
+  openSettingsBtn?.addEventListener("click", () => {
+    settingsModal?.classList.remove("hidden");
+    if (window.innerWidth < 768 && sidebar && !sidebar.classList.contains("-translate-x-full")) {
+      toggleMobileMenu();
+    }
+  });
+  closeSettingsBtn?.addEventListener("click", closeSettingsModal);
+  settingsModal?.addEventListener("click", (event) => {
+    if (event.target === settingsModal) closeSettingsModal();
+  });
+
+  document.querySelectorAll('input[name="dashboard-theme"]').forEach((input) => {
+    input.addEventListener("change", async () => {
+      if (!input.checked || !activeSettingsUser) return;
+
+      const previousTheme = normalizeDashboardTheme(
+        localStorage.getItem(dashboardThemeStorageKey(activeSettingsUser.uid)) || document.body.dataset.dashboardTheme
+      );
+      const nextTheme = normalizeDashboardTheme(input.value);
+      applyDashboardTheme(nextTheme);
+
+      try {
+        // This field lives on the signed-in account's existing profile document,
+        // separate from the shared queue/court subcollections.
+        await updateDoc(doc(db, "users", activeSettingsUser.uid), { dashboardTheme: nextTheme });
+        localStorage.setItem(dashboardThemeStorageKey(activeSettingsUser.uid), nextTheme);
+        showToast("Dashboard color updated.");
+      } catch (error) {
+        applyDashboardTheme(previousTheme);
+        showToast("Couldn't save your dashboard color. Please try again.", "error");
+        console.warn("Unable to save dashboard theme", error);
+      }
+    });
+  });
+
   const tvQrcodeContainer = document.getElementById("tv-qrcode");
   let qrCodeInstance = null;
 
@@ -3960,26 +4039,30 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
   
+  let profileData = {};
   try {
     // Account profiles live at users/{userId}; tenant collections (courts,
     // queues, etc.) live below that document.  Do not look for the profile in
     // the users subcollection, or its club setting will never be found.
     const userDocRef = doc(db, 'users', user.uid);
     const userDoc = await getDoc(userDocRef);
-    const data = userDoc.exists() ? userDoc.data() : {};
-    if (data.role === 'admin') {
+    profileData = userDoc.exists() ? userDoc.data() : {};
+    if (profileData.role === 'admin') {
       window.location.href = 'admin.html';
       return;
     }
 
     // Always reset an unknown/missing club to Deuce so a prior Longos login
     // cannot leave its branding on this account's dashboard.
-    const userClub = data.club || 'deuce';
+    const userClub = profileData.club || 'deuce';
     localStorage.setItem('dq_club_preference', userClub);
     applyClubBranding(userClub);
   } catch (err) {
     console.warn("Could not fetch user role", err);
   }
+
+  // Populate the account card and restore only this user's saved dashboard design.
+  populateSettingsProfile(user, profileData);
 
   // Start 20-minute inactivity auto-logout
   startAutoLogout(auth, signOut);
