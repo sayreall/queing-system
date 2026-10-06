@@ -1307,6 +1307,17 @@ body[data-dashboard-theme="custom"] [class*="text-slate-600"] { color: var(--tex
 body[data-dashboard-theme="custom"] [class*="text-slate-200"],
 body[data-dashboard-theme="custom"] [class*="text-slate-300"] { color: var(--text-base) !important; }
 
+/* Keep the dashboard summary readable even when the selected color is black,
+   very dark, or very bright.  Accent colors are decorative here, never text. */
+body[data-dashboard-theme="custom"] #stats-container .stat-value {
+  color: var(--theme-card-text) !important;
+}
+body[data-dashboard-theme="custom"] #stat-queues .badge {
+  background: var(--theme-card-pill-bg) !important;
+  border: 1px solid var(--theme-border) !important;
+  color: var(--theme-card-text) !important;
+}
+
 body[data-dashboard-theme="custom"] .btn-primary {
   background: linear-gradient(135deg, var(--theme-gradient-start), var(--theme-gradient-end)) !important;
   box-shadow: 0 4px 16px var(--theme-glow) !important;

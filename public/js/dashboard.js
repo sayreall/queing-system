@@ -51,6 +51,7 @@ const CUSTOM_THEME_PROPERTIES = [
   "--text-base", "--text-muted", "--border", "--theme-panel", "--theme-sidebar",
   "--theme-subpanel", "--theme-border", "--theme-glow", "--theme-button-end",
   "--theme-sidebar-text", "--theme-button-text", "--theme-header-text", "--theme-gradient-start", "--theme-gradient-end",
+  "--theme-card-text", "--theme-card-pill-bg",
 ];
 
 const ORIGINAL_DASHBOARD_PALETTE = {
@@ -161,6 +162,10 @@ function applyDashboardColor(color) {
   body.style.setProperty("--theme-sidebar-text", readableTextColor(sidebar));
   body.style.setProperty("--theme-button-text", readableTextColor(buttonSurface));
   body.style.setProperty("--theme-header-text", readableTextColor(headerSurface));
+  // Stat values and the small queue-count pills sit on dark translucent panels.
+  // Derive their ink from that panel, not from the selected accent color.
+  body.style.setProperty("--theme-card-text", readableTextColor(sub));
+  body.style.setProperty("--theme-card-pill-bg", rgba(sub, 0.94));
 
   const colorValue = document.getElementById("dashboard-color-value");
   if (colorValue) colorValue.textContent = selectedColor.toUpperCase();
