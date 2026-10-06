@@ -1,4 +1,4 @@
-import { addPlayersBulk, fetchExistingNames, normalizeSkill } from "./queue.js";
+import { addPlayersBulk, fetchExistingNames, normalizeSkill, playerNameKey } from "./queue.js";
 
 const fileInput = document.getElementById("import-file");
 const tableBody = document.getElementById("import-body");
@@ -7,6 +7,7 @@ const summary = document.getElementById("import-summary");
 
 let rows = [];
 let existingNames = new Map();
+let isSaving = false;
 
 function renderRows() {
   tableBody.innerHTML = "";
@@ -69,7 +70,7 @@ function validateRows(rawRows) {
     const rating = normalizeSkill(row.Rating ?? row.rating);
     const gender = (row.Gender || row.gender || "Unspecified").trim();
     const location = (row.Location || row.location || "").trim();
-    const nameLower = name.toLowerCase();
+    const nameLower = playerNameKey(name);
 
     let valid = true;
     let reason = "";
@@ -126,15 +127,29 @@ fileInput.addEventListener("change", () => {
 });
 
 saveButton.addEventListener("click", async () => {
+  if (isSaving) return;
   const validRows = rows.filter((row) => row.valid);
   if (!validRows.length) return;
 
-  const addToQueue = document.getElementById("add-to-queue-checkbox")?.checked || false;
-  await addPlayersBulk(validRows, addToQueue);
-  rows = [];
-  renderRows();
-  fileInput.value = "";
-  summary.textContent = "Players imported and queued.";
+  isSaving = true;
+  saveButton.disabled = true;
+  const originalLabel = saveButton.textContent;
+  saveButton.textContent = "Saving...";
+  try {
+    const addToQueue = document.getElementById("add-to-queue-checkbox")?.checked || false;
+    await addPlayersBulk(validRows, addToQueue);
+    rows = [];
+    renderRows();
+    fileInput.value = "";
+    summary.textContent = addToQueue ? "Players imported and queued." : "Players saved successfully.";
+  } catch (error) {
+    console.error("Player import failed", error);
+    summary.textContent = error.message || "Unable to import players. Please try again.";
+    saveButton.disabled = false;
+  } finally {
+    isSaving = false;
+    saveButton.textContent = originalLabel;
+  }
 });
 
 // Reclub Import Logic

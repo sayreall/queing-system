@@ -22,6 +22,7 @@ import {
   archiveAllPlayers,
   archiveSinglePlayer,
   generateSmartRound,
+  playerNameKey,
 } from "./queue.js";
 import {
   ensureCourtsExist,
@@ -2006,8 +2007,14 @@ function bindEvents() {
       return d.toLocaleDateString() === todayStr;
     }
     
-    const rosterPlayers = Array.from(state.players.values())
+    const rosterByName = new Map();
+    Array.from(state.players.values())
       .filter(p => p.status === "Roster")
+      .forEach((player) => {
+        const key = playerNameKey(player.name);
+        if (!rosterByName.has(key)) rosterByName.set(key, player);
+      });
+    const rosterPlayers = Array.from(rosterByName.values())
       .filter(p => p.name.toLowerCase().includes(searchStr))
       .sort((a, b) => a.name.localeCompare(b.name));
     

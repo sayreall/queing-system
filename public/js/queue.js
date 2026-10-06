@@ -135,6 +135,12 @@ export function normalizeName(name) {
     .replace(/'/g, "&#39;");
 }
 
+// A display name may be escaped before it is rendered, but duplicate checks
+// must use one stable, human-readable key.
+export function playerNameKey(name) {
+  return String(name || "").trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
 export function getQueueDocRef(skillKey) {
   return getTenantDoc("queues", skillKey);
 }
@@ -188,7 +194,7 @@ export async function addPlayer({ name, rating, gender, location, practicePartne
   if (!trimmedName) throw new Error("Player name is required.");
   if (!normalizedRating) throw new Error("Please select a valid rating.");
 
-  const nameLower = trimmedName.toLowerCase();
+  const nameLower = playerNameKey(name);
   const existing = await getDocs(
     query(getTenantCollection("players"), where("nameLower", "==", nameLower), limit(1))
   );
@@ -265,7 +271,9 @@ export async function addPlayersBulk(entries, addToQueue = false) {
   const allPlayersSnap = await getDocs(getTenantCollection("players"));
   const existingMap = new Map();
   allPlayersSnap.forEach(snap => {
-    existingMap.set(snap.data().nameLower, snap);
+    const player = snap.data();
+    const nameKey = playerNameKey(player.name || player.nameLower);
+    if (nameKey) existingMap.set(nameKey, snap);
   });
 
   const queuesToUpdate = {};
@@ -283,7 +291,7 @@ export async function addPlayersBulk(entries, addToQueue = false) {
     const playerLocation = normalizeName(entry.location || entry.Location || "");
     if (!trimmedName || !normalizedRating) return;
 
-    const nameLower = trimmedName.toLowerCase();
+    const nameLower = playerNameKey(entry.name);
     const existingSnap = existingMap.get(nameLower);
     
     let playerRef;
@@ -733,10 +741,14 @@ export function listenToPlayers(callback) {
 }
 
 export async function fetchExistingNames() {
-  const snapshot = await getDocs(query(getTenantCollection("players"), orderBy("nameLower")));
+  // Do not order by nameLower here: older imported records may not have that
+  // field, and Firestore would omit them from an ordered query.
+  const snapshot = await getDocs(getTenantCollection("players"));
   const map = new Map();
   snapshot.docs.forEach((docSnap) => {
-    map.set(docSnap.data().nameLower, docSnap.data().status);
+    const player = docSnap.data();
+    const nameKey = playerNameKey(player.name || player.nameLower);
+    if (nameKey) map.set(nameKey, player.status);
   });
   return map;
 }
