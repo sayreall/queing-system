@@ -3384,6 +3384,12 @@ function bindEvents() {
           title: 'Manage Queues',
           intro: 'Pending matches appear here sorted by skill. Drag and drop rows to reprioritize who plays next.',
           position: 'top'
+        },
+        {
+          element: document.querySelector('.queue-workspace .match-card-drag-handle, #queues-container .match-card-drag-handle, #queues-container .drag-handle, #queues-container'),
+          title: 'Drag Players & Match Cards',
+          intro: 'Use the <b>⋮⋮</b> handle beside a player to move or reorder them in a match. Drag a match card by its header to change the order of upcoming matches. This helps you adjust the play order without creating a new round.',
+          position: 'top'
         }
       );
 
