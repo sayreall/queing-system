@@ -79,6 +79,22 @@ function rgba(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+function relativeLuminance(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  const linearize = (channel) => {
+    const value = channel / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b);
+}
+
+function readableTextColor(background) {
+  const luminance = relativeLuminance(background);
+  const blackContrast = (luminance + 0.05) / 0.05;
+  const whiteContrast = 1.05 / (luminance + 0.05);
+  return blackContrast > whiteContrast ? "#07111f" : "#f8fafc";
+}
+
 function applyDashboardColor(color) {
   const selectedColor = normalizeDashboardColor(color);
   const body = document.body;
@@ -88,6 +104,7 @@ function applyDashboardColor(color) {
   const sidebar = mixHex(selectedColor, "#101320", 0.46);
   const bright = mixHex(selectedColor, "#ffffff", 0.72);
   const deep = mixHex(selectedColor, "#05060b", 0.78);
+  const buttonSurface = mixHex(selectedColor, deep, 0.58);
 
   activeDashboardColor = selectedColor;
   body.dataset.dashboardTheme = "custom";
@@ -106,6 +123,8 @@ function applyDashboardColor(color) {
   body.style.setProperty("--theme-border", rgba(bright, 0.24));
   body.style.setProperty("--theme-glow", rgba(selectedColor, 0.32));
   body.style.setProperty("--theme-button-end", deep);
+  body.style.setProperty("--theme-sidebar-text", readableTextColor(sidebar));
+  body.style.setProperty("--theme-button-text", readableTextColor(buttonSurface));
 
   const colorValue = document.getElementById("dashboard-color-value");
   if (colorValue) colorValue.textContent = selectedColor.toUpperCase();
@@ -2856,8 +2875,9 @@ function bindEvents() {
   if (colorPickerTarget && window.Pickr) {
     const pickr = window.Pickr.create({
       el: colorPickerTarget,
-      theme: "monolith",
+      theme: "nano",
       default: activeDashboardColor,
+      position: "top-middle",
       swatches: ["#1fcfb1", "#38bdf8", "#8b5cf6", "#d946ef", "#e85a1a", "#f5c42a"],
       components: {
         preview: true,
