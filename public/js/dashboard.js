@@ -2989,8 +2989,8 @@ function bindEvents() {
     document.getElementById("restore-original-design-btn")?.addEventListener("click", async () => {
       restoreOriginalDashboardDesign();
       savedGradient = { ...activeDashboardColors };
-      startPicker.setColor(savedGradient.start, true);
-      endPicker.setColor(savedGradient.end, true);
+      // Do not call setColor here: Pickr can emit a change event for a programmatic
+      // update, which would immediately reapply the old custom gradient.
       startPicker.hide();
       endPicker.hide();
 
