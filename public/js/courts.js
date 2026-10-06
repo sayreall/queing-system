@@ -347,7 +347,7 @@ export async function replaceActiveCourtPlayer(courtId, slotIndex, newPlayerId) 
       
       if (oldPlayerId) {
         const oldPlayerRef = getTenantDoc("players", oldPlayerId);
-        tx.set(oldPlayerRef, { status: "Waiting", currentMatchId: null, updatedAt: now }, { merge: true });
+        tx.set(oldPlayerRef, { status: "Waiting", currentMatchId: null, waitingSince: now, updatedAt: now }, { merge: true });
         
         if (oldQueueSnap && oldQueueRef) {
            const order = oldQueueSnap.exists() ? oldQueueSnap.data().order || [] : [];
@@ -470,7 +470,7 @@ export async function finishMatch(courtId, winnerTeam = null, score = null) {
         pointsDiff += teamScore - opponentScore;
       }
 
-      tx.set(playerRefs[idx], { status: "Standby", currentMatchId: null, playedWith, wins, losses, pointsDiff, lastResult, lastMatchEndedAt: now, updatedAt: now }, { merge: true });
+      tx.set(playerRefs[idx], { status: "Standby", currentMatchId: null, waitingSince: now, playedWith, wins, losses, pointsDiff, lastResult, lastMatchEndedAt: now, updatedAt: now }, { merge: true });
     });
   });
 

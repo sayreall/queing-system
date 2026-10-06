@@ -242,6 +242,7 @@ export async function addPlayer({ name, rating, gender, location, practicePartne
         gender: playerGender,
         location: playerLocation,
         status: "Standby",
+        waitingSince: now,
         playedWith: {},
         updatedAt: now,
       }, { merge: true });
@@ -253,6 +254,7 @@ export async function addPlayer({ name, rating, gender, location, practicePartne
         gender: playerGender,
         location: playerLocation,
         status: "Standby",
+        waitingSince: now,
         playedWith: {},
         currentMatchId: null,
         createdAt: now,
@@ -319,6 +321,7 @@ export async function addPlayersBulk(entries, addToQueue = false) {
         gender: playerGender,
         location: playerLocation,
         status: initialStatus,
+        waitingSince: addToQueue ? now : null,
         playedWith: {},
         updatedAt: now,
       }, { merge: true });
@@ -330,6 +333,7 @@ export async function addPlayersBulk(entries, addToQueue = false) {
         gender: playerGender,
         location: playerLocation,
         status: initialStatus,
+        waitingSince: addToQueue ? now : null,
         playedWith: {},
         currentMatchId: null,
         createdAt: now,
@@ -634,6 +638,7 @@ export async function markPlayerAbsent(playerId, absent) {
       }
       tx.update(playerRef, {
         status: "Waiting",
+        waitingSince: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
     }
@@ -650,6 +655,7 @@ export async function activatePlayerToStandby(playerId) {
   const playerRef = getTenantDoc("players", playerId);
   await updateDoc(playerRef, {
     status: "Standby",
+    waitingSince: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
 }
@@ -978,6 +984,31 @@ function playerPower(player) {
   return Number(playerRatingLabel(player)) + winRate * 0.35;
 }
 
+function timestampToMillis(value) {
+  if (typeof value?.toMillis === "function") return value.toMillis();
+  if (typeof value?.seconds === "number") return value.seconds * 1000;
+  const parsed = value ? new Date(value).getTime() : NaN;
+  return Number.isFinite(parsed) ? parsed : Infinity;
+}
+
+function queueWaitStart(player) {
+  // Existing players use the best historical fallback. New and returning
+  // players receive waitingSince when they join the queue, so profile edits
+  // can no longer change their turn.
+  return timestampToMillis(
+    player.waitingSince || player.lastMatchEndedAt || player.createdAt || player.updatedAt
+  );
+}
+
+function compareQueueFairness(playerA, playerB) {
+  const waitedFirst = queueWaitStart(playerA) - queueWaitStart(playerB);
+  if (waitedFirst) return waitedFirst;
+  const gamesDifference = ((playerA.wins || 0) + (playerA.losses || 0)) -
+    ((playerB.wins || 0) + (playerB.losses || 0));
+  if (gamesDifference) return gamesDifference;
+  return playerPower(playerA) - playerPower(playerB);
+}
+
 function sortForRound(players, mode) {
   const copy = [...players];
   const tieBreak = () => Math.random() - 0.5;
@@ -1200,12 +1231,9 @@ export async function generateSmartRound(playersList, mode = "social_mix", match
   for (const [skillKey, skillPlayers] of Object.entries(queues)) {
     const prioritizeFairPlay = (players) => {
       const ordered = sortForRound(players, mode);
-      if (!getGameLimit()) return ordered;
-      return ordered.sort((a, b) => {
-        const aGames = (a.wins || 0) + (a.losses || 0);
-        const bGames = (b.wins || 0) + (b.losses || 0);
-        return aGames - bGames;
-      });
+      // Waiting time is the primary turn order; completed games settle ties.
+      // Returning this ordered list also feeds chooseGroup's candidate window.
+      return ordered.sort(compareQueueFairness);
     };
     // With a game cap enabled, everyone with fewer completed games is placed
     // first. This keeps the round balanced rather than only stopping players
