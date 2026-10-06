@@ -49,7 +49,7 @@ let activeDashboardColor = "#8b5cf6";
 const CUSTOM_THEME_PROPERTIES = [
   "--bg-base", "--bg-card", "--bg-sub", "--accent-tl", "--accent-gd", "--accent-or",
   "--text-base", "--text-muted", "--border", "--theme-panel", "--theme-sidebar",
-  "--theme-subpanel", "--theme-border", "--theme-glow", "--theme-button-end",
+  "--theme-subpanel", "--theme-border", "--theme-glow",
   "--theme-sidebar-text", "--theme-button-text", "--theme-header-text", "--theme-gradient-start", "--theme-gradient-end",
   "--theme-card-text", "--theme-card-pill-bg",
 ];
@@ -137,7 +137,6 @@ function applyDashboardColor(color) {
   const sidebar = mixHex(selectedColor, "#0b1a1a", 0.42);
   const bright = mixHex(selectedColor, "#ffffff", 0.72);
   const deep = mixHex(selectedColor, "#05060b", 0.78);
-  const buttonSurface = mixHex(selectedColor, deep, 0.58);
   const headerSurface = mixHex(selectedColor, base, 0.52);
 
   activeDashboardColor = selectedColor;
@@ -156,11 +155,8 @@ function applyDashboardColor(color) {
   body.style.setProperty("--theme-subpanel", rgba(sub, 0.86));
   body.style.setProperty("--theme-border", rgba(bright, 0.24));
   body.style.setProperty("--theme-glow", rgba(selectedColor, 0.32));
-  body.style.setProperty("--theme-button-end", deep);
-  body.style.setProperty("--theme-gradient-start", selectedColor);
-  body.style.setProperty("--theme-gradient-end", selectedColor);
   body.style.setProperty("--theme-sidebar-text", readableTextColor(sidebar));
-  body.style.setProperty("--theme-button-text", readableTextColor(buttonSurface));
+  body.style.setProperty("--theme-button-text", readableTextColor(selectedColor));
   body.style.setProperty("--theme-header-text", readableTextColor(headerSurface));
   // Stat values and the small queue-count pills sit on dark translucent panels.
   // Derive their ink from that panel, not from the selected accent color.
