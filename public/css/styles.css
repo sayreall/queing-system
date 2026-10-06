@@ -1165,7 +1165,7 @@ body[data-dashboard-theme="custom"] {
 }
 
 body[data-dashboard-theme="custom"] #sidebar {
-  background: linear-gradient(180deg, var(--theme-sidebar), var(--theme-panel)) !important;
+  background: var(--theme-sidebar) !important;
   border-color: var(--theme-border) !important;
 }
 
@@ -1251,6 +1251,12 @@ body[data-dashboard-theme="custom"] #sidebar .nav-item,
 body[data-dashboard-theme="custom"] #sidebar .nav-item svg,
 body[data-dashboard-theme="custom"] #sidebar .nav-item .sidebar-text {
   color: var(--theme-sidebar-text) !important;
+}
+body[data-dashboard-theme="custom"] #sidebar [class*="hover:bg-slate-"] {
+  background-color: transparent !important;
+}
+body[data-dashboard-theme="custom"] #sidebar [class*="hover:bg-slate-"]:hover {
+  background-color: var(--theme-panel) !important;
 }
 
 body[data-dashboard-theme="custom"] ::-webkit-scrollbar-track { background: var(--bg-base); }
