@@ -251,6 +251,7 @@ function initializeRatingUI() {
     }
   });
   document.getElementById("custom-match-panel")?.after(compactList);
+  compactList.closest(".glass-subcard")?.classList.add("player-controls-workspace");
   document.getElementById("compact-add-player")?.addEventListener("click", () => {
     openNewPlayerModal();
   });
@@ -278,7 +279,7 @@ function initializeRatingUI() {
     .queue-workspace #queues-container { display:block; }
     .queue-workspace { min-width:0; }
     .queue-workspace #global-match-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.8rem; }
-    .queue-workspace .match-card { min-width:0; padding:.8rem !important; border-radius:.9rem; }
+    .queue-workspace .match-card { min-width:0; height:100%; padding:.8rem !important; border-radius:.9rem; }
     .queue-workspace .match-card > div:first-child { min-height:1.9rem; margin-bottom:.6rem; padding-bottom:.5rem; }
     .queue-workspace .match-card > div:first-child > div:last-child { flex-wrap:wrap; justify-content:flex-end; }
     .queue-workspace .match-card .match-card-drag-handle h4 { font-size:.72rem; }
@@ -346,6 +347,11 @@ function initializeRatingUI() {
     #compact-player-list .compact-player__action--done:hover { color:#fde68a; }
     #compact-player-list .compact-player__action:disabled { cursor:not-allowed; color:#475569; }
     #compact-player-list .compact-player:last-child { border-bottom:0; }
+    @media (min-width:768px) {
+      .player-controls-workspace { display:flex; flex-direction:column; min-height:0; }
+      .player-controls-workspace #compact-player-list { display:flex; flex:1 1 auto; flex-direction:column; min-height:0; max-height:none; }
+      .player-controls-workspace #compact-player-list .waiting-player-card__list { flex:1 1 auto; min-height:0; max-height:none; }
+    }
     /* The list lives in a narrow tablet column as well as on phones, so use
        its actual container width instead of the viewport width. */
     @container (max-width: 480px) {
