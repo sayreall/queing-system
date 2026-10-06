@@ -258,13 +258,15 @@ function initializeRatingUI() {
   const queueSection = queueContainer?.closest("section");
   const queueDestination = document.querySelector("#players-body-beginner")?.closest(".glass-subcard");
   if (queueContainer && queueDestination) {
-    queueDestination.innerHTML = `
+    const queueWorkspace = document.createElement("div");
+    queueWorkspace.className = "queue-workspace mb-6";
+    queueWorkspace.innerHTML = `
       <div class="flex items-center justify-between gap-3 mb-4">
         <div><h3 class="text-lg font-display font-semibold">Next Matches</h3><p class="text-xs text-slate-400">All generated matches in one queue</p></div>
         <span class="text-xs text-emerald-400">Up next</span>
       </div>`;
-    queueDestination.appendChild(queueContainer);
-    queueDestination.classList.add("queue-workspace");
+    queueWorkspace.appendChild(queueContainer);
+    queueDestination.prepend(queueWorkspace);
     if (queueSection) queueSection.style.display = "none";
   }
 
@@ -313,7 +315,7 @@ function initializeRatingUI() {
     .queue-workspace #queues-container .queue-matches-container > .queue-matches-grid { display:none; }
     .queue-workspace #queues-container > .glass-card > .flex { display:none; }
     .queue-workspace #queues-container .queue-empty { display:none; }
-    #compact-player-list { height:480px; scrollbar-gutter:stable; background:rgba(5, 29, 34, .58); }
+    #compact-player-list { max-height:480px; scrollbar-gutter:stable; background:rgba(5, 29, 34, .58); }
     #compact-player-list .waiting-player-card__header { min-height:64px; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.75rem .9rem; border-bottom:1px solid rgba(51,65,85,.7); background:linear-gradient(135deg, rgba(15,38,53,.96), rgba(8,28,39,.92)); }
     #compact-player-list .waiting-player-card__title { margin:0; color:#f1f5f9; font-size:.76rem; font-weight:800; line-height:1.15; letter-spacing:.035em; text-transform:uppercase; }
     #compact-player-list .waiting-player-card__title span { color:#94a3b8; font-weight:600; }
@@ -321,7 +323,7 @@ function initializeRatingUI() {
     #compact-player-list .waiting-player-card__add { display:inline-flex; align-items:center; gap:.38rem; flex:none; padding:.42rem .6rem; border:1px solid rgba(71,85,105,.72); border-radius:.42rem; background:rgba(15,23,42,.5); color:#e2e8f0; font-size:.65rem; font-weight:700; transition:border-color .18s ease, background .18s ease, color .18s ease; }
     #compact-player-list .waiting-player-card__add:hover { border-color:rgba(52,211,153,.7); background:rgba(16,185,129,.12); color:#a7f3d0; }
     #compact-player-list .waiting-player-card__add svg { width:.82rem; height:.82rem; }
-    #compact-player-list .waiting-player-card__list { height:416px; overflow-y:scroll; }
+    #compact-player-list .waiting-player-card__list { max-height:416px; overflow-y:auto; }
     #compact-player-list .compact-player { display:grid; grid-template-columns:1.5rem minmax(0,1fr) auto auto auto; gap:.65rem; align-items:center; min-height:58px; padding:.62rem .8rem; border-bottom:1px solid rgba(51,65,85,.55); transition:background .18s ease; }
     #compact-player-list .compact-player:hover { background:rgba(30,41,59,.28); }
     #compact-player-list .compact-player__rank { align-self:start; padding-top:.12rem; color:#34d399; font-size:.86rem; line-height:1; }
