@@ -3388,7 +3388,23 @@ function bindEvents() {
         {
           element: document.querySelector('.queue-workspace .match-card-drag-handle, #queues-container .match-card-drag-handle, #queues-container .drag-handle, #queues-container'),
           title: 'Drag Players & Match Cards',
-          intro: 'Use the <b>⋮⋮</b> handle beside a player to move or reorder them in a match. Drag a match card by its header to change the order of upcoming matches. This helps you adjust the play order without creating a new round.',
+          intro: `
+            <p>Drag from the marked handle—on touch devices, press and hold it first.</p>
+            <div class="tour-drag-demo" aria-label="Animated example of dragging a player and a match card">
+              <div class="tour-drag-demo__label">Player order</div>
+              <div class="tour-drag-demo__lane">
+                <div class="tour-drag-demo__card tour-drag-demo__card--player"><span class="tour-drag-demo__grip">⋮⋮</span> Player card</div>
+                <span class="tour-drag-demo__target">Drop here</span>
+                <div class="tour-drag-demo__ghost tour-drag-demo__ghost--player"><span>⋮⋮</span> Player</div>
+              </div>
+              <div class="tour-drag-demo__label">Upcoming matches</div>
+              <div class="tour-drag-demo__lane">
+                <div class="tour-drag-demo__card tour-drag-demo__card--match"><span class="tour-drag-demo__grip">⠿</span> Match card header</div>
+                <span class="tour-drag-demo__target">New position</span>
+                <div class="tour-drag-demo__ghost tour-drag-demo__ghost--match"><span>⠿</span> Match</div>
+              </div>
+            </div>
+            <p class="tour-drag-demo__hint">Grab <b>⋮⋮</b> beside a player to reorder or move them. Grab a <b>match card header</b> to reorder upcoming matches.</p>`,
           position: 'top'
         }
       );
