@@ -40,6 +40,7 @@
     };
   </script>
   <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr@1.8.2/dist/themes/monolith.min.css" />
   <script>
     (function () {
       const club = localStorage.getItem("dq_club_preference");
@@ -721,23 +722,13 @@
               <p class="mt-1 text-sm text-slate-400">Only your dashboard design will change.</p>
             </div>
           </div>
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Dashboard color">
-            <label class="theme-choice">
-              <input type="radio" name="dashboard-theme" value="teal" class="sr-only" checked>
-              <span class="theme-choice-card">
-                <span class="theme-preview theme-preview--teal" aria-hidden="true"><i></i><i></i><i></i></span>
-                <span class="theme-choice-label">Deuce teal</span>
-                <span class="theme-choice-description">Classic court tones</span>
-              </span>
-            </label>
-            <label class="theme-choice">
-              <input type="radio" name="dashboard-theme" value="violet" class="sr-only">
-              <span class="theme-choice-card">
-                <span class="theme-preview theme-preview--violet" aria-hidden="true"><i></i><i></i><i></i></span>
-                <span class="theme-choice-label">Midnight violet</span>
-                <span class="theme-choice-description">Cool, high-contrast tones</span>
-              </span>
-            </label>
+          <div class="custom-color-picker-row">
+            <button id="dashboard-color-picker" type="button" class="custom-color-picker-trigger" aria-label="Choose dashboard color"></button>
+            <div>
+              <p class="font-semibold text-white">Choose your color</p>
+              <p class="mt-1 text-sm text-slate-400">Use the picker, then select Save to apply it to your dashboard.</p>
+              <code id="dashboard-color-value" class="custom-color-value">#8B5CF6</code>
+            </div>
           </div>
         </section>
       </div>
@@ -1323,7 +1314,8 @@
   <div id="toast-container"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-  <script type="module" src="js/dashboard.js?v=21"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr@1.8.2/dist/pickr.min.js"></script>
+  <script type="module" src="js/dashboard.js?v=22"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

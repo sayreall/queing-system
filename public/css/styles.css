@@ -1118,3 +1118,131 @@ body[data-dashboard-theme="violet"] [style*="rgba(15, 61, 61"] {
 body[data-dashboard-theme="violet"] ::-webkit-scrollbar-track { background: rgba(23, 18, 44, 0.72); }
 body[data-dashboard-theme="violet"] ::-webkit-scrollbar-thumb { background: rgba(103, 198, 255, 0.38); }
 body[data-dashboard-theme="violet"] ::-webkit-scrollbar-thumb:hover { background: rgba(182, 156, 255, 0.72); }
+
+/* ===== Pickr custom dashboard color ===== */
+
+.custom-color-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 92px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(10, 40, 40, 0.52);
+}
+
+.custom-color-picker-trigger.pcr-button {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  margin: 0;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 0 0 3px var(--border), 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.custom-color-value {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent-tl);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+}
+
+/* Pickr's popup is outside the settings modal, so it needs to sit above it. */
+.pcr-app { z-index: 60 !important; }
+
+body[data-dashboard-theme="custom"] {
+  background:
+    radial-gradient(ellipse at top left, var(--theme-glow), transparent 55%),
+    radial-gradient(ellipse at bottom right, var(--theme-border), transparent 50%),
+    var(--bg-base) !important;
+}
+
+body[data-dashboard-theme="custom"] #sidebar {
+  background: var(--theme-panel) !important;
+  border-color: var(--theme-border) !important;
+}
+
+body[data-dashboard-theme="custom"] .page-bg {
+  background-image:
+    radial-gradient(circle at 15% 10%, var(--theme-glow), transparent 35%),
+    radial-gradient(circle at 85% 5%, var(--theme-border), transparent 35%),
+    radial-gradient(circle at 50% 90%, var(--theme-glow), transparent 40%);
+}
+
+body[data-dashboard-theme="custom"] .glass-card,
+body[data-dashboard-theme="custom"] .toast,
+body[data-dashboard-theme="custom"] .introjs-tooltip,
+body[data-dashboard-theme="custom"] .custom-intro-tooltip {
+  background: var(--theme-panel) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--text-base) !important;
+}
+
+body[data-dashboard-theme="custom"] .glass-subcard,
+body[data-dashboard-theme="custom"] .stat-card,
+body[data-dashboard-theme="custom"] .queue-item,
+body[data-dashboard-theme="custom"] .team-card,
+body[data-dashboard-theme="custom"] .court-card,
+body[data-dashboard-theme="custom"] .input-field,
+body[data-dashboard-theme="custom"] .settings-profile,
+body[data-dashboard-theme="custom"] .custom-color-picker-row,
+body[data-dashboard-theme="custom"] [class*="bg-slate-"] {
+  background-color: var(--theme-subpanel) !important;
+  border-color: var(--theme-border) !important;
+}
+
+body[data-dashboard-theme="custom"] [class*="border-slate-"] { border-color: var(--theme-border) !important; }
+body[data-dashboard-theme="custom"] [class*="text-slate-400"],
+body[data-dashboard-theme="custom"] [class*="text-slate-500"],
+body[data-dashboard-theme="custom"] [class*="text-slate-600"] { color: var(--text-muted) !important; }
+body[data-dashboard-theme="custom"] [class*="text-slate-200"],
+body[data-dashboard-theme="custom"] [class*="text-slate-300"] { color: var(--text-base) !important; }
+
+body[data-dashboard-theme="custom"] .btn-primary {
+  background: linear-gradient(135deg, var(--accent-tl), var(--theme-button-end)) !important;
+  box-shadow: 0 4px 16px var(--theme-glow) !important;
+}
+
+body[data-dashboard-theme="custom"] .btn-primary:hover { box-shadow: 0 8px 28px var(--theme-glow) !important; }
+body[data-dashboard-theme="custom"] .btn-secondary { border-color: var(--theme-border) !important; color: var(--text-base) !important; }
+body[data-dashboard-theme="custom"] .btn-secondary:hover,
+body[data-dashboard-theme="custom"] .input-field:focus {
+  border-color: var(--accent-tl) !important;
+  color: var(--accent-tl) !important;
+  box-shadow: 0 0 0 3px var(--theme-glow) !important;
+}
+
+body[data-dashboard-theme="custom"] .skill-beginner,
+body[data-dashboard-theme="custom"] .badge-beginner,
+body[data-dashboard-theme="custom"] .court-status.active {
+  background: var(--theme-glow) !important;
+  color: var(--accent-tl) !important;
+}
+body[data-dashboard-theme="custom"] .skill-intermediate,
+body[data-dashboard-theme="custom"] .badge-intermediate {
+  background: var(--theme-border) !important;
+  color: var(--accent-gd) !important;
+}
+body[data-dashboard-theme="custom"] .skill-advanced,
+body[data-dashboard-theme="custom"] .badge-advanced {
+  background: var(--theme-glow) !important;
+  color: var(--accent-gd) !important;
+}
+
+body[data-dashboard-theme="custom"] .header-title,
+body[data-dashboard-theme="custom"] [style*="color:#F5C42A"],
+body[data-dashboard-theme="custom"] [style*="color: #F5C42A"] { color: var(--accent-gd) !important; }
+body[data-dashboard-theme="custom"] [style*="rgba(12,50,50"],
+body[data-dashboard-theme="custom"] [style*="rgba(12, 50, 50"],
+body[data-dashboard-theme="custom"] [style*="rgba(15,61,61"],
+body[data-dashboard-theme="custom"] [style*="rgba(15, 61, 61"] { background-color: var(--theme-subpanel) !important; }
+
+body[data-dashboard-theme="custom"] ::-webkit-scrollbar-track { background: var(--bg-base); }
+body[data-dashboard-theme="custom"] ::-webkit-scrollbar-thumb { background: var(--theme-glow); }
+body[data-dashboard-theme="custom"] ::-webkit-scrollbar-thumb:hover { background: var(--accent-tl); }

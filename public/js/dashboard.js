@@ -43,23 +43,70 @@ import { startAutoLogout, stopAutoLogout } from "./auto-logout.js";
 
 const AVG_MATCH_MINUTES = 15;
 
-const DASHBOARD_THEMES = new Set(["teal", "violet"]);
 let activeSettingsUser = null;
+let activeDashboardColor = "#8b5cf6";
 
 function dashboardThemeStorageKey(userId) {
   return `dq_dashboard_theme_${userId}`;
 }
 
-function normalizeDashboardTheme(theme) {
-  return DASHBOARD_THEMES.has(theme) ? theme : "teal";
+function normalizeDashboardColor(color, fallback = "#8b5cf6") {
+  return typeof color === "string" && /^#[0-9a-f]{6}$/i.test(color.trim())
+    ? color.trim().toLowerCase()
+    : fallback;
 }
 
-function applyDashboardTheme(theme) {
-  const selectedTheme = normalizeDashboardTheme(theme);
-  document.body.dataset.dashboardTheme = selectedTheme;
-  document.querySelectorAll('input[name="dashboard-theme"]').forEach((input) => {
-    input.checked = input.value === selectedTheme;
-  });
+function hexToRgb(hex) {
+  const value = normalizeDashboardColor(hex).slice(1);
+  return {
+    r: parseInt(value.slice(0, 2), 16),
+    g: parseInt(value.slice(2, 4), 16),
+    b: parseInt(value.slice(4, 6), 16),
+  };
+}
+
+function mixHex(first, second, firstWeight) {
+  const a = hexToRgb(first);
+  const b = hexToRgb(second);
+  const mixChannel = (channel) => Math.round(a[channel] * firstWeight + b[channel] * (1 - firstWeight));
+  return `#${[mixChannel("r"), mixChannel("g"), mixChannel("b")]
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
+function rgba(hex, alpha) {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function applyDashboardColor(color) {
+  const selectedColor = normalizeDashboardColor(color);
+  const body = document.body;
+  const base = mixHex(selectedColor, "#080a13", 0.17);
+  const card = mixHex(selectedColor, "#101320", 0.28);
+  const sub = mixHex(selectedColor, "#0c0e18", 0.2);
+  const bright = mixHex(selectedColor, "#ffffff", 0.72);
+  const deep = mixHex(selectedColor, "#05060b", 0.78);
+
+  activeDashboardColor = selectedColor;
+  body.dataset.dashboardTheme = "custom";
+  body.style.setProperty("--bg-base", base);
+  body.style.setProperty("--bg-card", card);
+  body.style.setProperty("--bg-sub", sub);
+  body.style.setProperty("--accent-tl", selectedColor);
+  body.style.setProperty("--accent-gd", bright);
+  body.style.setProperty("--accent-or", deep);
+  body.style.setProperty("--text-base", "#f8fafc");
+  body.style.setProperty("--text-muted", "#cbd5e1");
+  body.style.setProperty("--border", rgba(selectedColor, 0.28));
+  body.style.setProperty("--theme-panel", rgba(card, 0.96));
+  body.style.setProperty("--theme-subpanel", rgba(sub, 0.86));
+  body.style.setProperty("--theme-border", rgba(bright, 0.24));
+  body.style.setProperty("--theme-glow", rgba(selectedColor, 0.32));
+  body.style.setProperty("--theme-button-end", deep);
+
+  const colorValue = document.getElementById("dashboard-color-value");
+  if (colorValue) colorValue.textContent = selectedColor.toUpperCase();
 }
 
 function populateSettingsProfile(user, profile = {}) {
@@ -77,11 +124,12 @@ function populateSettingsProfile(user, profile = {}) {
   if (profileClub) profileClub.textContent = clubName;
   if (avatar) avatar.textContent = initial;
 
-  // The local per-account copy wins until a successful sync. This lets a
-  // signed-in user keep their choice even if their legacy profile document is
-  // absent or Firestore is temporarily unavailable.
-  const savedTheme = localStorage.getItem(dashboardThemeStorageKey(user.uid));
-  applyDashboardTheme(savedTheme || profile.dashboardTheme || "teal");
+  // Keep the selection private to this signed-in account, with the browser
+  // copy taking priority if a connection was unavailable during a prior save.
+  const savedColor = localStorage.getItem(dashboardThemeStorageKey(user.uid));
+  const legacyColor = profile.dashboardTheme === "teal" ? "#1fcfb1" : "#8b5cf6";
+  const migratedSavedColor = savedColor === "teal" ? "#1fcfb1" : savedColor === "violet" ? "#8b5cf6" : savedColor;
+  applyDashboardColor(migratedSavedColor || profile.dashboardColor || legacyColor);
 }
 
 function getMorphOpts() {
@@ -2802,31 +2850,55 @@ function bindEvents() {
     if (event.target === settingsModal) closeSettingsModal();
   });
 
-  document.querySelectorAll('input[name="dashboard-theme"]').forEach((input) => {
-    input.addEventListener("change", async () => {
-      if (!input.checked || !activeSettingsUser) return;
+  const colorPickerTarget = document.getElementById("dashboard-color-picker");
+  if (colorPickerTarget && window.Pickr) {
+    const pickr = window.Pickr.create({
+      el: colorPickerTarget,
+      theme: "monolith",
+      default: activeDashboardColor,
+      swatches: ["#1fcfb1", "#38bdf8", "#8b5cf6", "#d946ef", "#e85a1a", "#f5c42a"],
+      components: {
+        preview: true,
+        opacity: false,
+        hue: true,
+        interaction: { hex: true, input: true, save: true, cancel: true },
+      },
+    });
 
-      const nextTheme = normalizeDashboardTheme(input.value);
-      applyDashboardTheme(nextTheme);
-      localStorage.setItem(dashboardThemeStorageKey(activeSettingsUser.uid), nextTheme);
+    let savedColor = activeDashboardColor;
+    const colorFromPickr = (color) => color ? normalizeDashboardColor(color.toHEXA().toString().slice(0, 7)) : savedColor;
 
+    pickr.on("change", (color) => {
+      applyDashboardColor(colorFromPickr(color));
+    });
+
+    pickr.on("cancel", () => {
+      applyDashboardColor(savedColor);
+      pickr.setColor(savedColor, true);
+    });
+
+    pickr.on("save", async (color) => {
+      const nextColor = colorFromPickr(color);
+      savedColor = nextColor;
+      applyDashboardColor(nextColor);
+      pickr.hide();
+
+      if (!activeSettingsUser) return;
+      localStorage.setItem(dashboardThemeStorageKey(activeSettingsUser.uid), nextColor);
       try {
-        // Merge creates the preference for older accounts that do not yet have
-        // a profile document, without replacing any profile, role, or club data.
+        // Merge preserves the profile's role, club, and other account data.
         await setDoc(
           doc(db, "users", activeSettingsUser.uid),
-          { dashboardTheme: nextTheme },
+          { dashboardTheme: "custom", dashboardColor: nextColor },
           { merge: true }
         );
         showToast("Dashboard color updated.");
       } catch (error) {
-        // The per-account browser copy has already been saved. Keep the chosen
-        // design rather than rejecting it when cloud sync is unavailable.
-        console.warn("Dashboard theme will remain stored on this device until it can sync", error);
+        console.warn("Dashboard color is stored on this device until it can sync", error);
         showToast("Dashboard color updated on this device.");
       }
     });
-  });
+  }
 
   const tvQrcodeContainer = document.getElementById("tv-qrcode");
   let qrCodeInstance = null;
