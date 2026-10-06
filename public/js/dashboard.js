@@ -291,6 +291,9 @@ function initializeRatingUI() {
     .queue-workspace .match-card .queue-actions button { padding:.22rem; }
     @media (max-width: 1150px) {
       .queue-workspace #global-match-grid { grid-template-columns:1fr; }
+      .queue-workspace .match-teams { grid-template-columns:1fr !important; gap:.5rem; }
+      .queue-workspace .match-teams > div:nth-child(2) { min-height:1.25rem; padding:0; }
+      .queue-workspace .match-card .team-list { min-height:0; }
     }
     @media (max-width: 520px) {
       .queue-workspace .match-card { padding:.75rem !important; }
