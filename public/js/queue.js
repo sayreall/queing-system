@@ -1016,6 +1016,10 @@ function areFixedPartners(playerA, playerB) {
   return playerA?.practicePartner === playerB?.id || playerB?.practicePartner === playerA?.id;
 }
 
+function fixedPartnerInPool(player, pool) {
+  return pool.find((candidate) => candidate.id !== player.id && areFixedPartners(player, candidate)) || null;
+}
+
 function pairingScore(teamA, teamB, teammateHistory, opponentHistory, mode, lockPartners = false) {
   const teammateRepeats = pairCount(teammateHistory, teamA[0], teamA[1]) +
     pairCount(teammateHistory, teamB[0], teamB[1]);
@@ -1043,6 +1047,17 @@ function pairingScore(teamA, teamB, teammateHistory, opponentHistory, mode, lock
 
 function chooseGroup(pool, lineupHistory, teammateHistory, opponentHistory, mode, lockPartners = false) {
   const candidates = pool.slice(0, Math.min(10, pool.length));
+  // A paired player can be outside the initial fairness window. Include that
+  // partner before we evaluate groups, otherwise the pair may be split before
+  // the large fixed-pair penalty ever has a chance to apply.
+  if (lockPartners) {
+    for (const player of [...candidates]) {
+      const partner = fixedPartnerInPool(player, pool);
+      if (partner && !candidates.some((candidate) => candidate.id === partner.id)) {
+        candidates.push(partner);
+      }
+    }
+  }
   let best = candidates.slice(0, 4);
   let bestScore = Infinity;
   for (let a = 0; a < candidates.length - 3; a++) {
@@ -1054,7 +1069,7 @@ function chooseGroup(pool, lineupHistory, teammateHistory, opponentHistory, mode
           const pairing = arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode, lockPartners);
           const missingFixedPartners = lockPartners
             ? group.reduce((count, player) => {
-                const partner = candidates.find((candidate) => areFixedPartners(player, candidate));
+                const partner = fixedPartnerInPool(player, pool);
                 return count + (partner && !group.includes(partner) ? 1 : 0);
               }, 0)
             : 0;
@@ -1082,9 +1097,14 @@ function arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode, loc
     [[group[0], group[2]], [group[1], group[3]]],
     [[group[0], group[3]], [group[1], group[2]]],
   ];
-  let best = pairings[0];
+  const validPairings = lockPartners
+    ? pairings.filter(([teamA, teamB]) => !teamA.some((playerA) =>
+        teamB.some((playerB) => areFixedPartners(playerA, playerB))
+      ))
+    : pairings;
+  let best = validPairings[0] || pairings[0];
   let bestDetails = null;
-  for (const pairing of pairings) {
+  for (const pairing of validPairings.length ? validPairings : pairings) {
     const [teamA, teamB] = pairing;
     const details = pairingScore(teamA, teamB, teammateHistory, opponentHistory, mode, lockPartners);
     if (!bestDetails || details.score < bestDetails.score) {
@@ -1099,7 +1119,7 @@ function arrangeBalancedTeams(group, teammateHistory, opponentHistory, mode, loc
 // Queue cards are represented by every four positions in the flat queue order;
 // an open position is stored as "EMPTY". The generator fills that position
 // first, instead of reshuffling the three players already on the card.
-function getLockedQueuedCards(playersList, preserveExisting = false) {
+function getLockedQueuedCards(playersList, preserveExisting = false, lockPartners = false) {
   const playerById = new Map(playersList.map((player) => [player.id, player]));
   const locked = Object.fromEntries(SKILLS.map((skill) => [skill.key, []]));
   const playerIds = new Set();
@@ -1112,7 +1132,19 @@ function getLockedQueuedCards(playersList, preserveExisting = false) {
 
       const filledIds = card.filter((id) => id && id !== "EMPTY");
       const cardPlayers = filledIds.map((id) => playerById.get(id));
+      const keepsFixedPartnersTogether = !lockPartners || card.every((playerId, position) => {
+        if (!playerId || playerId === "EMPTY") return true;
+        const player = playerById.get(playerId);
+        if (!player) return false;
+        const partner = fixedPartnerInPool(player, playersList);
+        if (!partner) return true;
+        const partnerPosition = card.findIndex((id) => id === partner.id);
+        // A preserved card is only safe when both people are already on the
+        // same displayed team (positions 0/1 or 2/3).
+        return partnerPosition !== -1 && Math.floor(position / 2) === Math.floor(partnerPosition / 2);
+      });
       const canKeepCard = (preserveExisting ? filledIds.length === 4 : filledIds.length === 3) &&
+        keepsFixedPartnersTogether &&
         cardPlayers.every((player) =>
           player &&
           (player.status === "Waiting" || player.status === "Standby" || player.status === "Playing") &&
@@ -1132,8 +1164,8 @@ function getLockedQueuedCards(playersList, preserveExisting = false) {
 }
 
 export async function generateSmartRound(playersList, mode = "social_mix", matchHistory = [], options = {}) {
-  const lockedCards = getLockedQueuedCards(playersList, options.preserveExisting === true);
   const lockPartners = options.lockPartners === true;
+  const lockedCards = getLockedQueuedCards(playersList, options.preserveExisting === true, lockPartners);
   const eligible = playersList.filter((player) =>
     !lockedCards.playerIds.has(player.id) &&
     (player.status === "Waiting" || player.status === "Standby" || player.status === "Playing") && canPlayAnotherMatch(player)
