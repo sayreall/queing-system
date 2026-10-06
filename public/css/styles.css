@@ -1165,8 +1165,9 @@ body[data-dashboard-theme="custom"] {
 }
 
 body[data-dashboard-theme="custom"] #sidebar {
-  background: var(--theme-sidebar) !important;
-  border-color: var(--theme-border) !important;
+  /* Keep navigation familiar while the workspace uses the chosen color. */
+  background: rgba(15, 61, 61, 0.95) !important;
+  border-color: rgba(51, 65, 85, 0.5) !important;
 }
 
 body[data-dashboard-theme="custom"] .page-bg {
@@ -1245,18 +1246,46 @@ body[data-dashboard-theme="custom"] [style*="rgba(12, 50, 50"],
 body[data-dashboard-theme="custom"] [style*="rgba(15,61,61"],
 body[data-dashboard-theme="custom"] [style*="rgba(15, 61, 61"] { background-color: var(--theme-subpanel) !important; }
 
-/* Sidebar labels and icons use the strongest contrast against the selected
-   color. For a bright picked color this becomes near-black automatically. */
+/* The sidebar intentionally retains its original dark-teal navigation design. */
 body[data-dashboard-theme="custom"] #sidebar .nav-item,
 body[data-dashboard-theme="custom"] #sidebar .nav-item svg,
 body[data-dashboard-theme="custom"] #sidebar .nav-item .sidebar-text {
-  color: var(--theme-sidebar-text) !important;
+  color: #cbd5e1 !important;
 }
+body[data-dashboard-theme="custom"] #sidebar #open-tv-share-btn,
+body[data-dashboard-theme="custom"] #sidebar #open-tv-share-btn svg,
+body[data-dashboard-theme="custom"] #sidebar #open-tv-share-btn .sidebar-text { color: #1fcfb1 !important; }
+body[data-dashboard-theme="custom"] #sidebar #guide-btn,
+body[data-dashboard-theme="custom"] #sidebar #guide-btn svg,
+body[data-dashboard-theme="custom"] #sidebar #guide-btn .sidebar-text { color: #22d3ee !important; }
+body[data-dashboard-theme="custom"] #sidebar #logout-btn,
+body[data-dashboard-theme="custom"] #sidebar #logout-btn svg,
+body[data-dashboard-theme="custom"] #sidebar #logout-btn .sidebar-text { color: #f87171 !important; }
 body[data-dashboard-theme="custom"] #sidebar [class*="hover:bg-slate-"] {
   background-color: transparent !important;
 }
 body[data-dashboard-theme="custom"] #sidebar [class*="hover:bg-slate-"]:hover {
-  background-color: var(--theme-panel) !important;
+  background-color: rgba(30, 41, 59, 0.5) !important;
+}
+
+.restore-original-design-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border: 1px solid rgba(168, 196, 190, 0.35);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.restore-original-design-btn:hover {
+  border-color: var(--accent-tl);
+  background: rgba(31, 207, 177, 0.12);
+  color: var(--accent-tl);
 }
 
 body[data-dashboard-theme="custom"] ::-webkit-scrollbar-track { background: var(--bg-base); }

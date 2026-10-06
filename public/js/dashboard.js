@@ -46,6 +46,13 @@ const AVG_MATCH_MINUTES = 15;
 let activeSettingsUser = null;
 let activeDashboardColor = "#8b5cf6";
 
+const CUSTOM_THEME_PROPERTIES = [
+  "--bg-base", "--bg-card", "--bg-sub", "--accent-tl", "--accent-gd", "--accent-or",
+  "--text-base", "--text-muted", "--border", "--theme-panel", "--theme-sidebar",
+  "--theme-subpanel", "--theme-border", "--theme-glow", "--theme-button-end",
+  "--theme-sidebar-text", "--theme-button-text",
+];
+
 function dashboardThemeStorageKey(userId) {
   return `dq_dashboard_theme_${userId}`;
 }
@@ -129,6 +136,14 @@ function applyDashboardColor(color) {
   if (colorValue) colorValue.textContent = selectedColor.toUpperCase();
 }
 
+function restoreOriginalDashboardDesign() {
+  document.body.dataset.dashboardTheme = "teal";
+  CUSTOM_THEME_PROPERTIES.forEach((property) => document.body.style.removeProperty(property));
+  activeDashboardColor = "#1fcfb1";
+  const colorValue = document.getElementById("dashboard-color-value");
+  if (colorValue) colorValue.textContent = "ORIGINAL";
+}
+
 function populateSettingsProfile(user, profile = {}) {
   activeSettingsUser = user;
   const displayName = (profile.name || user.displayName || user.email || "Account").trim();
@@ -149,7 +164,11 @@ function populateSettingsProfile(user, profile = {}) {
   const savedColor = localStorage.getItem(dashboardThemeStorageKey(user.uid));
   const legacyColor = profile.dashboardTheme === "teal" ? "#1fcfb1" : "#8b5cf6";
   const migratedSavedColor = savedColor === "teal" ? "#1fcfb1" : savedColor === "violet" ? "#8b5cf6" : savedColor;
-  applyDashboardColor(migratedSavedColor || profile.dashboardColor || legacyColor);
+  if (migratedSavedColor === "teal" || (!migratedSavedColor && (!profile.dashboardTheme || profile.dashboardTheme === "teal"))) {
+    restoreOriginalDashboardDesign();
+  } else {
+    applyDashboardColor(migratedSavedColor || (profile.dashboardTheme === "custom" ? profile.dashboardColor : legacyColor));
+  }
 }
 
 function getMorphOpts() {
@@ -2885,7 +2904,6 @@ function bindEvents() {
         interaction: { hex: true, input: true, save: true, cancel: true },
       },
     });
-
     let savedColor = activeDashboardColor;
     const colorFromPickr = (color) => color ? normalizeDashboardColor(color.toHEXA().toString().slice(0, 7)) : savedColor;
 
@@ -2917,6 +2935,29 @@ function bindEvents() {
       } catch (error) {
         console.warn("Dashboard color is stored on this device until it can sync", error);
         showToast("Dashboard color updated on this device.");
+      }
+    });
+
+    document.getElementById("restore-original-design-btn")?.addEventListener("click", async () => {
+      savedColor = "#1fcfb1";
+      restoreOriginalDashboardDesign();
+      pickr.setColor(savedColor, true);
+      pickr.hide();
+
+      if (!activeSettingsUser) return;
+      // Keep an explicit legacy marker locally so a stale cloud profile cannot
+      // reapply a custom color before the next sync completes.
+      localStorage.setItem(dashboardThemeStorageKey(activeSettingsUser.uid), "teal");
+      try {
+        await setDoc(
+          doc(db, "users", activeSettingsUser.uid),
+          { dashboardTheme: "teal", dashboardColor: null },
+          { merge: true }
+        );
+        showToast("Original dashboard design restored.");
+      } catch (error) {
+        console.warn("Original dashboard design is stored on this device until it can sync", error);
+        showToast("Original dashboard design restored on this device.");
       }
     });
   }
