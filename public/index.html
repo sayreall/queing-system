@@ -231,7 +231,7 @@
   <div class="w-full md:pl-16 flex flex-col relative min-h-screen">
 
     <header class="px-6 py-4 md:px-10 md:py-6">
-      <div class="header-inner flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+      <div class="header-inner">
         <!-- Brand: logo + title -->
         <div class="header-brand flex items-center">
           <button id="mobile-menu-btn"
@@ -241,16 +241,12 @@
             </svg>
           </button>
           <div class="header-title-block">
-            <div class="flex items-center gap-3 mb-1">
-              <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> LIVE</span>
-              <p class="text-xs text-slate-400">Strict skill separation ON</p>
-            </div>
             <h1 class="font-display font-semibold header-title text-2xl md:text-3xl" style="color:#F5C42A;">Deuce Club Queuing System</h1>
           </div>
         </div>
 
         <!-- Header Actions -->
-        <div class="flex items-center gap-2 flex-wrap">
+        <div class="header-actions">
           
           <button id="game-limit-btn" type="button" class="btn-secondary text-xs px-3 py-2 flex items-center gap-2 border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-slate-300 transition-colors">
             <span id="game-limit-label">Game Limit: Off</span>
@@ -431,7 +427,7 @@
           </div>
         </div>
 
-        <div class="mt-6 grid gap-4 lg:grid-cols-[0.35fr_0.65fr]">
+        <div class="mt-6 grid gap-4 xl:grid-cols-[0.35fr_0.65fr]">
           <div class="glass-subcard">
             <label class="text-sm uppercase tracking-[0.2em] text-slate-400">Search</label>
             <input id="player-search" class="input-field mt-2" placeholder="Search players" />

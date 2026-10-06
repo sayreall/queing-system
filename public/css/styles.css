@@ -30,10 +30,9 @@
 /* ===== Header Layout ===== */
 
 .header-inner {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
 }
 
@@ -41,6 +40,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  min-width: 0;
   flex-shrink: 0;
 }
 
@@ -64,6 +64,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .header-title {
@@ -72,18 +73,38 @@
 }
 
 .header-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  justify-content: end;
+  gap: 6px;
   align-items: center;
+}
+
+.header-actions .btn-primary,
+.header-actions .btn-secondary {
+  width: auto;
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+/* Narrow screens: preserve a left-aligned title and compact action grid. */
+@media (max-width: 900px) {
+  .header-inner {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    justify-content: start;
+  }
 }
 
 /* Mobile: stack brand block, shrink logo */
 @media (max-width: 640px) {
-  .header-inner {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 
   .header-logo {
     width: 58px;
@@ -92,12 +113,14 @@
 
   .header-actions {
     width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .header-actions .btn-primary,
   .header-actions .btn-secondary {
-    flex: 1 1 auto;
     justify-content: center;
+    width: 100%;
   }
 }
 
