@@ -266,30 +266,33 @@ function initializeRatingUI() {
         <span class="text-xs text-emerald-400">Up next</span>
       </div>`;
     queueWorkspace.appendChild(queueContainer);
-    queueDestination.prepend(queueWorkspace);
+    // The former player tables are superseded by the compact Waiting to Play
+    // panel. Keep this column dedicated to upcoming match cards.
+    queueDestination.replaceChildren(queueWorkspace);
     if (queueSection) queueSection.style.display = "none";
   }
 
   const workspaceStyle = document.createElement("style");
   workspaceStyle.textContent = `
     .queue-workspace #queues-container { display:block; }
-    .queue-workspace #global-match-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.65rem; }
-    .queue-workspace .match-card { min-width:0; padding:.65rem !important; border-radius:.8rem; }
-    .queue-workspace .match-card > div:first-child { min-height:1.75rem; margin-bottom:.5rem; padding-bottom:.45rem; }
+    .queue-workspace { min-width:0; }
+    .queue-workspace #global-match-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.8rem; }
+    .queue-workspace .match-card { min-width:0; padding:.8rem !important; border-radius:.9rem; }
+    .queue-workspace .match-card > div:first-child { min-height:1.9rem; margin-bottom:.6rem; padding-bottom:.5rem; }
     .queue-workspace .match-card > div:first-child > div:last-child { flex-wrap:wrap; justify-content:flex-end; }
     .queue-workspace .match-card .match-card-drag-handle h4 { font-size:.72rem; }
-    .queue-workspace .match-card .match-teams { grid-template-columns:1fr; gap:.4rem; }
-    .queue-workspace .match-card .match-teams > div { padding:.45rem; border-radius:.6rem; min-width:0; }
+    .queue-workspace .match-card .match-teams { grid-template-columns:1fr; gap:.5rem; }
+    .queue-workspace .match-card .match-teams > div { padding:.55rem; border-radius:.65rem; min-width:0; }
     .queue-workspace .match-card .match-teams > div:nth-child(2) { min-height:1rem; padding:0; }
     .queue-workspace .match-card .team-list { min-height:0; }
     .queue-workspace .match-card .team-list > * + * { margin-top:.3rem; }
     .queue-workspace .match-card .queue-item {
-      min-height:2.2rem;
-      padding:.35rem .4rem;
+      min-height:2.4rem;
+      padding:.4rem .45rem;
       border-radius:.55rem;
       gap:.35rem;
     }
-    .queue-workspace .match-card .queue-item .font-semibold { font-size:.72rem; line-height:1.15; }
+    .queue-workspace .match-card .queue-item .font-semibold { font-size:.76rem; line-height:1.15; }
     .queue-workspace .match-card .queue-item .drag-handle { font-size:.75rem; }
     .queue-workspace .match-card .queue-item .rating-badge { font-size:.6rem; padding:.1rem .25rem; white-space:nowrap; }
     .queue-workspace .match-card .queue-actions button { padding:.22rem; }
