@@ -53,6 +53,18 @@ const CUSTOM_THEME_PROPERTIES = [
   "--theme-sidebar-text", "--theme-button-text", "--theme-gradient-start", "--theme-gradient-end",
 ];
 
+const ORIGINAL_DASHBOARD_PALETTE = {
+  "--bg-base": "#0a2e2e",
+  "--bg-card": "#0f3d3d",
+  "--bg-sub": "#0c3232",
+  "--accent-or": "#E85A1A",
+  "--accent-gd": "#F5C42A",
+  "--accent-tl": "#1fcfb1",
+  "--text-base": "#F2E8D5",
+  "--text-muted": "#a8c4be",
+  "--border": "rgba(245, 196, 42, 0.18)",
+};
+
 function dashboardThemeStorageKey(userId) {
   return `dq_dashboard_theme_${userId}`;
 }
@@ -159,8 +171,11 @@ function applyDashboardGradient(startColor, endColor) {
 }
 
 function restoreOriginalDashboardDesign() {
-  document.body.dataset.dashboardTheme = "teal";
+  document.body.removeAttribute("data-dashboard-theme");
   CUSTOM_THEME_PROPERTIES.forEach((property) => document.body.style.removeProperty(property));
+  Object.entries(ORIGINAL_DASHBOARD_PALETTE).forEach(([property, value]) => {
+    document.body.style.setProperty(property, value);
+  });
   activeDashboardColors = { start: "#1fcfb1", end: "#e85a1a" };
   const startValue = document.getElementById("dashboard-color-start-value");
   const endValue = document.getElementById("dashboard-color-end-value");
