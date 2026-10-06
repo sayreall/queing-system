@@ -124,6 +124,15 @@
   }
 }
 
+/* On tablets the player-management columns stack. Keep generated matches first
+   so they are immediately visible instead of being pushed below the long
+   player controls and waiting list. */
+@media (max-width: 1279px) {
+  .queue-workspace {
+    order: -1;
+  }
+}
+
 body {
   background: radial-gradient(ellipse at top left, rgba(31, 207, 177, 0.12), transparent 55%),
     radial-gradient(ellipse at bottom right, rgba(232, 90, 26, 0.1), transparent 50%),
