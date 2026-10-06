@@ -3207,6 +3207,18 @@ async function bootstrap() {
   }
 
   window.addEventListener("unhandledrejection", (event) => {
+    // Browser extensions can inject promises into the page. MetaMask's
+    // session-restoration failure is not a dashboard/Firebase failure, so do
+    // not surface it as an application toast.
+    const reason = event.reason;
+    const extensionMessage = [reason?.message, reason?.cause?.message, String(reason || "")]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    if (extensionMessage.includes("metamask") || extensionMessage.includes("extension not found")) {
+      event.preventDefault();
+      return;
+    }
     console.error("Unhandled promise rejection", event.reason);
     showToast(formatFirebaseError(event.reason), "error");
   });
