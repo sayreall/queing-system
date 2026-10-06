@@ -37,7 +37,7 @@ import {
 } from "./courts.js";
 import { 
   db, collection, query, where, orderBy, limit, onSnapshot,
-  auth, onAuthStateChanged, signOut, doc, getDoc, updateDoc
+  auth, onAuthStateChanged, signOut, doc, getDoc, setDoc
 , getTenantCollection, getTenantDoc} from "./firebase.js";
 import { startAutoLogout, stopAutoLogout } from "./auto-logout.js";
 
@@ -77,8 +77,11 @@ function populateSettingsProfile(user, profile = {}) {
   if (profileClub) profileClub.textContent = clubName;
   if (avatar) avatar.textContent = initial;
 
+  // The local per-account copy wins until a successful sync. This lets a
+  // signed-in user keep their choice even if their legacy profile document is
+  // absent or Firestore is temporarily unavailable.
   const savedTheme = localStorage.getItem(dashboardThemeStorageKey(user.uid));
-  applyDashboardTheme(profile.dashboardTheme || savedTheme || "teal");
+  applyDashboardTheme(savedTheme || profile.dashboardTheme || "teal");
 }
 
 function getMorphOpts() {
@@ -2803,22 +2806,24 @@ function bindEvents() {
     input.addEventListener("change", async () => {
       if (!input.checked || !activeSettingsUser) return;
 
-      const previousTheme = normalizeDashboardTheme(
-        localStorage.getItem(dashboardThemeStorageKey(activeSettingsUser.uid)) || document.body.dataset.dashboardTheme
-      );
       const nextTheme = normalizeDashboardTheme(input.value);
       applyDashboardTheme(nextTheme);
+      localStorage.setItem(dashboardThemeStorageKey(activeSettingsUser.uid), nextTheme);
 
       try {
-        // This field lives on the signed-in account's existing profile document,
-        // separate from the shared queue/court subcollections.
-        await updateDoc(doc(db, "users", activeSettingsUser.uid), { dashboardTheme: nextTheme });
-        localStorage.setItem(dashboardThemeStorageKey(activeSettingsUser.uid), nextTheme);
+        // Merge creates the preference for older accounts that do not yet have
+        // a profile document, without replacing any profile, role, or club data.
+        await setDoc(
+          doc(db, "users", activeSettingsUser.uid),
+          { dashboardTheme: nextTheme },
+          { merge: true }
+        );
         showToast("Dashboard color updated.");
       } catch (error) {
-        applyDashboardTheme(previousTheme);
-        showToast("Couldn't save your dashboard color. Please try again.", "error");
-        console.warn("Unable to save dashboard theme", error);
+        // The per-account browser copy has already been saved. Keep the chosen
+        // design rather than rejecting it when cloud sync is unavailable.
+        console.warn("Dashboard theme will remain stored on this device until it can sync", error);
+        showToast("Dashboard color updated on this device.");
       }
     });
   });
