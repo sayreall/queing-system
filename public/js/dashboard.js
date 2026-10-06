@@ -297,6 +297,9 @@ function initializeRatingUI() {
     .queue-workspace .match-card .queue-item .drag-handle { font-size:.75rem; }
     .queue-workspace .match-card .queue-item .rating-badge { font-size:.6rem; padding:.1rem .25rem; white-space:nowrap; }
     .queue-workspace .match-card .queue-actions button { padding:.22rem; }
+    .queue-workspace .queue-item[data-player-id],
+    .queue-workspace .queue-item[data-player-id] .drag-handle { touch-action:none; -webkit-user-select:none; user-select:none; }
+    .queue-workspace .queue-item[data-player-id] .drag-handle { display:inline-flex; align-items:center; min-width:1.4rem; min-height:1.8rem; margin:-.3rem 0; }
     @media (max-width: 1150px) {
       .queue-workspace #global-match-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
     }
@@ -1225,10 +1228,15 @@ function setupSortable() {
       globalGrid._sortable = new Sortable(globalGrid, {
         animation: 150,
         draggable: ".match-card",
+        handle: ".match-card-drag-handle",
         filter: ".queue-item, button, select, input, textarea",
         preventOnFilter: false,
         fallbackOnBody: true,
         forceFallback: true,
+        delay: 120,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 5,
+        fallbackTolerance: 3,
         onMove: (event) => {
           return true; // Allow match cards to be dragged anywhere freely
         },
@@ -1274,11 +1282,13 @@ function setupSortable() {
         animation: 150,
         filter: "button, .add-player-btn",
         preventOnFilter: false,
-        delay: 150,
+        fallbackOnBody: true,
+        forceFallback: true,
+        fallbackTolerance: 3,
+        delay: 0,
         swap: true,
         swapClass: "bg-slate-700/80",
-        delayOnTouchOnly: true,
-        touchStartThreshold: 3,
+        touchStartThreshold: 5,
         onEnd: async () => {
           const order = [];
           globalGrid.querySelectorAll(`.match-card[data-skill-key="${skillKey}"] .queue-item`).forEach((item) => {
@@ -1339,11 +1349,13 @@ function setupSortable() {
         animation: 150,
         filter: 'button, .add-player-btn',
         preventOnFilter: false,
-        delay: 150,
+        fallbackOnBody: true,
+        forceFallback: true,
+        fallbackTolerance: 3,
+        delay: 0,
         swap: true,
         swapClass: 'bg-slate-700/80',
-        delayOnTouchOnly: true,
-        touchStartThreshold: 3,
+        touchStartThreshold: 5,
         onEnd: async (e) => {
           // Rebuild the entire order array from ALL match cards in this skill's container
           const order = [];
