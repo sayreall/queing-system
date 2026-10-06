@@ -53,6 +53,48 @@ body[data-dashboard-theme="violet"] .page-bg {
   box-sizing: border-box;
 }
 
+/* Labels for the icon-only sidebar. Positioned outside the sidebar so they
+   remain visible when its overflow is hidden. */
+.sidebar-float-label {
+  position: fixed;
+  z-index: 80;
+  transform: translateY(-50%) translateX(-6px);
+  max-width: min(230px, calc(100vw - 88px));
+  padding: 8px 12px;
+  border: 1px solid rgba(31, 207, 177, 0.5);
+  border-radius: 9px;
+  background: rgba(7, 27, 30, 0.98);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35), 0 0 16px rgba(31, 207, 177, 0.12);
+  color: #f2e8d5;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms ease, transform 150ms ease, visibility 150ms ease;
+}
+
+.sidebar-float-label::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -6px;
+  width: 10px;
+  height: 10px;
+  transform: translateY(-50%) rotate(45deg);
+  border-bottom: 1px solid rgba(31, 207, 177, 0.5);
+  border-left: 1px solid rgba(31, 207, 177, 0.5);
+  background: rgba(7, 27, 30, 0.98);
+}
+
+.sidebar-float-label.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
 /* ===== Header Layout ===== */
 
 .header-inner {

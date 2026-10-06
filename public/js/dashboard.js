@@ -182,6 +182,72 @@ function restoreOriginalDashboardDesign() {
   if (colorValue) colorValue.textContent = "ORIGINAL";
 }
 
+function setupSidebarTooltips() {
+  const sidebar = document.getElementById("sidebar");
+  if (!sidebar || document.getElementById("sidebar-float-label")) return;
+
+  const tooltip = document.createElement("div");
+  tooltip.id = "sidebar-float-label";
+  tooltip.className = "sidebar-float-label";
+  tooltip.setAttribute("role", "tooltip");
+  document.body.appendChild(tooltip);
+
+  let pressTimer = null;
+  let activeItem = null;
+  const hide = () => {
+    window.clearTimeout(pressTimer);
+    pressTimer = null;
+    activeItem = null;
+    tooltip.classList.remove("is-visible");
+  };
+  const isCollapsedDesktopSidebar = () => window.innerWidth >= 768 && sidebar.classList.contains("md:w-16");
+  const show = (item, force = false) => {
+    if (!force && !isCollapsedDesktopSidebar()) return;
+    const label = item.dataset.sidebarLabel;
+    if (!label) return;
+    const bounds = item.getBoundingClientRect();
+    tooltip.textContent = label;
+    tooltip.style.left = `${Math.max(8, bounds.right + 12)}px`;
+    tooltip.style.top = `${Math.max(12, Math.min(window.innerHeight - 12, bounds.top + bounds.height / 2))}px`;
+    tooltip.classList.add("is-visible");
+    activeItem = item;
+  };
+
+  sidebar.querySelectorAll(".nav-item[title]").forEach((item) => {
+    const label = item.getAttribute("title");
+    item.dataset.sidebarLabel = label;
+    item.setAttribute("aria-label", label);
+    item.removeAttribute("title"); // Use the consistent custom label instead of the browser tooltip.
+
+    item.addEventListener("mouseenter", () => show(item));
+    item.addEventListener("mouseleave", hide);
+    item.addEventListener("focus", () => show(item));
+    item.addEventListener("blur", hide);
+    item.addEventListener("pointerdown", (event) => {
+      if (event.pointerType !== "touch") return;
+      pressTimer = window.setTimeout(() => {
+        show(item, true);
+        activeItem = item;
+        navigator.vibrate?.(8);
+      }, 500);
+    });
+    const finishTouch = (event) => {
+      const wasLongPress = activeItem === item;
+      window.clearTimeout(pressTimer);
+      pressTimer = null;
+      if (!wasLongPress) return;
+      event.preventDefault();
+      item.addEventListener("click", (clickEvent) => clickEvent.preventDefault(), { once: true, capture: true });
+      window.setTimeout(hide, 1400);
+    };
+    item.addEventListener("pointerup", finishTouch);
+    item.addEventListener("pointercancel", hide);
+  });
+
+  window.addEventListener("resize", hide);
+  window.addEventListener("scroll", hide, true);
+}
+
 function populateSettingsProfile(user, profile = {}) {
   activeSettingsUser = user;
   const displayName = (profile.name || user.displayName || user.email || "Account").trim();
@@ -1976,6 +2042,7 @@ async function confirmFinishMatch(winnerTeam) {
 }
 
 function bindEvents() {
+  setupSidebarTooltips();
   const gameLimitBtn = document.getElementById("game-limit-btn");
   const gameLimitModal = document.getElementById("game-limit-modal");
   const gameLimitInput = document.getElementById("game-limit-input");
