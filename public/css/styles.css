@@ -1016,3 +1016,105 @@ body.introjs-open #sidebar {
 html { scroll-behavior: smooth !important; }
 
 @media (max-width: 768px) { .mobile-icon-only span { display: none; } .mobile-icon-only { padding-left: 6px !important; padding-right: 6px !important; } }
+
+/* ===== Midnight violet dashboard-wide component theme =====
+   All rules are scoped to the dashboard body attribute. Login, import, admin,
+   and TV pages never receive this attribute, so their designs are unchanged. */
+body[data-dashboard-theme="violet"] {
+  background:
+    radial-gradient(ellipse at top left, rgba(103, 198, 255, 0.14), transparent 55%),
+    radial-gradient(ellipse at bottom right, rgba(227, 93, 145, 0.13), transparent 50%),
+    var(--bg-base) !important;
+}
+
+body[data-dashboard-theme="violet"] .glass-card,
+body[data-dashboard-theme="violet"] .toast,
+body[data-dashboard-theme="violet"] .introjs-tooltip,
+body[data-dashboard-theme="violet"] .custom-intro-tooltip {
+  background: rgba(36, 29, 67, 0.94) !important;
+  border-color: var(--border) !important;
+  color: var(--text-base) !important;
+}
+
+body[data-dashboard-theme="violet"] .glass-subcard,
+body[data-dashboard-theme="violet"] .stat-card,
+body[data-dashboard-theme="violet"] .queue-item,
+body[data-dashboard-theme="violet"] .team-card,
+body[data-dashboard-theme="violet"] .court-card,
+body[data-dashboard-theme="violet"] .input-field,
+body[data-dashboard-theme="violet"] [class*="bg-slate-"] {
+  background-color: rgba(27, 22, 54, 0.84) !important;
+  border-color: rgba(182, 156, 255, 0.22) !important;
+}
+
+body[data-dashboard-theme="violet"] [class*="border-slate-"] {
+  border-color: rgba(182, 156, 255, 0.22) !important;
+}
+
+body[data-dashboard-theme="violet"] [class*="text-slate-400"],
+body[data-dashboard-theme="violet"] [class*="text-slate-500"],
+body[data-dashboard-theme="violet"] [class*="text-slate-600"] {
+  color: var(--text-muted) !important;
+}
+
+body[data-dashboard-theme="violet"] [class*="text-slate-200"],
+body[data-dashboard-theme="violet"] [class*="text-slate-300"] {
+  color: var(--text-base) !important;
+}
+
+body[data-dashboard-theme="violet"] .btn-primary {
+  background: linear-gradient(135deg, #8b5cf6, #d94688) !important;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35) !important;
+}
+
+body[data-dashboard-theme="violet"] .btn-primary:hover {
+  box-shadow: 0 8px 28px rgba(217, 70, 136, 0.45) !important;
+}
+
+body[data-dashboard-theme="violet"] .btn-secondary {
+  border-color: rgba(182, 156, 255, 0.48) !important;
+  color: var(--text-base) !important;
+}
+
+body[data-dashboard-theme="violet"] .btn-secondary:hover,
+body[data-dashboard-theme="violet"] .input-field:focus {
+  border-color: var(--accent-tl) !important;
+  color: var(--accent-tl) !important;
+  box-shadow: 0 0 0 3px rgba(103, 198, 255, 0.14) !important;
+}
+
+body[data-dashboard-theme="violet"] .skill-beginner,
+body[data-dashboard-theme="violet"] .badge-beginner,
+body[data-dashboard-theme="violet"] .court-status.active {
+  background: rgba(103, 198, 255, 0.16) !important;
+  color: #67c6ff !important;
+}
+
+body[data-dashboard-theme="violet"] .skill-intermediate,
+body[data-dashboard-theme="violet"] .badge-intermediate {
+  background: rgba(182, 156, 255, 0.16) !important;
+  color: #b69cff !important;
+}
+
+body[data-dashboard-theme="violet"] .skill-advanced,
+body[data-dashboard-theme="violet"] .badge-advanced {
+  background: rgba(227, 93, 145, 0.16) !important;
+  color: #f178ad !important;
+}
+
+body[data-dashboard-theme="violet"] .header-title,
+body[data-dashboard-theme="violet"] [style*="color:#F5C42A"],
+body[data-dashboard-theme="violet"] [style*="color: #F5C42A"] {
+  color: var(--accent-gd) !important;
+}
+
+body[data-dashboard-theme="violet"] [style*="rgba(12,50,50"],
+body[data-dashboard-theme="violet"] [style*="rgba(12, 50, 50"],
+body[data-dashboard-theme="violet"] [style*="rgba(15,61,61"],
+body[data-dashboard-theme="violet"] [style*="rgba(15, 61, 61"] {
+  background-color: rgba(27, 22, 54, 0.94) !important;
+}
+
+body[data-dashboard-theme="violet"] ::-webkit-scrollbar-track { background: rgba(23, 18, 44, 0.72); }
+body[data-dashboard-theme="violet"] ::-webkit-scrollbar-thumb { background: rgba(103, 198, 255, 0.38); }
+body[data-dashboard-theme="violet"] ::-webkit-scrollbar-thumb:hover { background: rgba(182, 156, 255, 0.72); }
