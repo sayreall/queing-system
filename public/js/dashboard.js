@@ -133,6 +133,7 @@ function applyDashboardColor(color) {
   const base = mixHex(selectedColor, "#080a13", 0.17);
   const card = mixHex(selectedColor, "#101320", 0.28);
   const sub = mixHex(selectedColor, "#0c0e18", 0.2);
+  const sidebar = mixHex(selectedColor, "#0b1a1a", 0.42);
   const bright = mixHex(selectedColor, "#ffffff", 0.72);
   const deep = mixHex(selectedColor, "#05060b", 0.78);
   const buttonSurface = mixHex(selectedColor, deep, 0.58);
@@ -149,14 +150,14 @@ function applyDashboardColor(color) {
   body.style.setProperty("--text-muted", "#cbd5e1");
   body.style.setProperty("--border", rgba(selectedColor, 0.28));
   body.style.setProperty("--theme-panel", rgba(card, 0.96));
-  body.style.setProperty("--theme-sidebar", selectedColor);
+  body.style.setProperty("--theme-sidebar", rgba(sidebar, 0.98));
   body.style.setProperty("--theme-subpanel", rgba(sub, 0.86));
   body.style.setProperty("--theme-border", rgba(bright, 0.24));
   body.style.setProperty("--theme-glow", rgba(selectedColor, 0.32));
   body.style.setProperty("--theme-button-end", deep);
   body.style.setProperty("--theme-gradient-start", selectedColor);
   body.style.setProperty("--theme-gradient-end", selectedColor);
-  body.style.setProperty("--theme-sidebar-text", readableTextColor(selectedColor));
+  body.style.setProperty("--theme-sidebar-text", readableTextColor(sidebar));
   body.style.setProperty("--theme-button-text", readableTextColor(buttonSurface));
 
   const colorValue = document.getElementById("dashboard-color-value");

@@ -1176,9 +1176,9 @@ body[data-dashboard-theme="custom"] {
 }
 
 body[data-dashboard-theme="custom"] #sidebar {
-  /* Keep navigation familiar while the workspace uses the chosen color. */
-  background: rgba(15, 61, 61, 0.95) !important;
-  border-color: rgba(51, 65, 85, 0.5) !important;
+  /* A dark tint keeps the selected color visible without overwhelming navigation. */
+  background: var(--theme-sidebar) !important;
+  border-color: var(--theme-border) !important;
 }
 
 body[data-dashboard-theme="custom"] .page-bg {
