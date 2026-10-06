@@ -1121,6 +1121,12 @@ body[data-dashboard-theme="violet"] ::-webkit-scrollbar-thumb:hover { background
 
 /* ===== Pickr custom dashboard color ===== */
 
+.custom-color-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .custom-color-picker-row {
   display: flex;
   align-items: center;
@@ -1130,6 +1136,11 @@ body[data-dashboard-theme="violet"] ::-webkit-scrollbar-thumb:hover { background
   border: 1px solid var(--border);
   border-radius: 16px;
   background: rgba(10, 40, 40, 0.52);
+}
+
+@media (max-width: 460px) {
+  .custom-color-picker-grid { grid-template-columns: 1fr; }
+  .custom-color-picker-row { min-height: 76px; padding: 12px; }
 }
 
 .custom-color-picker-trigger.pcr-button {
@@ -1159,8 +1170,8 @@ body[data-dashboard-theme="violet"] ::-webkit-scrollbar-thumb:hover { background
 
 body[data-dashboard-theme="custom"] {
   background:
-    radial-gradient(ellipse at top left, var(--theme-glow), transparent 55%),
-    radial-gradient(ellipse at bottom right, var(--theme-border), transparent 50%),
+    radial-gradient(ellipse at top left, var(--theme-gradient-start), transparent 55%),
+    radial-gradient(ellipse at bottom right, var(--theme-gradient-end), transparent 50%),
     var(--bg-base) !important;
 }
 
@@ -1172,8 +1183,8 @@ body[data-dashboard-theme="custom"] #sidebar {
 
 body[data-dashboard-theme="custom"] .page-bg {
   background-image:
-    radial-gradient(circle at 15% 10%, var(--theme-glow), transparent 35%),
-    radial-gradient(circle at 85% 5%, var(--theme-border), transparent 35%),
+    radial-gradient(circle at 15% 10%, var(--theme-gradient-start), transparent 35%),
+    radial-gradient(circle at 85% 5%, var(--theme-gradient-end), transparent 35%),
     radial-gradient(circle at 50% 90%, var(--theme-glow), transparent 40%);
 }
 
@@ -1207,7 +1218,7 @@ body[data-dashboard-theme="custom"] [class*="text-slate-200"],
 body[data-dashboard-theme="custom"] [class*="text-slate-300"] { color: var(--text-base) !important; }
 
 body[data-dashboard-theme="custom"] .btn-primary {
-  background: linear-gradient(135deg, var(--accent-tl), var(--theme-button-end)) !important;
+  background: linear-gradient(135deg, var(--theme-gradient-start), var(--theme-gradient-end)) !important;
   box-shadow: 0 4px 16px var(--theme-glow) !important;
   color: var(--theme-button-text) !important;
 }
@@ -1302,7 +1313,7 @@ body[data-dashboard-theme="custom"] #custom-match-panel {
 body[data-dashboard-theme="custom"] #round-generator-panel h3,
 body[data-dashboard-theme="custom"] #custom-match-panel h3 { color: var(--accent-gd) !important; }
 body[data-dashboard-theme="custom"] #generate-round-btn {
-  background: var(--accent-tl) !important;
+  background: linear-gradient(135deg, var(--theme-gradient-start), var(--theme-gradient-end)) !important;
   color: var(--theme-button-text) !important;
 }
 

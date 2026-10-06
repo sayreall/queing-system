@@ -722,12 +722,21 @@
               <p class="mt-1 text-sm text-slate-400">Only your dashboard design will change.</p>
             </div>
           </div>
-          <div class="custom-color-picker-row">
-            <button id="dashboard-color-picker" type="button" class="custom-color-picker-trigger" aria-label="Choose dashboard color"></button>
-            <div>
-              <p class="font-semibold text-white">Choose your color</p>
-              <p class="mt-1 text-sm text-slate-400">Use the picker, then select Save to apply it to your dashboard.</p>
-              <code id="dashboard-color-value" class="custom-color-value">#8B5CF6</code>
+          <p class="mb-3 text-sm text-slate-400">Choose two colors to create your dashboard gradient. Save either picker to apply both.</p>
+          <div class="custom-color-picker-grid">
+            <div class="custom-color-picker-row">
+              <button id="dashboard-color-picker-start" type="button" class="custom-color-picker-trigger" aria-label="Choose gradient start color"></button>
+              <div>
+                <p class="font-semibold text-white">Gradient start</p>
+                <code id="dashboard-color-start-value" class="custom-color-value">#8B5CF6</code>
+              </div>
+            </div>
+            <div class="custom-color-picker-row">
+              <button id="dashboard-color-picker-end" type="button" class="custom-color-picker-trigger" aria-label="Choose gradient end color"></button>
+              <div>
+                <p class="font-semibold text-white">Gradient end</p>
+                <code id="dashboard-color-end-value" class="custom-color-value">#D946EF</code>
+              </div>
             </div>
           </div>
           <button id="restore-original-design-btn" type="button" class="restore-original-design-btn">
@@ -1318,7 +1327,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr@1.8.2/dist/pickr.min.js"></script>
-  <script type="module" src="js/dashboard.js?v=27"></script>
+  <script type="module" src="js/dashboard.js?v=28"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

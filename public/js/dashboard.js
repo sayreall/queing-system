@@ -44,17 +44,33 @@ import { startAutoLogout, stopAutoLogout } from "./auto-logout.js";
 const AVG_MATCH_MINUTES = 15;
 
 let activeSettingsUser = null;
-let activeDashboardColor = "#8b5cf6";
+let activeDashboardColors = { start: "#8b5cf6", end: "#d946ef" };
 
 const CUSTOM_THEME_PROPERTIES = [
   "--bg-base", "--bg-card", "--bg-sub", "--accent-tl", "--accent-gd", "--accent-or",
   "--text-base", "--text-muted", "--border", "--theme-panel", "--theme-sidebar",
   "--theme-subpanel", "--theme-border", "--theme-glow", "--theme-button-end",
-  "--theme-sidebar-text", "--theme-button-text",
+  "--theme-sidebar-text", "--theme-button-text", "--theme-gradient-start", "--theme-gradient-end",
 ];
 
 function dashboardThemeStorageKey(userId) {
   return `dq_dashboard_theme_${userId}`;
+}
+
+function readDashboardGradient(value) {
+  if (!value || value === "teal") return null;
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed && typeof parsed === "object") {
+      return {
+        start: normalizeDashboardColor(parsed.start),
+        end: normalizeDashboardColor(parsed.end, "#d946ef"),
+      };
+    }
+  } catch {
+    // Old accounts stored one color as a plain string.
+  }
+  return { start: normalizeDashboardColor(value), end: "#d946ef" };
 }
 
 function normalizeDashboardColor(color, fallback = "#8b5cf6") {
@@ -102,8 +118,10 @@ function readableTextColor(background) {
   return blackContrast > whiteContrast ? "#07111f" : "#f8fafc";
 }
 
-function applyDashboardColor(color) {
-  const selectedColor = normalizeDashboardColor(color);
+function applyDashboardGradient(startColor, endColor) {
+  const selectedStart = normalizeDashboardColor(startColor);
+  const selectedEnd = normalizeDashboardColor(endColor, "#d946ef");
+  const selectedColor = mixHex(selectedStart, selectedEnd, 0.5);
   const body = document.body;
   const base = mixHex(selectedColor, "#080a13", 0.17);
   const card = mixHex(selectedColor, "#101320", 0.28);
@@ -112,13 +130,13 @@ function applyDashboardColor(color) {
   const deep = mixHex(selectedColor, "#05060b", 0.78);
   const buttonSurface = mixHex(selectedColor, deep, 0.58);
 
-  activeDashboardColor = selectedColor;
+  activeDashboardColors = { start: selectedStart, end: selectedEnd };
   body.dataset.dashboardTheme = "custom";
   body.style.setProperty("--bg-base", base);
   body.style.setProperty("--bg-card", card);
   body.style.setProperty("--bg-sub", sub);
-  body.style.setProperty("--accent-tl", selectedColor);
-  body.style.setProperty("--accent-gd", bright);
+  body.style.setProperty("--accent-tl", selectedStart);
+  body.style.setProperty("--accent-gd", selectedEnd);
   body.style.setProperty("--accent-or", deep);
   body.style.setProperty("--text-base", "#f8fafc");
   body.style.setProperty("--text-muted", "#cbd5e1");
@@ -128,20 +146,26 @@ function applyDashboardColor(color) {
   body.style.setProperty("--theme-subpanel", rgba(sub, 0.86));
   body.style.setProperty("--theme-border", rgba(bright, 0.24));
   body.style.setProperty("--theme-glow", rgba(selectedColor, 0.32));
-  body.style.setProperty("--theme-button-end", deep);
+  body.style.setProperty("--theme-button-end", selectedEnd);
+  body.style.setProperty("--theme-gradient-start", selectedStart);
+  body.style.setProperty("--theme-gradient-end", selectedEnd);
   body.style.setProperty("--theme-sidebar-text", readableTextColor(selectedColor));
   body.style.setProperty("--theme-button-text", readableTextColor(buttonSurface));
 
-  const colorValue = document.getElementById("dashboard-color-value");
-  if (colorValue) colorValue.textContent = selectedColor.toUpperCase();
+  const startValue = document.getElementById("dashboard-color-start-value");
+  const endValue = document.getElementById("dashboard-color-end-value");
+  if (startValue) startValue.textContent = selectedStart.toUpperCase();
+  if (endValue) endValue.textContent = selectedEnd.toUpperCase();
 }
 
 function restoreOriginalDashboardDesign() {
   document.body.dataset.dashboardTheme = "teal";
   CUSTOM_THEME_PROPERTIES.forEach((property) => document.body.style.removeProperty(property));
-  activeDashboardColor = "#1fcfb1";
-  const colorValue = document.getElementById("dashboard-color-value");
-  if (colorValue) colorValue.textContent = "ORIGINAL";
+  activeDashboardColors = { start: "#1fcfb1", end: "#e85a1a" };
+  const startValue = document.getElementById("dashboard-color-start-value");
+  const endValue = document.getElementById("dashboard-color-end-value");
+  if (startValue) startValue.textContent = "ORIGINAL";
+  if (endValue) endValue.textContent = "ORIGINAL";
 }
 
 function populateSettingsProfile(user, profile = {}) {
@@ -161,13 +185,16 @@ function populateSettingsProfile(user, profile = {}) {
 
   // Keep the selection private to this signed-in account, with the browser
   // copy taking priority if a connection was unavailable during a prior save.
-  const savedColor = localStorage.getItem(dashboardThemeStorageKey(user.uid));
-  const legacyColor = profile.dashboardTheme === "teal" ? "#1fcfb1" : "#8b5cf6";
-  const migratedSavedColor = savedColor === "teal" ? "#1fcfb1" : savedColor === "violet" ? "#8b5cf6" : savedColor;
-  if (migratedSavedColor === "teal" || (!migratedSavedColor && (!profile.dashboardTheme || profile.dashboardTheme === "teal"))) {
+  const savedValue = localStorage.getItem(dashboardThemeStorageKey(user.uid));
+  const savedGradient = readDashboardGradient(savedValue);
+  if (savedValue === "teal" || (!savedGradient && (!profile.dashboardTheme || profile.dashboardTheme === "teal"))) {
     restoreOriginalDashboardDesign();
   } else {
-    applyDashboardColor(migratedSavedColor || (profile.dashboardTheme === "custom" ? profile.dashboardColor : legacyColor));
+    const profileGradient = profile.dashboardTheme === "custom"
+      ? { start: profile.dashboardColorStart || profile.dashboardColor, end: profile.dashboardColorEnd || "#d946ef" }
+      : { start: "#8b5cf6", end: "#d946ef" };
+    const gradient = savedGradient || profileGradient;
+    applyDashboardGradient(gradient.start, gradient.end);
   }
 }
 
@@ -2889,69 +2916,75 @@ function bindEvents() {
     if (event.target === settingsModal) closeSettingsModal();
   });
 
-  const colorPickerTarget = document.getElementById("dashboard-color-picker");
-  if (colorPickerTarget && window.Pickr) {
-    const pickr = window.Pickr.create({
-      el: colorPickerTarget,
+  const startPickerTarget = document.getElementById("dashboard-color-picker-start");
+  const endPickerTarget = document.getElementById("dashboard-color-picker-end");
+  if (startPickerTarget && endPickerTarget && window.Pickr) {
+    const pickerOptions = (element, color) => ({
+      el: element,
       theme: "nano",
-      default: activeDashboardColor,
+      default: color,
       position: "top-middle",
       swatches: ["#1fcfb1", "#38bdf8", "#8b5cf6", "#d946ef", "#e85a1a", "#f5c42a"],
-      components: {
-        preview: true,
-        opacity: false,
-        hue: true,
-        interaction: { hex: true, input: true, save: true, cancel: true },
-      },
+      components: { preview: true, opacity: false, hue: true, interaction: { hex: true, input: true, save: true, cancel: true } },
     });
-    let savedColor = activeDashboardColor;
-    const colorFromPickr = (color) => color ? normalizeDashboardColor(color.toHEXA().toString().slice(0, 7)) : savedColor;
+    const startPicker = window.Pickr.create(pickerOptions(startPickerTarget, activeDashboardColors.start));
+    const endPicker = window.Pickr.create(pickerOptions(endPickerTarget, activeDashboardColors.end));
+    let savedGradient = { ...activeDashboardColors };
+    const colorFromPickr = (color, fallback) => color ? normalizeDashboardColor(color.toHEXA().toString().slice(0, 7)) : fallback;
 
-    pickr.on("change", (color) => {
-      applyDashboardColor(colorFromPickr(color));
-    });
-
-    pickr.on("cancel", () => {
-      applyDashboardColor(savedColor);
-      pickr.setColor(savedColor, true);
-    });
-
-    pickr.on("save", async (color) => {
-      const nextColor = colorFromPickr(color);
-      savedColor = nextColor;
-      applyDashboardColor(nextColor);
-      pickr.hide();
+    const previewGradient = (key, color) => {
+      const next = { ...activeDashboardColors, [key]: colorFromPickr(color, activeDashboardColors[key]) };
+      applyDashboardGradient(next.start, next.end);
+    };
+    const cancelGradient = () => {
+      applyDashboardGradient(savedGradient.start, savedGradient.end);
+      startPicker.setColor(savedGradient.start, true);
+      endPicker.setColor(savedGradient.end, true);
+    };
+    const saveGradient = async (key, color, picker) => {
+      const next = { ...activeDashboardColors, [key]: colorFromPickr(color, activeDashboardColors[key]) };
+      savedGradient = next;
+      applyDashboardGradient(next.start, next.end);
+      startPicker.setColor(next.start, true);
+      endPicker.setColor(next.end, true);
+      picker.hide();
 
       if (!activeSettingsUser) return;
-      localStorage.setItem(dashboardThemeStorageKey(activeSettingsUser.uid), nextColor);
+      localStorage.setItem(dashboardThemeStorageKey(activeSettingsUser.uid), JSON.stringify(next));
       try {
-        // Merge preserves the profile's role, club, and other account data.
         await setDoc(
           doc(db, "users", activeSettingsUser.uid),
-          { dashboardTheme: "custom", dashboardColor: nextColor },
+          { dashboardTheme: "custom", dashboardColorStart: next.start, dashboardColorEnd: next.end, dashboardColor: null },
           { merge: true }
         );
-        showToast("Dashboard color updated.");
+        showToast("Dashboard gradient updated.");
       } catch (error) {
-        console.warn("Dashboard color is stored on this device until it can sync", error);
-        showToast("Dashboard color updated on this device.");
+        console.warn("Dashboard gradient is stored on this device until it can sync", error);
+        showToast("Dashboard gradient updated on this device.");
       }
-    });
+    };
+
+    startPicker.on("change", (color) => previewGradient("start", color));
+    endPicker.on("change", (color) => previewGradient("end", color));
+    startPicker.on("cancel", cancelGradient);
+    endPicker.on("cancel", cancelGradient);
+    startPicker.on("save", (color) => saveGradient("start", color, startPicker));
+    endPicker.on("save", (color) => saveGradient("end", color, endPicker));
 
     document.getElementById("restore-original-design-btn")?.addEventListener("click", async () => {
-      savedColor = "#1fcfb1";
       restoreOriginalDashboardDesign();
-      pickr.setColor(savedColor, true);
-      pickr.hide();
+      savedGradient = { ...activeDashboardColors };
+      startPicker.setColor(savedGradient.start, true);
+      endPicker.setColor(savedGradient.end, true);
+      startPicker.hide();
+      endPicker.hide();
 
       if (!activeSettingsUser) return;
-      // Keep an explicit legacy marker locally so a stale cloud profile cannot
-      // reapply a custom color before the next sync completes.
       localStorage.setItem(dashboardThemeStorageKey(activeSettingsUser.uid), "teal");
       try {
         await setDoc(
           doc(db, "users", activeSettingsUser.uid),
-          { dashboardTheme: "teal", dashboardColor: null },
+          { dashboardTheme: "teal", dashboardColor: null, dashboardColorStart: null, dashboardColorEnd: null },
           { merge: true }
         );
         showToast("Original dashboard design restored.");
