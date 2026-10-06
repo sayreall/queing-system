@@ -50,7 +50,7 @@ const CUSTOM_THEME_PROPERTIES = [
   "--bg-base", "--bg-card", "--bg-sub", "--accent-tl", "--accent-gd", "--accent-or",
   "--text-base", "--text-muted", "--border", "--theme-panel", "--theme-sidebar",
   "--theme-subpanel", "--theme-border", "--theme-glow", "--theme-button-end",
-  "--theme-sidebar-text", "--theme-button-text", "--theme-gradient-start", "--theme-gradient-end",
+  "--theme-sidebar-text", "--theme-button-text", "--theme-header-text", "--theme-gradient-start", "--theme-gradient-end",
 ];
 
 const ORIGINAL_DASHBOARD_PALETTE = {
@@ -137,6 +137,7 @@ function applyDashboardColor(color) {
   const bright = mixHex(selectedColor, "#ffffff", 0.72);
   const deep = mixHex(selectedColor, "#05060b", 0.78);
   const buttonSurface = mixHex(selectedColor, deep, 0.58);
+  const headerSurface = mixHex(selectedColor, base, 0.52);
 
   activeDashboardColor = selectedColor;
   body.dataset.dashboardTheme = "custom";
@@ -159,6 +160,7 @@ function applyDashboardColor(color) {
   body.style.setProperty("--theme-gradient-end", selectedColor);
   body.style.setProperty("--theme-sidebar-text", readableTextColor(sidebar));
   body.style.setProperty("--theme-button-text", readableTextColor(buttonSurface));
+  body.style.setProperty("--theme-header-text", readableTextColor(headerSurface));
 
   const colorValue = document.getElementById("dashboard-color-value");
   if (colorValue) colorValue.textContent = selectedColor.toUpperCase();

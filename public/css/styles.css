@@ -1251,7 +1251,7 @@ body[data-dashboard-theme="custom"] .badge-advanced {
 
 body[data-dashboard-theme="custom"] .header-title,
 body[data-dashboard-theme="custom"] [style*="color:#F5C42A"],
-body[data-dashboard-theme="custom"] [style*="color: #F5C42A"] { color: var(--accent-gd) !important; }
+body[data-dashboard-theme="custom"] [style*="color: #F5C42A"] { color: var(--theme-header-text) !important; }
 body[data-dashboard-theme="custom"] [style*="rgba(12,50,50"],
 body[data-dashboard-theme="custom"] [style*="rgba(12, 50, 50"],
 body[data-dashboard-theme="custom"] [style*="rgba(15,61,61"],
