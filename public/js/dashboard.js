@@ -372,7 +372,7 @@ function refreshScoringUI() {
     headerButton.classList.toggle("text-purple-300", scoringEnabled);
   }
   if (rankingToggle) rankingToggle.checked = scoringEnabled;
-  if (rankingLabel) rankingLabel.textContent = scoringEnabled ? "Pts diff" : "Win rate";
+  if (rankingLabel) rankingLabel.textContent = "Games 1st";
 }
 
 function setScoringEnabled(enabled) {
@@ -3109,26 +3109,29 @@ function bindEvents() {
   const closeRankingBtn = document.getElementById("close-ranking-modal");
   const rankingTbody = document.getElementById("ranking-tbody");
 
+  // A perfect record from only a couple of games is not enough to pass a
+  // player who has completed more matches. Games played is the first ranking
+  // factor; points/win rate only settle players with equal experience.
+  const comparePlayersByRanking = (a, b, usePoints = false) => {
+    const aWins = a.wins || 0;
+    const aGames = aWins + (a.losses || 0);
+    const bWins = b.wins || 0;
+    const bGames = bWins + (b.losses || 0);
+    if (bGames !== aGames) return bGames - aGames;
+    if (usePoints && (b.pointsDiff || 0) !== (a.pointsDiff || 0)) return (b.pointsDiff || 0) - (a.pointsDiff || 0);
+    const aRate = aGames ? aWins / aGames : 0;
+    const bRate = bGames ? bWins / bGames : 0;
+    if (bRate !== aRate) return bRate - aRate;
+    if (bWins !== aWins) return bWins - aWins;
+    return String(a.name || "").localeCompare(String(b.name || ""));
+  };
+
   const openBasicRankingModal = () => {
     if (!rankingModal || !rankingTbody) return;
 
     const allPlayers = Array.from(state.players.values()).filter(p => p.status !== "Archived" && ((p.wins || 0) + (p.losses || 0)) > 0);
     
-    allPlayers.sort((a, b) => {
-      const aW = a.wins || 0;
-      const aL = a.losses || 0;
-      const bW = b.wins || 0;
-      const bL = b.losses || 0;
-      const aGP = aW + aL;
-      const bGP = bW + bL;
-      
-      const aWinPct = aGP > 0 ? (aW / aGP) * 100 : 0;
-      const bWinPct = bGP > 0 ? (bW / bGP) * 100 : 0;
-
-      if (Math.abs(bWinPct - aWinPct) > 0.1) return bWinPct - aWinPct;
-      if (bW !== aW) return bW - aW;
-      return bGP - aGP;
-    });
+    allPlayers.sort((a, b) => comparePlayersByRanking(a, b));
 
     rankingTbody.innerHTML = allPlayers.length > 0 ? allPlayers.map((player, idx) => {
       const gp = (player.wins || 0) + (player.losses || 0);
@@ -3166,16 +3169,7 @@ function bindEvents() {
     const usePoints = scoringIsEnabled();
     return Array.from(state.players.values())
       .filter((player) => player.status !== "Archived" && ((player.wins || 0) + (player.losses || 0)) > 0)
-      .sort((a, b) => {
-        const aGames = (a.wins || 0) + (a.losses || 0);
-        const bGames = (b.wins || 0) + (b.losses || 0);
-        const aRate = aGames ? (a.wins || 0) / aGames : 0;
-        const bRate = bGames ? (b.wins || 0) / bGames : 0;
-        if (usePoints && (b.pointsDiff || 0) !== (a.pointsDiff || 0)) return (b.pointsDiff || 0) - (a.pointsDiff || 0);
-        if (bRate !== aRate) return bRate - aRate;
-        if ((b.wins || 0) !== (a.wins || 0)) return (b.wins || 0) - (a.wins || 0);
-        return bGames - aGames;
-      });
+      .sort((a, b) => comparePlayersByRanking(a, b, usePoints));
   };
 
   const rankingTable = (players, limit, compact = false) => {
