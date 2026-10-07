@@ -128,6 +128,8 @@ export async function assignMatchToCourt(courtId, skillKey) {
   const now = serverTimestamp();
   const skillLabel = skillLabelFromKey(skillKey);
   const pairKey = (a, b) => [a, b].sort().join("__");
+  let matchStarted = false;
+  let invalidPlayerCount = 0;
 
   // Read last completed match to avoid repeating exact same 4 players or teams.
   const lastMatchPlayers = new Set();
@@ -202,6 +204,7 @@ export async function assignMatchToCourt(courtId, skillKey) {
         cleanOrder.push(id);
       }
     }
+    invalidPlayerCount = orderRaw.length - cleanOrder.length;
 
     // Self-heal the queue document if it drifted.
     if (
@@ -258,7 +261,15 @@ export async function assignMatchToCourt(courtId, skillKey) {
         status: "Playing", currentMatchId: matchRef.id, updatedAt: now,
       }, { merge: true });
     });
+    matchStarted = true;
   });
+
+  if (!matchStarted) {
+    if (invalidPlayerCount > 0) {
+      throw new Error("The queue contained a missing player. It was removed; add another player to complete the match.");
+    }
+    throw new Error("Not enough valid players to start this match.");
+  }
 
   return matchRef.id;
 }

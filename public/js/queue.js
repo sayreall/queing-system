@@ -364,23 +364,25 @@ export async function removePlayer(playerId) {
     const playerSnap = await tx.get(playerRef);
     if (!playerSnap.exists()) return;
 
-    const player = playerSnap.data();
-    const skillKey = skillKeyFromLabel(playerRatingLabel(player));
-    const queueRef = getQueueDocRef(skillKey);
-    const queueSnap = await tx.get(queueRef);
+    // A player can be manually placed into a queue other than the one implied
+    // by their rating. Remove the ID from every queue so deleting the player
+    // can never leave a dangling "Unknown" entry behind.
+    const queueEntries = await Promise.all(SKILLS.map(async (skill) => {
+      const ref = getQueueDocRef(skill.key);
+      return { ref, snap: await tx.get(ref) };
+    }));
 
-    if (queueSnap.exists()) {
-      const order = queueSnap.data().order || [];
+    queueEntries.forEach(({ ref, snap }) => {
+      if (!snap.exists()) return;
+      const order = snap.data().order || [];
       let filtered = order.map((id) => id === playerId ? "EMPTY" : id);
       while (filtered.length > 0 && filtered[filtered.length - 1] === "EMPTY") {
         filtered.pop();
       }
-      tx.set(
-        queueRef,
-        { skill: playerRatingLabel(player), order: filtered, updatedAt: serverTimestamp() },
-        { merge: true }
-      );
-    }
+      if (filtered.some((id, index) => id !== order[index]) || filtered.length !== order.length) {
+        tx.set(ref, { order: filtered, updatedAt: serverTimestamp() }, { merge: true });
+      }
+    });
 
     tx.delete(playerRef);
   });
@@ -395,20 +397,24 @@ export async function archiveSinglePlayer(playerId) {
     const playerSnap = await tx.get(playerRef);
     if (!playerSnap.exists()) return;
 
-    const player = playerSnap.data();
-    const skillKey = skillKeyFromLabel(playerRatingLabel(player));
-    const queueRef = getQueueDocRef(skillKey);
-    const queueSnap = await tx.get(queueRef);
+    const queueEntries = await Promise.all(SKILLS.map(async (skill) => {
+      const ref = getQueueDocRef(skill.key);
+      return { ref, snap: await tx.get(ref) };
+    }));
 
-    // Remove player from their skill queue
-    if (queueSnap.exists()) {
-      const order = queueSnap.data().order || [];
+    // Remove the player from every possible queue, including queues where the
+    // player may have been placed manually before their rating changed.
+    queueEntries.forEach(({ ref, snap }) => {
+      if (!snap.exists()) return;
+      const order = snap.data().order || [];
       let filtered = order.map((id) => id === playerId ? "EMPTY" : id);
       while (filtered.length > 0 && filtered[filtered.length - 1] === "EMPTY") {
         filtered.pop();
       }
-      tx.set(queueRef, { skill: playerRatingLabel(player), order: filtered, updatedAt: now }, { merge: true });
-    }
+      if (filtered.some((id, index) => id !== order[index]) || filtered.length !== order.length) {
+        tx.set(ref, { order: filtered, updatedAt: now }, { merge: true });
+      }
+    });
 
     // Archive the player but keep their name/stats; add archivedDate for date-filtering
     tx.set(playerRef, {

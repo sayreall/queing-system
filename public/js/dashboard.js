@@ -740,6 +740,10 @@ function renderStats() {
 }
 
 function renderQueues() {
+  // Queue snapshots can arrive before the player snapshot. Waiting prevents
+  // valid IDs from briefly appearing as missing-player slots on slower tablets.
+  if (!state.ready.players) return;
+
   SKILLS.forEach((skill) => {
     const container = document.querySelector(`[data-queue="${skill.key}"]`);
     if (!container) return;
@@ -821,8 +825,8 @@ function renderQueues() {
           const playerId = chunk[i];
           const item = document.createElement("li");
 
-          if (playerId && playerId !== "EMPTY") {
-            const player = state.players.get(playerId);
+          const player = playerId && playerId !== "EMPTY" ? state.players.get(playerId) : null;
+          if (player) {
             item.className = "queue-item bg-slate-800 hover:bg-slate-700 transition-colors border border-slate-600/50 p-1 rounded flex items-center justify-between min-h-[28px] cursor-grab";
             item.dataset.playerId = playerId;
 
@@ -836,7 +840,7 @@ function renderQueues() {
             item.innerHTML = `
               <div class="flex items-center gap-1 overflow-hidden min-w-0">
                 <span class="drag-handle text-slate-400 cursor-grab hover:text-white px-0.5 text-xs shrink-0">⋮⋮</span>
-                <span class="font-semibold text-[11px] truncate flex-1 cursor-grab" title="${player ? player.name : "Unknown"}">${player ? player.name : "Unknown"}</span>
+                <span class="font-semibold text-[11px] truncate flex-1 cursor-grab" title="${player.name}">${player.name}</span>
                 <span class="rating-badge text-[10px] font-bold text-cyan-300 bg-cyan-400/10 border border-cyan-400/20 px-1.5 py-0.5 rounded shrink-0" title="${ratingForPlayer(player)} · ${rankForPlayer(player)}">${ratingForPlayer(player)}</span>
                 ${resultBadge}
               </div>
@@ -855,13 +859,14 @@ function renderQueues() {
             item.dataset.queueKey = skill.key;
             item.dataset.matchId = matchId;
             item.dataset.slotIndex = i;
+            if (playerId && playerId !== "EMPTY") item.dataset.stalePlayerId = playerId;
             item.innerHTML = `
               <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider flex items-center gap-1 pointer-events-none">
                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                Add
+                ${playerId && playerId !== "EMPTY" ? "Replace missing player" : "Add"}
               </span>
             `;
-            if (!isEditing) {
+            if (!isEditing && (!playerId || playerId === "EMPTY")) {
               item.style.display = "none";
             }
           }
@@ -1955,7 +1960,9 @@ async function confirmAddPlayer(playerId) {
     newOrder[existingIdx] = "EMPTY";
   }
   
-  if (newOrder[targetIndex] === "EMPTY" || newOrder[targetIndex] === undefined) {
+  const targetPlayerId = newOrder[targetIndex];
+  const targetIsMissing = targetPlayerId && targetPlayerId !== "EMPTY" && !state.players.has(targetPlayerId);
+  if (targetPlayerId === "EMPTY" || targetPlayerId === undefined || targetIsMissing) {
     newOrder[targetIndex] = playerId;
   } else {
     // Determine actual splice index ignoring trailing EMPTYs? No, just splice.
