@@ -189,7 +189,11 @@ try {
     assert.match(await printPage.$eval('.highlight', element => element.textContent), /175\.00/);
     assert.match(await printPage.$eval('.rent-summary', element => element.textContent), /Net court rent expense.*75\.00/);
     assert.match(await printPage.$eval('.expense-table', element => element.textContent), /Community Court/);
-    await printPage.pdf({ path: 'artifacts/payment-audit-' + club + '.pdf', preferCSSPageSize: true, printBackground: true, displayHeaderFooter: false });
+    const compactPdf = await printPage.pdf({ path: 'artifacts/payment-audit-' + club + '.pdf', preferCSSPageSize: true, printBackground: true, displayHeaderFooter: false });
+    assert.equal((Buffer.from(compactPdf).toString('latin1').match(/\/Type \/Page\b/g) || []).length, 1, club + ' audit should fit on one A4 page');
+    // Browser print headers must not push the signatures onto a second page.
+    const withHeaders = await printPage.pdf({ preferCSSPageSize: true, printBackground: true, displayHeaderFooter: true });
+    assert.equal((Buffer.from(withHeaders).toString('latin1').match(/\/Type \/Page\b/g) || []).length, 1);
     await printPage.screenshot({ path: 'artifacts/payment-audit-print-' + club + '.png', fullPage: true });
   }
   await page.bringToFront();

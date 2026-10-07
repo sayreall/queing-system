@@ -16,6 +16,9 @@ the browser print dialog; Export CSV downloads the day's detailed ledger.
 Printed audits and receipts use the current dashboard's club name and logo,
 with a summary, itemized payments and review signatures. For a clean PDF,
 turn off **Headers and footers** in the browser's print settings.
+The compact A4 layout keeps short daily audits, including signatures and footer,
+on one page. Longer rosters continue across pages with repeated table headers
+so no payment details are omitted.
 Complete audit exports require a confirmed connection. Cached results are
 clearly marked, and payments and refunds require an internet connection.
 

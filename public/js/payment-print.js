@@ -18,70 +18,74 @@ const timeLabel = entry => entryDate(entry).toLocaleTimeString("en-PH", { timeZo
 const PRINT_STYLES = `
   :root { color-scheme:light; }
   * { box-sizing:border-box; }
-  body { margin:0; color:#202a33; background:#fff; font-family:Arial,Helvetica,sans-serif; font-size:10px; line-height:1.45; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body { margin:0; color:#202a33; background:#fff; font-family:Arial,Helvetica,sans-serif; font-size:10px; line-height:1.3; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   .report { width:100%; }
-  .brand-header { display:flex; align-items:center; gap:17px; padding:0 0 20px; border-bottom:3px solid var(--club-accent); }
-  .club-logo { width:76px; height:76px; object-fit:contain; border-radius:50%; flex-shrink:0; }
+  .brand-header { display:flex; align-items:center; gap:12px; padding:0 0 10px; border-bottom:2px solid var(--club-accent); }
+  .club-logo { width:48px; height:48px; object-fit:contain; border-radius:50%; flex-shrink:0; }
   .club-name { margin:0 0 5px; font-size:24px; line-height:1.15; letter-spacing:-.5px; font-weight:700; }
   .eyebrow { margin:0; color:var(--club-accent); font-size:9px; letter-spacing:1.8px; text-transform:uppercase; font-weight:700; }
   .report-meta { margin-left:auto; text-align:right; min-width:150px; color:#65717c; font-size:9px; }
   .report-meta strong { display:block; color:#202a33; font-size:11px; margin:4px 0; }
-  .report-heading { display:flex; justify-content:space-between; align-items:flex-start; margin:23px 0 18px; gap:20px; }
-  h1 { font-size:24px; line-height:1.1; margin:0 0 7px; letter-spacing:-.5px; }
+  .report-heading { display:flex; justify-content:space-between; align-items:flex-start; margin:12px 0 9px; gap:20px; }
+  h1 { font-size:21px; line-height:1.1; margin:0 0 4px; letter-spacing:-.5px; }
   .muted { color:#65717c; }
   .report-heading p { margin:0; font-size:10px; }
   .status-tag { border:1px solid #bacdc7; padding:5px 9px; border-radius:4px; color:var(--club-accent); font-weight:700; font-size:9px; white-space:nowrap; }
-  .summary { display:grid; grid-template-columns:1fr 1fr 1.2fr; gap:12px; margin-bottom:16px; break-inside:avoid; }
-  .summary-card { border:1px solid #d8e0e5; border-radius:7px; padding:13px 15px; }
-  .summary-card span { display:block; color:#65717c; font-size:9px; margin-bottom:5px; }
-  .summary-card strong { display:block; font-size:23px; letter-spacing:-.5px; }
+  .summary { display:grid; grid-template-columns:1fr 1fr 1.2fr; gap:9px; margin-bottom:6px; break-inside:avoid; }
+  .summary-card { border:1px solid #d8e0e5; border-radius:5px; padding:9px 11px; }
+  .summary-card span { display:block; color:#65717c; font-size:9px; margin-bottom:4px; }
+  .summary-card strong { display:block; font-size:21px; letter-spacing:-.5px; }
   .summary-card.highlight { border:1.5px solid var(--club-accent); background:#f5f8f7; }
   .summary-card.highlight strong { color:var(--club-accent); }
-  .reconciliation { display:grid; grid-template-columns:repeat(5,1fr); margin:0 0 24px; border:1px solid #d8e0e5; border-radius:6px; break-inside:avoid; }
-  .reconciliation div { padding:10px 11px; border-right:1px solid #d8e0e5; }
+  .reconciliation { display:grid; grid-template-columns:repeat(5,1fr); margin:0 0 10px; border:1px solid #d8e0e5; border-radius:5px; break-inside:avoid; }
+  .reconciliation div { padding:7px 9px; border-right:1px solid #d8e0e5; }
   .reconciliation div:last-child { border:0; }
   .reconciliation span { display:block; font-size:8px; color:#65717c; }
-  .reconciliation strong { display:block; font-size:12px; margin-top:4px; }
-  .rent-summary { grid-template-columns:repeat(3,1fr); margin-bottom:12px; }
+  .reconciliation strong { display:block; font-size:12px; margin-top:3px; }
+  .rent-summary { grid-template-columns:repeat(3,1fr); margin-bottom:5px; }
   .expense-table th:first-child { width:58%; }
   .expense-table th:nth-child(2) { width:14%; }
   .expense-table th:nth-child(3) { width:28%; }
-  .expense-heading { margin-top:24px; }
-  .section-heading { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px; }
+  .expense-heading { margin-top:14px; }
+  .section-heading { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
   .section-heading h2 { margin:0; font-size:13px; }
   .section-heading span { font-size:9px; color:#65717c; }
   table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:9px; }
   thead { display:table-header-group; }
-  th { padding:9px 7px; background:#eef2f4; border-top:1px solid #d8e0e5; border-bottom:1px solid #c4cfd6; text-align:left; font-size:8px; color:#4f5e69; font-weight:700; }
-  td { padding:11px 7px; vertical-align:top; border-bottom:1px solid #e0e6ea; }
+  th { padding:6px 7px; background:#eef2f4; border-top:1px solid #d8e0e5; border-bottom:1px solid #c4cfd6; text-align:left; font-size:8px; color:#4f5e69; font-weight:700; }
+  td { padding:4px 7px; vertical-align:top; border-bottom:1px solid #e0e6ea; }
   tr { break-inside:avoid; }
   th:first-child { width:35%; }
   th:nth-child(2) { width:11%; }
   th:nth-child(n+3) { width:13.5%; }
   .amount { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
-  .player-name { font-size:11px; display:block; margin-bottom:4px; }
-  .entry-meta { display:block; font-size:8px; color:#65717c; margin-top:3px; overflow-wrap:anywhere; }
+  .player-name { font-size:11px; display:block; margin-bottom:2px; }
+  .entry-meta { display:block; font-size:8px; color:#65717c; margin-top:1px; overflow-wrap:anywhere; }
   .entry-id { font-size:7px; color:#7a858e; }
   .refund-row { background:#fcf5f3; }
   .refund-row .collected { color:#a13b2b; }
   .refund-tag { font-size:7px; letter-spacing:.5px; color:#a13b2b; margin-left:5px; }
-  .totals-row td { border-top:2px solid #c4cfd6; background:#f5f7f8; font-weight:700; padding:12px 7px; }
-  .empty-row { text-align:center; padding:30px; color:#65717c; }
-  .report-note { margin:12px 0 0; color:#65717c; font-size:8px; }
-  .signatures { display:grid; grid-template-columns:1fr 1fr; gap:45px; margin-top:38px; break-inside:avoid; }
+  .totals-row td { border-top:2px solid #c4cfd6; background:#f5f7f8; font-weight:700; padding:5px 7px; }
+  .empty-row { text-align:center; padding:12px; color:#65717c; }
+  .report-note { margin:8px 0 0; color:#65717c; font-size:8px; }
+  .report-end { margin-top:16px; break-inside:avoid; }
+  .signatures { display:grid; grid-template-columns:1fr 1fr; gap:35px; }
   .signature-line { border-top:1px solid #87949e; padding-top:7px; }
   .signature-line strong { display:block; font-size:9px; overflow-wrap:anywhere; }
   .signature-line span { display:block; font-size:8px; color:#65717c; margin-top:3px; }
-  .report-footer { display:flex; justify-content:space-between; gap:20px; padding-top:12px; margin-top:22px; border-top:1px solid #e0e6ea; color:#7a858e; font-size:8px; break-inside:avoid; }
+  .report-footer { display:flex; justify-content:space-between; gap:16px; padding-top:7px; margin-top:12px; border-top:1px solid #e0e6ea; color:#7a858e; font-size:8px; }
+  .closing-balance { display:flex; justify-content:space-between; align-items:center; gap:15px; margin-top:10px; padding:6px 10px; border-top:2px solid var(--club-accent); background:#f5f8f7; break-inside:avoid; }
+  .closing-balance span { font-weight:700; font-size:10px; }
+  .closing-balance strong { color:var(--club-accent); font-size:19px; }
   .receipt-details { border:1px solid #d8e0e5; border-radius:7px; padding:4px 17px; margin:0; }
-  .receipt-details div { display:grid; grid-template-columns:145px minmax(0,1fr); gap:15px; padding:11px 0; border-bottom:1px solid #e0e6ea; }
+  .receipt-details div { display:grid; grid-template-columns:145px minmax(0,1fr); gap:15px; padding:8px 0; border-bottom:1px solid #e0e6ea; }
   .receipt-details div:last-child { border:0; }
   dt { color:#65717c; font-size:10px; }
   dd { margin:0; font-size:11px; font-weight:600; text-align:right; overflow-wrap:anywhere; }
   .receipt-total { margin-top:18px; border:1.5px solid var(--club-accent); border-radius:7px; display:flex; align-items:center; justify-content:space-between; padding:17px; background:#f5f8f7; break-inside:avoid; }
   .receipt-total span { font-size:11px; font-weight:700; }
   .receipt-total strong { color:var(--club-accent); font-size:27px; }
-  @page { size:A4 portrait; margin:14mm; }
+  @page { size:A4 portrait; margin:12mm; }
   @media screen { body { padding:35px; } .report { max-width:720px; margin:auto; } }
 `;
 
@@ -96,8 +100,8 @@ function pageShell({ brand, title, day, content, preparedBy = "", generatedAt = 
         <div class="report-meta">REPORT DATE<strong>${esc(date)}</strong>Philippine time · UTC+8</div>
       </header>
       ${content}
-      <section class="signatures"><div class="signature-line"><strong>${esc(preparedBy || brand.name)}</strong><span>Prepared by / Recorded by</span></div><div class="signature-line"><strong>Reviewed by</strong><span>Name &amp; signature</span></div></section>
-      <footer class="report-footer"><span>${esc(brand.name)} · Payment acknowledgement for club records</span><span>Generated ${esc(generated)} · UTC+8</span></footer>
+      <div class="report-end"><section class="signatures"><div class="signature-line"><strong>${esc(preparedBy || brand.name)}</strong><span>Prepared by / Recorded by</span></div><div class="signature-line"><strong>Reviewed by</strong><span>Name &amp; signature</span></div></section>
+      <footer class="report-footer"><span>${esc(brand.name)} · Payment acknowledgement for club records</span><span>Generated ${esc(generated)} · UTC+8</span></footer></div>
     </main></body></html>`;
 }
 
@@ -130,7 +134,7 @@ export function buildAuditPrint({ entries, day, brand, preparedBy, generatedAt }
     <div class="section-heading expense-heading"><h2>Court rent &amp; expenses</h2><span>${rentEntries.length} entries · Paid out (−) / Returned (+)</span></div>
     <table class="expense-table"><thead><tr><th>Court / Paid to</th><th>Method</th><th class="amount">Money In / Out</th></tr></thead><tbody>${rentRows || '<tr><td class="empty-row" colspan="3">No court rent recorded for this day.</td></tr>'}
     ${rentEntries.length ? `<tr class="totals-row"><td colspan="2">NET COURT RENT</td><td class="amount">${esc(money(-totals.rent))}</td></tr>` : ""}</tbody></table>
-    <div class="receipt-total"><span>Remaining balance after court rent</span><strong>${esc(money(totals.balance))}</strong></div>
+    <div class="closing-balance"><span>Remaining balance after court rent</span><strong>${esc(money(totals.balance))}</strong></div>
     <p class="report-note">Balance = player payments − player refunds − court rent paid + court rent refunds received. Entries appear on the day money moves; original receipts are preserved. Players paid counts distinct players with a payment that day.</p>`;
   return pageShell({ brand, title: "Daily Payment Audit", day, content, preparedBy, generatedAt });
 }
