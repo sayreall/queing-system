@@ -38,25 +38,32 @@ export function entryDate(entry) {
 }
 
 export function receiptNumber(entry) {
-  const prefix = { payment: "PAY", refund: "REF", rent: "RENT", rent_refund: "RENT-REF" }[entry.type];
+  const prefix = { payment: "PAY", refund: "REF", rent: "RENT", rent_refund: "RENT-REF", expense: "EXP", expense_refund: "EXP-REF" }[entry.type];
   return `${prefix}-${auditDate(entryDate(entry)).replaceAll("-", "")}-${entry.id}`;
 }
 
-export const isReversal = entry => ["refund", "rent_refund"].includes(entry.type);
+export const isReversal = entry => ["refund", "rent_refund", "expense_refund"].includes(entry.type);
 export const isCourtRent = entry => ["rent", "rent_refund"].includes(entry.type);
-export const entryLabel = entry => ({ payment: "Payment", refund: "Refund", rent: "Court rent", rent_refund: "Court rent refund" })[entry.type];
-export const entryImpact = entry => (["refund", "rent"].includes(entry.type) ? -1 : 1) * entry.feeCents;
+export const isExpense = entry => isCourtRent(entry) || ["expense", "expense_refund"].includes(entry.type);
+export const expenseCategory = entry => isCourtRent(entry) ? "Court rent" : entry.category;
+export const entryLabel = entry => entry.type === "expense" ? `${entry.category} expense` : entry.type === "expense_refund" ? `${entry.category} expense refund` : ({ payment: "Payment", refund: "Refund", rent: "Court rent", rent_refund: "Court rent refund" })[entry.type];
+export const entryImpact = entry => (["refund", "rent", "expense"].includes(entry.type) ? -1 : 1) * entry.feeCents;
 
 export function summarize(entries) {
-  const summary = { players: 0, collected: 0, cash: 0, gcash: 0, received: 0, change: 0, refunds: 0, rent: 0, rentPaid: 0, rentRefunds: 0, balance: 0 };
+  const summary = { players: 0, collected: 0, cash: 0, gcash: 0, received: 0, change: 0, refunds: 0, rent: 0, rentPaid: 0, rentRefunds: 0, expenses: 0, expensesPaid: 0, expenseRefunds: 0, totalExpenses: 0, water: 0, ice: 0, other: 0, balance: 0 };
   const paidPlayers = new Set();
   for (const entry of entries) {
     const impact = entryImpact(entry);
-    if (!isCourtRent(entry)) summary.collected += impact;
-    else {
+    if (!isExpense(entry)) summary.collected += impact;
+    else if (isCourtRent(entry)) {
       summary.rent -= impact;
       if (entry.type === "rent") summary.rentPaid += entry.feeCents;
       else summary.rentRefunds += entry.feeCents;
+    } else {
+      summary.expenses -= impact;
+      summary[entry.category.toLowerCase()] -= impact;
+      if (entry.type === "expense") summary.expensesPaid += entry.feeCents;
+      else summary.expenseRefunds += entry.feeCents;
     }
     summary.balance += impact;
     summary[entry.method === "Cash" ? "cash" : "gcash"] += impact;
@@ -69,6 +76,7 @@ export function summarize(entries) {
     } else if (entry.type === "refund") summary.refunds += entry.feeCents;
   }
   summary.players = paidPlayers.size;
+  summary.totalExpenses = summary.rent + summary.expenses;
   return summary;
 }
 
@@ -84,12 +92,12 @@ export function csvCell(value) {
 }
 
 export function auditCsv(entries) {
-  const rows = [["Receipt", "Type", "Player / Payee", "Recorded at (Philippine time)", "Method", "Fee / Amount PHP", "Received PHP", "Change PHP", "Money In / Out PHP", "Staff", "Note / Reason", "Original receipt ID"]];
+  const rows = [["Receipt", "Type", "Player / Payee", "Recorded at (Philippine time)", "Method", "Fee / Amount PHP", "Received PHP", "Change PHP", "Money In / Out PHP", "Staff", "Note / Reason", "Original receipt ID", "Expense category"]];
   for (const entry of entries) rows.push([
     receiptNumber(entry), entry.type, entry.playerName,
     entryDate(entry).toLocaleString("en-PH", { timeZone: AUDIT_TIME_ZONE }), entry.method,
     (entry.feeCents / 100).toFixed(2), (entry.receivedCents / 100).toFixed(2), (entry.changeCents / 100).toFixed(2),
-    entryImpact(entry) / 100, entry.staffName, entry.note, entry.relatedReceiptId
+    entryImpact(entry) / 100, entry.staffName, entry.note, entry.relatedReceiptId, isExpense(entry) ? expenseCategory(entry) : ""
   ]);
   return "\uFEFF" + rows.map(row => row.map(csvCell).join(",")).join("\r\n");
 }

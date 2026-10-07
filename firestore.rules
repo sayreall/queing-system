@@ -16,11 +16,13 @@ service cloud.firestore {
           'staffId', 'staffName', 'createdAt']) &&
         data.keys().hasOnly(['type', 'playerId', 'playerName', 'feeCents',
           'receivedCents', 'changeCents', 'method', 'note', 'relatedReceiptId',
-          'staffId', 'staffName', 'createdAt']) &&
-        data.type in ['payment', 'refund', 'rent', 'rent_refund'] &&
+          'staffId', 'staffName', 'createdAt', 'category']) &&
+        data.type in ['payment', 'refund', 'rent', 'rent_refund', 'expense', 'expense_refund'] &&
+        ((data.type in ['expense', 'expense_refund'] && data.category in ['Water', 'Ice', 'Other']) ||
+          (!(data.type in ['expense', 'expense_refund']) && !('category' in data))) &&
         data.playerId is string && data.playerId.size() <= 128 &&
         ((data.type in ['payment', 'refund'] && data.playerId.size() > 0 && data.playerId.matches('^[a-zA-Z0-9_-]+$')) ||
-          (data.type in ['rent', 'rent_refund'] && data.playerId == '')) &&
+          (data.type in ['rent', 'rent_refund', 'expense', 'expense_refund'] && data.playerId == '')) &&
         data.playerName is string && data.playerName.size() > 0 && data.playerName.size() <= 200 &&
         data.staffId == ownerId && data.staffName is string && data.staffName.size() > 0 && data.staffName.size() <= 120 &&
         data.note is string && data.note.size() <= 200 &&
@@ -32,8 +34,8 @@ service cloud.firestore {
         ((data.type == 'payment' && data.receivedCents >= data.feeCents &&
           data.changeCents == data.receivedCents - data.feeCents &&
           (data.method == 'Cash' || data.changeCents == 0)) ||
-          (data.type in ['refund', 'rent'] && data.receivedCents == 0 && data.changeCents == 0) ||
-          (data.type == 'rent_refund' && data.receivedCents == data.feeCents && data.changeCents == 0)) &&
+          (data.type in ['refund', 'rent', 'expense'] && data.receivedCents == 0 && data.changeCents == 0) ||
+          (data.type in ['rent_refund', 'expense_refund'] && data.receivedCents == data.feeCents && data.changeCents == 0)) &&
         data.createdAt is timestamp && data.createdAt == request.time;
     }
 
@@ -41,7 +43,8 @@ service cloud.firestore {
       let original = get(/databases/$(database)/documents/paymentAudits/$(ownerId)/entries/$(data.relatedReceiptId)).data;
       return entryId == 'refund_' + data.relatedReceiptId &&
         data.relatedReceiptId.matches('^[a-zA-Z0-9_-]+$') &&
-        ((data.type == 'refund' && original.type == 'payment') || (data.type == 'rent_refund' && original.type == 'rent')) &&
+        ((data.type == 'refund' && original.type == 'payment') || (data.type == 'rent_refund' && original.type == 'rent') ||
+          (data.type == 'expense_refund' && original.type == 'expense' && data.category == original.category)) &&
         data.playerId == original.playerId &&
         data.playerName == original.playerName && data.feeCents == original.feeCents &&
         data.method == original.method &&
@@ -54,8 +57,8 @@ service cloud.firestore {
         ((request.resource.data.type == 'payment' && request.resource.data.relatedReceiptId == '' &&
             !entryId.matches('^refund_.*') &&
             exists(/databases/$(database)/documents/users/$(ownerId)/players/$(request.resource.data.playerId))) ||
-          (request.resource.data.type == 'rent' && request.resource.data.relatedReceiptId == '' && !entryId.matches('^refund_.*')) ||
-          (request.resource.data.type in ['refund', 'rent_refund'] && validRefund(ownerId, entryId, request.resource.data)));
+          (request.resource.data.type in ['rent', 'expense'] && request.resource.data.relatedReceiptId == '' && !entryId.matches('^refund_.*')) ||
+          (request.resource.data.type in ['refund', 'rent_refund', 'expense_refund'] && validRefund(ownerId, entryId, request.resource.data)));
       allow update, delete: if false;
     }
 

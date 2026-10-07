@@ -123,7 +123,7 @@ try {
   await page.waitForFunction(() => document.getElementById('payment-receipt-title').textContent === 'Court rent receipt');
   assert.match(await page.$eval('#payment-receipt-content', el => el.textContent), /Court rent paid.*50\.00/);
   await page.click('#close-payment-receipt');
-  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Balance after court rent.*200\.00/);
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Balance after expenses.*200\.00/);
   assert.match(await page.$eval('#audit-summary', el => el.textContent), /Player payments net.*250\.00/);
   await page.click('[data-audit-receipt="test4"]');
   await page.waitForFunction(() => !document.getElementById('payment-refund-save').disabled);
@@ -131,7 +131,7 @@ try {
   await page.click('#payment-refund-save');
   await page.waitForFunction(() => document.getElementById('payment-receipt-title').textContent === 'Court rent refund receipt');
   await page.click('#close-payment-receipt');
-  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Balance after court rent.*250\.00/);
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Balance after expenses.*250\.00/);
   // A rent receipt cannot be refunded twice.
   await page.click('[data-audit-receipt="test4"]');
   await page.waitForFunction(() => document.getElementById('payment-refund-status').textContent.includes('Fully refunded'));
@@ -144,7 +144,7 @@ try {
   await page.waitForFunction(() => document.getElementById('payment-receipt-title').textContent === 'Court rent receipt');
   await page.click('#close-payment-receipt');
   await page.waitForFunction(() => document.querySelectorAll('#audit-rows tr').length === 7);
-  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Balance after court rent.*175\.00/);
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Balance after expenses.*175\.00/);
   assert.match(await page.$eval('#audit-summary', el => el.textContent), /GCash balance.*75\.00/);
   // Player removal leaves the money ledger intact.
   await page.evaluate(() => window.paymentTest.players.splice(0));
@@ -232,6 +232,43 @@ try {
   await printPage.setContent(longHtml, { waitUntil: 'load' });
   const longPdf = await printPage.pdf({ path: 'artifacts/payment-audit-multiple-pages.pdf', preferCSSPageSize: true, printBackground: true, displayHeaderFooter: false });
   assert.ok((Buffer.from(longPdf).toString('latin1').match(/\/Type \/Page\b/g) || []).length > 1);
+  await page.bringToFront();
+  // Supplies need no player and subtract from their respective method balances.
+  for (const [category, amount, method] of [['Water', '25', 'Cash'], ['Ice', '15', 'GCash'], ['Other', '10', 'Cash']]) {
+    await page.select('#court-rent-category', category);
+    await page.type('#court-rent-payee', category + ' supplies');
+    await page.type('#court-rent-amount', amount);
+    await page.select('#court-rent-method', method);
+    await page.click('#court-rent-save');
+    await page.waitForFunction(category => document.getElementById('payment-receipt-title').textContent === category + ' expense receipt', {}, category);
+    assert.match(await page.$eval('#payment-receipt-content', el => el.textContent), /Expense category/);
+    await page.click('#close-payment-receipt');
+  }
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Balance after expenses.*125\.00/);
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Water \(net\).*25\.00/);
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Ice \(net\).*15\.00/);
+  await page.click('[data-audit-receipt="test6"]');
+  await page.waitForFunction(() => !document.getElementById('payment-refund-save').disabled);
+  await page.type('#payment-refund-reason', 'Supplier returned the water payment');
+  await page.click('#payment-refund-save');
+  await page.waitForFunction(() => document.getElementById('payment-receipt-title').textContent === 'Water expense refund receipt');
+  await page.click('#close-payment-receipt');
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Balance after expenses.*150\.00/);
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Water \(net\).*0\.00/);
+  // A representative daily audit with rent, water, ice, and other fits one page.
+  const expenseHtml = await page.evaluate(async () => {
+    const { buildAuditPrint, currentPrintBranding } = await import('/js/payment-print.js');
+    const { auditDate } = await import('/js/payment-utils.js');
+    const records = [...window.paymentTest.records].map(([path, data]) => ({ ...data, id: path.split('/').at(-1) }));
+    return buildAuditPrint({ entries: records.filter(entry => ['test2', 'test3', 'test5', 'test6', 'test7', 'test8'].includes(entry.id)), day: auditDate(), brand: currentPrintBranding(), preparedBy: 'Test cashier' });
+  });
+  await printPage.bringToFront();
+  await printPage.setContent(expenseHtml, { waitUntil: 'load' });
+  assert.match(await printPage.$eval('.expense-table', el => el.textContent), /WATER/);
+  assert.match(await printPage.$eval('.expense-table', el => el.textContent), /ICE/);
+  assert.match(await printPage.$eval('.highlight', el => el.textContent), /125\.00/);
+  const expensePdf = await printPage.pdf({ path: 'artifacts/payment-audit-expenses.pdf', preferCSSPageSize: true, printBackground: true, displayHeaderFooter: false });
+  assert.equal((Buffer.from(expensePdf).toString('latin1').match(/\/Type \/Page\b/g) || []).length, 1);
   await printPage.close();
   await page.screenshot({ path: 'artifacts/payment-audit-desktop.png' });
   await page.setViewport({ width: 390, height: 844 });
@@ -241,7 +278,7 @@ try {
   await page.$eval('#audit-date', input => { input.value = '2026-01-01'; input.dispatchEvent(new Event('change')); });
   await page.waitForFunction(() => document.getElementById('audit-rows').textContent.includes('No payments'));
   assert.deepEqual(errors, []);
-  console.log('PASS: payment and court rent workflows, rent refunds, method balances, daily filter, mobile layout, club logos, receipts, and multiple-page PDFs.');
+  console.log('PASS: player payments, court rent, water, ice, other expenses, supplier refunds, balances, daily filters, club receipts, and single/multiple-page PDFs.');
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

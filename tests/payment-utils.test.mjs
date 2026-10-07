@@ -24,7 +24,7 @@ const makeEntry = (overrides = {}) => ({ id: 'abc', type: 'payment', playerId: '
 
 test('audit reconciles cash received minus change minus refunds; counts distinct players', () => {
   const entries = [makeEntry(), makeEntry({ id: 'def', playerId: 'maria', method: 'GCash', receivedCents: 10000, changeCents: 0 }), makeEntry({ id: 'refund_abc', type: 'refund', receivedCents: 0, changeCents: 0, relatedReceiptId: 'abc' })];
-  assert.deepEqual(summarize(entries), { players: 2, collected: 10000, cash: 0, gcash: 10000, received: 50000, change: 40000, refunds: 10000, rent: 0, rentPaid: 0, rentRefunds: 0, balance: 10000 });
+  assert.deepEqual(summarize(entries), { players: 2, collected: 10000, cash: 0, gcash: 10000, received: 50000, change: 40000, refunds: 10000, rent: 0, rentPaid: 0, rentRefunds: 0, expenses: 0, expensesPaid: 0, expenseRefunds: 0, totalExpenses: 0, water: 0, ice: 0, other: 0, balance: 10000 });
   // A later-day refund belongs to its own day and can yield a negative net.
   assert.equal(summarize([entries[2]]).collected, -10000);
   assert.equal(summarize([makeEntry(), makeEntry()]).players, 1);
@@ -35,7 +35,7 @@ test('court rent deducts from the correct method without changing player collect
   const otherRent = { ...rent, id: 'rent2', method: 'GCash', feeCents: 3000 };
   const returnedRent = { ...otherRent, id: 'refund_rent2', type: 'rent_refund', receivedCents: 3000, relatedReceiptId: 'rent2', note: 'Venue returned rent' };
   const totals = summarize([makeEntry(), makeEntry({ playerId: 'maria', method: 'GCash', receivedCents: 10000, changeCents: 0 }), rent, otherRent, returnedRent]);
-  assert.deepEqual(totals, { players: 2, collected: 20000, cash: 5000, gcash: 10000, received: 50000, change: 40000, refunds: 0, rent: 5000, rentPaid: 8000, rentRefunds: 3000, balance: 15000 });
+  assert.deepEqual(totals, { players: 2, collected: 20000, cash: 5000, gcash: 10000, received: 50000, change: 40000, refunds: 0, rent: 5000, rentPaid: 8000, rentRefunds: 3000, expenses: 0, expensesPaid: 0, expenseRefunds: 0, totalExpenses: 5000, water: 0, ice: 0, other: 0, balance: 15000 });
   assert.equal(totals.cash + totals.gcash, totals.balance);
   assert.equal(totals.collected - totals.rent, totals.balance);
   assert.equal(entryImpact(rent), -5000);
@@ -61,4 +61,30 @@ test('CSV preserves quote/newline data and neutralizes spreadsheet formulas', ()
   assert.ok(csv.includes('"One,""two""\nthree"'));
   assert.ok(csv.includes('"100.00","500.00","400.00","100.00"'));
   assert.equal(escapeHtml('<img onerror="bad">'), '&lt;img onerror=&quot;bad&quot;&gt;');
+});
+
+test('water, ice and other expenses reconcile by category and payment method', () => {
+  const expense = (category, amount) => makeEntry({ type: 'expense', category, playerId: '', playerName: category, feeCents: amount, receivedCents: 0, changeCents: 0 });
+  const water = expense('Water', 2500);
+  const ice = { ...expense('Ice', 1500), method: 'GCash' };
+  const other = expense('Other', 1000);
+  const returnedWater = { ...water, type: 'expense_refund', receivedCents: 2500, relatedReceiptId: water.id };
+  const totals = summarize([makeEntry(), water, ice, other, returnedWater]);
+  assert.equal(totals.players, 1);
+  assert.equal(totals.collected, 10000);
+  assert.equal(totals.water, 0);
+  assert.equal(totals.ice, 1500);
+  assert.equal(totals.other, 1000);
+  assert.equal(totals.expensesPaid, 5000);
+  assert.equal(totals.expenseRefunds, 2500);
+  assert.equal(totals.totalExpenses, 2500);
+  assert.equal(totals.balance, 7500);
+  assert.equal(totals.cash, 9000);
+  assert.equal(totals.gcash, -1500);
+  assert.equal(totals.cash + totals.gcash, totals.balance);
+  assert.equal(totals.collected - totals.totalExpenses, totals.balance);
+  assert.match(receiptNumber(water), /^EXP-/);
+  assert.match(receiptNumber(returnedWater), /^EXP-REF-/);
+  assert.ok(auditCsv([water, ice]).includes('"Water"'));
+  assert.ok(auditCsv([water, ice]).includes('"Ice"'));
 });

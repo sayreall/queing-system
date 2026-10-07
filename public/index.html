@@ -1356,22 +1356,23 @@
           <button id="payment-save" type="submit" class="btn-primary w-full">Save payment &amp; generate receipt</button>
         </form>
         <form id="court-rent-form" class="audit-payment-form">
-          <h3 class="text-xl font-display font-semibold">Record court rent</h3>
-          <p class="text-xs text-slate-400">Record money paid to rent the court. This is deducted from today's balance.</p>
-          <label>Court / Paid to <input id="court-rent-payee" class="input-field w-full" maxlength="200" required placeholder="Court or venue name"></label>
-          <label>Rent paid (PHP) <input id="court-rent-amount" type="number" min="0.01" max="1000000" step="0.01" class="input-field w-full" required placeholder="500.00"></label>
+          <h3 class="text-xl font-display font-semibold">Record an expense</h3>
+          <p class="text-xs text-slate-400">Court rent, water, ice, and other expenses are deducted from today's balance.</p>
+          <label>Expense category <select id="court-rent-category" class="input-field w-full"><option value="Court rent">Court rent</option><option value="Water">Water</option><option value="Ice">Ice</option><option value="Other">Other</option></select></label>
+          <label>Item / Paid to <input id="court-rent-payee" class="input-field w-full" maxlength="200" required placeholder="Court, supplier, or item description"></label>
+          <label>Amount paid (PHP) <input id="court-rent-amount" type="number" min="0.01" max="1000000" step="0.01" class="input-field w-full" required placeholder="500.00"></label>
           <label>Paid through <select id="court-rent-method" class="input-field w-full"><option value="Cash">Cash</option><option value="GCash">GCash</option></select></label>
-          <label>Reference / Note <input id="court-rent-note" class="input-field w-full" maxlength="200" placeholder="Optional hours or rental reference"></label>
+          <label>Reference / Note <input id="court-rent-note" class="input-field w-full" maxlength="200" placeholder="Optional quantity or payment reference"></label>
           <p id="court-rent-error" class="text-sm text-red-300" role="alert"></p>
-          <button id="court-rent-save" type="submit" class="btn-primary w-full">Save court rent &amp; generate receipt</button>
+          <button id="court-rent-save" type="submit" class="btn-primary w-full">Save expense &amp; generate receipt</button>
         </form>
         </div>
         <div class="min-w-0">
-          <h3 class="text-xl font-display font-semibold mb-3">Payments &amp; court rent</h3>
+          <h3 class="text-xl font-display font-semibold mb-3">Payments &amp; expenses</h3>
           <div class="overflow-x-auto rounded-xl border border-slate-700/60">
             <table class="audit-table w-full text-sm"><thead><tr><th>Player / Expense</th><th>Method</th><th>Fee / Amount</th><th>Received</th><th>Change</th><th>In / Out</th><th></th></tr></thead><tbody id="audit-rows"></tbody></table>
           </div>
-          <p class="text-xs text-slate-400 mt-3">Balance = player payments minus player refunds and court rent, plus rent refunds. Each entry belongs to the day money moves. To correct an entry, open its receipt and record a refund with a reason.</p>
+          <p class="text-xs text-slate-400 mt-3">Balance = player payments minus player refunds and expenses, plus expense refunds. Each entry belongs to the day money moves. To correct an entry, open its receipt and record a refund with a reason.</p>
         </div>
       </div>
     </section>

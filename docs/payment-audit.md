@@ -24,15 +24,17 @@ clearly marked, and payments and refunds require an internet connection.
 
 Players paid counts distinct players with payment entries that day. Player
 payments net is fees received minus player refunds recorded that day.
-**Balance after court rent** deducts rental expenses and adds returned court
-rent. Cash balance and GCash balance use the same calculation for their
+**Balance after expenses** deducts court rent, water, ice, and other expenses
+and adds supplier or venue refunds. Cash balance and GCash balance use the same calculation for their
 respective methods. Cash received and
 change returned count incoming cash payments only. A refund of an earlier
 day's payment appears on the day the money is returned and can make that day's
 net negative.
 
-Use **Record court rent** to enter the court / venue paid, amount, Cash or GCash,
-and an optional reference or note. Rent is recorded for the actual payment day,
+Use **Record an expense** and choose **Court rent**, **Water**, **Ice**, or
+**Other**. Enter the court, supplier, or item description, amount, Cash or GCash,
+and an optional reference or note (for example, quantity purchased). Expenses
+are recorded for the actual payment day,
 even while viewing an earlier audit, and generates its own expense receipt.
 It does not add any charge to individual players. For example, PHP 1,000 in
 player payments minus PHP 600 in rent leaves PHP 400. Expenses can exceed daily
@@ -45,6 +47,13 @@ are kept separate from refunds returned to players. Only one full refund is
 allowed for each rent receipt; partial rent refunds are not supported.
 The branded PDF includes an itemized court rent section, rental totals and the
 remaining balance. CSV exports include signed money-in / money-out values.
+
+Water, ice, and other supplies receive their own numbered expense receipts.
+The audit shows each category's net total as well as total expenses and the
+remaining balance. Open an expense receipt to record a full supplier refund
+with a reason; the original category, amount, and payment method are preserved.
+The PDF includes all expense categories in its itemized expense section, and
+CSV exports include the category. Older court-rent records need no migration.
 
 Open a receipt to record a **full refund**, with a required reason. Return the
 fee using the original payment method. The original receipt stays intact.
@@ -95,7 +104,9 @@ requests. The existing public queue rules are outside this change.
 | Backdated or future creation timestamp | Denied; timestamp must equal the server request time. |
 | Refund nonexistent receipt, a refund, or another owner's receipt | Denied; original must be a payment or rent expense in the same owner's ledger. |
 | Return rent using a player refund entry, or refund players using a rent-refund entry | Denied; reversal type must match the original payment or rent type. |
-| Rent expense tied to a player, or with received cash / change | Denied; rent must have an empty player ID and zero incoming cash / change. |
+| Expense tied to a player, or with received cash / change | Denied; expenses must have an empty player ID and zero incoming cash / change. |
+| Missing or invalid supply expense category | Denied; supply categories must be Water, Ice, or Other. Categories on player/rent records are denied. |
+| Supplier refund changes the category or refers to a player/rent record | Denied; supply refunds must reference a supply expense with the original category. |
 | Rent refund has wrong amount, method, court or incoming amount | Denied; the original expense is compared, and incoming amount must equal the full rent. |
 | Refund with a different fee, method, player, or no reason | Denied by original-document comparison and reason validation. |
 | Replay a refund under another ID | Denied; refund ID must be `refund_` plus original ID. |
