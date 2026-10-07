@@ -40,6 +40,7 @@ import {
   auth, onAuthStateChanged, signOut, doc, getDoc, setDoc
 , getTenantCollection, getTenantDoc} from "./firebase.js";
 import { startAutoLogout, stopAutoLogout } from "./auto-logout.js";
+import { initPaymentAudit, openPlayerPayment } from "./payments.js";
 
 const AVG_MATCH_MINUTES = 15;
 
@@ -1774,6 +1775,10 @@ function openPlayerDetailsModal(playerId) {
       : "Unspecified";
 
   document.getElementById("player-details-id").value = player.id;
+  document.getElementById("player-payment-btn").onclick = () => {
+    document.getElementById("player-details-modal").classList.add("hidden");
+    openPlayerPayment(player.id);
+  };
   document.getElementById("player-details-title").textContent = player.name;
   document.getElementById("player-details-summary").textContent = "Update player information and partner preferences.";
   document.getElementById("player-details-name").value = player.name || "";
@@ -4315,6 +4320,7 @@ onAuthStateChanged(auth, async (user) => {
   startAutoLogout(auth, signOut);
 
   // Initialize the dashboard
+  initPaymentAudit({ user, getPlayers: () => Array.from(state.players.values()), showToast });
   bootstrap();
 
   // Show Guide for first time users or new registrations

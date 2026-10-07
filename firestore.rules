@@ -2,6 +2,81 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Private ledger: immutable entries hold integer centavos, player snapshots,
+    // staff identity and a server timestamp. Refunds reference one original
+    // payment and use a deterministic ID to prevent repeated refunds.
+    // dailyPlayers locks are only used to coordinate same-day payments across tabs.
+    function auditOwner(ownerId) {
+      return request.auth != null && request.auth.uid == ownerId;
+    }
+
+    function validAuditEntry(data, ownerId) {
+      return data.keys().hasAll(['type', 'playerId', 'playerName', 'feeCents',
+          'receivedCents', 'changeCents', 'method', 'note', 'relatedReceiptId',
+          'staffId', 'staffName', 'createdAt']) &&
+        data.keys().hasOnly(['type', 'playerId', 'playerName', 'feeCents',
+          'receivedCents', 'changeCents', 'method', 'note', 'relatedReceiptId',
+          'staffId', 'staffName', 'createdAt']) &&
+        data.type in ['payment', 'refund'] &&
+        data.playerId is string && data.playerId.size() > 0 && data.playerId.size() <= 128 &&
+        data.playerId.matches('^[a-zA-Z0-9_-]+$') &&
+        data.playerName is string && data.playerName.size() > 0 && data.playerName.size() <= 200 &&
+        data.staffId == ownerId && data.staffName is string && data.staffName.size() > 0 && data.staffName.size() <= 120 &&
+        data.note is string && data.note.size() <= 200 &&
+        data.relatedReceiptId is string && data.relatedReceiptId.size() <= 128 &&
+        data.method in ['Cash', 'GCash'] &&
+        data.feeCents is int && data.feeCents > 0 && data.feeCents <= 100000000 &&
+        data.receivedCents is int && data.receivedCents >= 0 && data.receivedCents <= 100000000 &&
+        data.changeCents is int && data.changeCents >= 0 &&
+        ((data.type == 'payment' && data.receivedCents >= data.feeCents &&
+          data.changeCents == data.receivedCents - data.feeCents &&
+          (data.method == 'Cash' || data.changeCents == 0)) ||
+          (data.type == 'refund' && data.receivedCents == 0 && data.changeCents == 0)) &&
+        data.createdAt is timestamp && data.createdAt == request.time;
+    }
+
+    function validRefund(ownerId, entryId, data) {
+      let original = get(/databases/$(database)/documents/paymentAudits/$(ownerId)/entries/$(data.relatedReceiptId)).data;
+      return entryId == 'refund_' + data.relatedReceiptId &&
+        data.relatedReceiptId.matches('^[a-zA-Z0-9_-]+$') &&
+        original.type == 'payment' && data.playerId == original.playerId &&
+        data.playerName == original.playerName && data.feeCents == original.feeCents &&
+        data.method == original.method && data.receivedCents == 0 &&
+        data.changeCents == 0 && data.note.size() > 0;
+    }
+
+    match /paymentAudits/{ownerId}/entries/{entryId} {
+      allow read: if auditOwner(ownerId);
+      allow create: if auditOwner(ownerId) && validAuditEntry(request.resource.data, ownerId) &&
+        ((request.resource.data.type == 'payment' && request.resource.data.relatedReceiptId == '' &&
+            !entryId.matches('^refund_.*') &&
+            exists(/databases/$(database)/documents/users/$(ownerId)/players/$(request.resource.data.playerId))) ||
+          (request.resource.data.type == 'refund' && validRefund(ownerId, entryId, request.resource.data)));
+      allow update, delete: if false;
+    }
+
+    function validDailyLock(ownerId, lockId, data) {
+      let payment = getAfter(/databases/$(database)/documents/paymentAudits/$(ownerId)/entries/$(data.receiptId)).data;
+      return data.keys().hasAll(['receiptId', 'playerId', 'day']) &&
+        data.keys().hasOnly(['receiptId', 'playerId', 'day']) &&
+        data.receiptId is string && data.receiptId.size() > 0 && data.receiptId.size() <= 128 &&
+        data.receiptId.matches('^[a-zA-Z0-9_-]+$') &&
+        data.playerId is string && data.playerId.size() > 0 && data.playerId.size() <= 128 &&
+        data.playerId.matches('^[a-zA-Z0-9_-]+$') &&
+        data.day is string && data.day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+        lockId == data.day + '_' + data.playerId &&
+        payment.type == 'payment' && payment.playerId == data.playerId && payment.createdAt == request.time;
+    }
+
+    match /paymentAudits/{ownerId}/dailyPlayers/{lockId} {
+      allow read: if auditOwner(ownerId);
+      allow create: if auditOwner(ownerId) && validDailyLock(ownerId, lockId, request.resource.data);
+      allow update: if auditOwner(ownerId) && validDailyLock(ownerId, lockId, request.resource.data) &&
+        request.resource.data.playerId == resource.data.playerId && request.resource.data.day == resource.data.day &&
+        exists(/databases/$(database)/documents/paymentAudits/$(ownerId)/entries/$('refund_' + resource.data.receiptId));
+      allow delete: if false;
+    }
+
     // Only allow reads and writes within a specific tenant (user) folder
     match /users/{tenantId}/{document=**} {
       // Anyone can read public tenant data (for tv.html share link)

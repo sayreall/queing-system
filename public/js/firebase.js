@@ -18,6 +18,7 @@ import {
   onSnapshot,
   serverTimestamp,
   writeBatch,
+  runTransaction,
   getDocFromCache,
   getDocsFromCache
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -98,6 +99,7 @@ export {
   onSnapshot,
   serverTimestamp,
   writeBatch,
+  runTransaction,
   getDocFromCache,
   getDocsFromCache,
   signInWithEmailAndPassword,

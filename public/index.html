@@ -139,6 +139,15 @@
           Log</span>
       </button>
 
+      <button id="view-payment-audit-btn" type="button"
+        class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-emerald-300"
+        title="Daily Payment Audit">
+        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 3h10v18l-2-2-3 2-3-2-2 2V3zm3 5h4m-4 4h4m-4 4h2" />
+        </svg>
+        <span class="sidebar-text md:opacity-0 whitespace-nowrap font-semibold transition-opacity duration-300 pointer-events-none">Daily Payment Audit</span>
+      </button>
+
       <button id="view-ranking-btn"
         class="nav-item flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors text-left text-slate-300 hover:text-white"
         title="Ranking">
@@ -1018,6 +1027,7 @@
           <p id="player-details-summary" class="mt-1 text-sm text-slate-400">Review and update this player's information.</p>
         </div>
 
+        <button id="player-payment-btn" type="button" class="btn-secondary mt-4 w-full">Record payment / View today's receipts</button>
         <form id="player-details-form" class="mt-6 space-y-4">
           <input id="player-details-id" type="hidden">
           <div class="grid gap-4 sm:grid-cols-2">
@@ -1316,9 +1326,62 @@
 
   <div id="toast-container"></div>
 
+  <div id="payment-audit-modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-center justify-center p-3 sm:p-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="payment-audit-title">
+    <section class="glass-card audit-panel w-full max-w-6xl relative max-h-[92vh] overflow-y-auto custom-scrollbar">
+      <button id="close-payment-audit" type="button" class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl" aria-label="Close payment audit">&times;</button>
+      <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">Payments &amp; receipts</p>
+      <h2 id="payment-audit-title" class="mt-1 text-3xl font-display font-semibold">Daily Payment Audit</h2>
+      <p class="mt-1 text-sm text-slate-400">Every payment, every peso. Dates follow Philippine time (UTC+8).</p>
+      <div class="audit-toolbar mt-5">
+        <label class="text-sm">Audit date <input id="audit-date" type="date" class="input-field" required></label>
+        <button id="audit-today" type="button" class="btn-secondary">Today</button>
+        <button id="audit-print" type="button" class="btn-secondary">Print / Save PDF</button>
+        <button id="audit-export" type="button" class="btn-secondary">Export CSV</button>
+      </div>
+      <p id="audit-status" class="mt-3 text-sm text-slate-400" role="status" aria-live="polite"></p>
+      <div id="audit-summary" class="audit-summary mt-4"></div>
+      <div class="audit-layout mt-5">
+        <form id="payment-form" class="audit-payment-form">
+          <h3 class="text-xl font-display font-semibold">Record a payment</h3>
+          <p class="text-xs text-slate-400 mb-4">Payments are recorded for today, even when viewing an older audit.</p>
+          <label>Player <select id="payment-player" class="input-field w-full" required><option value="">Select a player</option></select></label>
+          <p id="payment-player-status" class="text-xs text-emerald-300" aria-live="polite"></p>
+          <label>Fee due (PHP) <input id="payment-fee" type="number" min="0.01" max="1000000" step="0.01" class="input-field w-full" placeholder="100.00" required></label>
+          <label>Payment method <select id="payment-method" class="input-field w-full"><option value="Cash">Cash</option><option value="GCash">GCash</option></select></label>
+          <label id="payment-received-label">Amount received (PHP) <input id="payment-received" type="number" min="0.01" max="1000000" step="0.01" class="input-field w-full" placeholder="500.00" required></label>
+          <div class="audit-change"><span>Change to return</span><strong id="payment-change">PHP 0.00</strong></div>
+          <label>Reference / Note <input id="payment-note" class="input-field w-full" maxlength="200" placeholder="Optional GCash reference or note"></label>
+          <p id="payment-error" class="text-sm text-red-300" role="alert"></p>
+          <button id="payment-save" type="submit" class="btn-primary w-full">Save payment &amp; generate receipt</button>
+        </form>
+        <div class="min-w-0">
+          <h3 class="text-xl font-display font-semibold mb-3">Payment receipts</h3>
+          <div class="overflow-x-auto rounded-xl border border-slate-700/60">
+            <table class="audit-table w-full text-sm"><thead><tr><th>Player / Receipt</th><th>Method</th><th>Fee</th><th>Received</th><th>Change</th><th>Collected</th><th></th></tr></thead><tbody id="audit-rows"></tbody></table>
+          </div>
+          <p class="text-xs text-slate-400 mt-3">Refunds are separate entries on the day money is returned. To correct a payment, refund it with a reason, then record the correct payment.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="payment-receipt-modal" class="fixed inset-0 z-[70] hidden bg-black/75 flex items-center justify-center p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="payment-receipt-title">
+    <section class="glass-card w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
+      <button id="close-payment-receipt" type="button" class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl" aria-label="Close receipt">&times;</button>
+      <h2 id="payment-receipt-title" class="text-2xl font-display font-semibold mb-4">Payment receipt</h2>
+      <div id="payment-receipt-content"></div>
+      <button id="payment-receipt-print" type="button" class="btn-primary w-full mt-4">Print receipt / Save PDF</button>
+      <form id="payment-refund-form" class="mt-4 space-y-3">
+        <label class="block text-sm">Reason for full refund <input id="payment-refund-reason" class="input-field w-full mt-1" maxlength="200" required placeholder="Explain the refund or correction"></label>
+        <button id="payment-refund-save" type="submit" class="btn-secondary w-full">Record full refund</button>
+        <p id="payment-refund-status" class="text-sm text-slate-400" role="status"></p>
+      </form>
+    </section>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr@1.8.2/dist/pickr.min.js"></script>
-  <script type="module" src="js/dashboard.js?v=39"></script>
+  <script type="module" src="js/dashboard.js?v=40"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
