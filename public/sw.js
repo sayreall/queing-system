@@ -1,6 +1,6 @@
 // Bump this whenever a deployed asset changes, so clients cannot keep an
 // incompatible dashboard script after the HTML has been updated.
-const CACHE_NAME = "pickleball-queue-v50";
+const CACHE_NAME = "pickleball-queue-v51";
 const ASSETS = [
   "./",
   "./index.html",
@@ -12,6 +12,7 @@ const ASSETS = [
   "./js/dashboard.js",
   "./js/payments.js",
   "./js/payment-utils.js",
+  "./js/payment-print.js",
   "./js/queue.js",
   "./js/firebase.js",
   "./js/login.js",

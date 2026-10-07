@@ -13,6 +13,9 @@ The audit defaults to today in Philippine time (UTC+8). It selects receipts
 using the confirmed server payment timestamp, rather than the date a player
 joined the queue. Use the date picker for earlier days. Print / Save PDF uses
 the browser print dialog; Export CSV downloads the day's detailed ledger.
+Printed audits and receipts use the current dashboard's club name and logo,
+with a summary, itemized payments and review signatures. For a clean PDF,
+turn off **Headers and footers** in the browser's print settings.
 Complete audit exports require a confirmed connection. Cached results are
 clearly marked, and payments and refunds require an internet connection.
 

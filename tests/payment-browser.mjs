@@ -120,6 +120,71 @@ try {
   await page.evaluate(() => window.paymentTest.players.splice(0));
   assert.equal(await page.$$eval('#audit-rows tr', rows => rows.length), 4);
   await mkdir('artifacts', { recursive: true });
+  // Exercise the real print buttons while replacing only Chrome's print dialog.
+  await page.evaluate(() => {
+    window.printedDocuments = [];
+    const descriptor = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'contentWindow');
+    Object.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', { ...descriptor, get() {
+      const target = descriptor.get.call(this);
+      if (target) target.print = () => { console.log('Captured print document'); window.printedDocuments.push(this.srcdoc); };
+      return target;
+    } });
+  });
+  const printPage = await browser.newPage();
+  await printPage.setViewport({ width: 794, height: 1123 });
+  await printPage.emulateMediaType('print');
+  for (const [club, name, logo] of [
+    ['deuce', 'Deuce Club Queuing System', 'deuce-game-logo.png'],
+    ['longos', 'Longos Pickleball Club', 'logo-lpc.jpg'],
+    ['balian', 'Balian Picklers Queuing', 'balian-pc.jpg']
+  ]) {
+    console.log('Checking printed branding:', club);
+    await page.bringToFront();
+    await page.evaluate(({ name, logo }) => {
+      document.querySelector('.header-title').textContent = name;
+      document.querySelectorAll('.header-logo, .sidebar-logo').forEach(image => image.src = '/assets/images/' + logo);
+    }, { name, logo });
+    const previous = await page.evaluate(() => window.printedDocuments.length);
+    await page.click('#audit-print');
+    console.log('Print button clicked');
+    await page.waitForFunction(previous => window.printedDocuments.length > previous, {}, previous);
+    const html = await page.evaluate(() => window.printedDocuments.at(-1));
+    console.log('Rendering PDF document');
+    await printPage.bringToFront();
+    await printPage.setContent(html, { waitUntil: 'load' });
+    assert.ok(await printPage.$eval('.club-logo', image => image.complete && image.naturalWidth > 0));
+    assert.match(await printPage.$eval('.club-logo', image => image.src), new RegExp(logo.replace('.', '\\.')));
+    assert.equal(await printPage.$eval('.club-name', element => element.textContent), name.replace(/\s+(Queuing System|Queuing)$/i, ''));
+    assert.equal(await printPage.$$eval('table button', buttons => buttons.length), 0);
+    assert.match(await printPage.$eval('.highlight', element => element.textContent), /250\.00/);
+    await printPage.pdf({ path: 'artifacts/payment-audit-' + club + '.pdf', preferCSSPageSize: true, printBackground: true, displayHeaderFooter: false });
+    await printPage.screenshot({ path: 'artifacts/payment-audit-print-' + club + '.png', fullPage: true });
+  }
+  await page.bringToFront();
+  await page.click('[data-audit-receipt="test3"]');
+  const priorReceipts = await page.evaluate(() => window.printedDocuments.length);
+  await page.click('#payment-receipt-print');
+  await page.waitForFunction(previous => window.printedDocuments.length > previous, {}, priorReceipts);
+  const receiptHtml = await page.evaluate(() => window.printedDocuments.at(-1));
+  await printPage.bringToFront();
+  await printPage.setContent(receiptHtml, { waitUntil: 'load' });
+  assert.equal(await printPage.$eval('.club-name', element => element.textContent), 'Balian Picklers');
+  assert.match(await printPage.$eval('.receipt-total', element => element.textContent), /150\.00/);
+  await printPage.pdf({ path: 'artifacts/payment-receipt-balian.pdf', preferCSSPageSize: true, printBackground: true, displayHeaderFooter: false });
+  await printPage.screenshot({ path: 'artifacts/payment-receipt-print-balian.png', fullPage: true });
+  await page.bringToFront();
+  await page.click('#close-payment-receipt');
+  // Long reports repeat table headers and paginate without splitting player rows.
+  const longHtml = await page.evaluate(async () => {
+    const { buildAuditPrint, currentPrintBranding } = await import('/js/payment-print.js');
+    const entry = [...window.paymentTest.records.values()].find(entry => entry.type === 'payment');
+    const { auditDate } = await import('/js/payment-utils.js');
+    return buildAuditPrint({ entries: Array.from({ length: 60 }, (_, i) => ({ ...entry, id: 'test-long-receipt-' + i, playerId: 'player-' + i, playerName: 'Player ' + (i + 1) })), day: auditDate(), brand: currentPrintBranding(), preparedBy: 'Test cashier' });
+  });
+  await printPage.setContent(longHtml, { waitUntil: 'load' });
+  const longPdf = await printPage.pdf({ path: 'artifacts/payment-audit-multiple-pages.pdf', preferCSSPageSize: true, printBackground: true, displayHeaderFooter: false });
+  assert.ok((Buffer.from(longPdf).toString('latin1').match(/\/Type \/Page\b/g) || []).length > 1);
+  await printPage.close();
   await page.screenshot({ path: 'artifacts/payment-audit-desktop.png' });
   await page.setViewport({ width: 390, height: 844 });
   await page.screenshot({ path: 'artifacts/payment-audit-mobile.png' });
@@ -128,7 +193,7 @@ try {
   await page.$eval('#audit-date', input => { input.value = '2026-01-01'; input.dispatchEvent(new Event('change')); });
   await page.waitForFunction(() => document.getElementById('audit-rows').textContent.includes('No payments'));
   assert.deepEqual(errors, []);
-  console.log('PASS: cash, GCash, duplicate payment prevention, refund, replacement payment, preserved ledger, daily filter, and mobile layout.');
+  console.log('PASS: payment workflows, daily filter, mobile layout, club logos for Deuce/Longos/Balian, receipt printing, and multiple-page PDFs.');
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

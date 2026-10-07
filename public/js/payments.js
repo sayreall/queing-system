@@ -1,5 +1,6 @@
 import { db, auth, collection, doc, query, where, onSnapshot, getDoc, serverTimestamp, runTransaction } from "./firebase.js";
 import { AUDIT_TIME_ZONE, auditDate, dayBounds, paymentAmounts, money, entryDate, receiptNumber, summarize, escapeHtml as esc, auditCsv } from "./payment-utils.js";
+import { currentPrintBranding, buildAuditPrint, buildReceiptPrint } from "./payment-print.js";
 
 let context;
 let entries = [];
@@ -232,25 +233,31 @@ async function saveRefund(event) {
   finally { refundSaving = false; }
 }
 
-function printDocument(title, markup) {
+function printDocument(title, documentHtml) {
   const frame = document.createElement("iframe");
   frame.title = title;
   frame.style.cssText = "position:fixed;width:0;height:0;border:0;";
-  frame.onload = () => {
+  frame.onload = async () => {
     const target = frame.contentWindow;
+    // Ensure the club logo has decoded before opening the print preview.
+    await target.document.fonts.ready;
+    await Promise.allSettled([...target.document.images].map(image => image.decode()));
+    if (!frame.isConnected) return;
     target.addEventListener("afterprint", () => frame.remove(), { once: true });
     target.focus();
     target.print();
     setTimeout(() => frame.remove(), 60000);
   };
-  frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font:14px Arial,sans-serif;color:#111;padding:24px}h1{font-size:24px}table{border-collapse:collapse;width:100%;font-size:11px}th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left;overflow-wrap:anywhere}small{display:block}button{display:none}dl div{display:flex;justify-content:space-between;gap:24px;padding:8px 0;border-bottom:1px solid #ddd}dd{margin:0;text-align:right;overflow-wrap:anywhere}dt{white-space:nowrap}.audit-receipt-brand{font-size:20px;font-weight:bold}.audit-receipt-footnote{color:#666;font-size:11px}@page{margin:12mm}</style></head><body><h1>${esc(title)}</h1>${markup}</body></html>`;
+  frame.srcdoc = documentHtml;
   document.body.append(frame);
 }
 
 function printAudit() {
   if (!auditReady) return;
-  const totals = summarize(entries);
-  printDocument(`Daily Payment Audit · ${el("audit-date").value}`, `<p>Philippine time (UTC+8) · Players paid: ${totals.players} · Net collected: ${esc(money(totals.collected))}</p><p>Cash net: ${esc(money(totals.cash))} · GCash net: ${esc(money(totals.gcash))} · Cash received: ${esc(money(totals.received))} · Change: ${esc(money(totals.change))} · Refunds: ${esc(money(totals.refunds))}</p>${el("audit-rows").closest("table").outerHTML}`);
+  printDocument(`Daily Payment Audit · ${el("audit-date").value}`, buildAuditPrint({
+    entries, day: el("audit-date").value, brand: currentPrintBranding(),
+    preparedBy: context.user.displayName || context.user.email || "Owner"
+  }));
 }
 
 function closeReceipt() {
@@ -285,7 +292,7 @@ export function initPaymentAudit(options) {
     const receipt = entries.find(entry => entry.id === button?.dataset.auditReceipt);
     if (receipt) showReceipt(receipt);
   });
-  el("payment-receipt-print").addEventListener("click", () => { if (selectedReceipt) printDocument("Club receipt", receiptMarkup(selectedReceipt)); });
+  el("payment-receipt-print").addEventListener("click", () => { if (selectedReceipt) printDocument("Club receipt", buildReceiptPrint({ entry: selectedReceipt, brand: currentPrintBranding() })); });
   el("audit-print").addEventListener("click", printAudit);
   el("audit-export").addEventListener("click", () => {
     if (!auditReady) return;
