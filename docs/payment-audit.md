@@ -19,12 +19,29 @@ turn off **Headers and footers** in the browser's print settings.
 Complete audit exports require a confirmed connection. Cached results are
 clearly marked, and payments and refunds require an internet connection.
 
-Players paid counts distinct players with payment entries that day. Net
-collected is fees received minus refunds recorded that day. Cash net and GCash
-net use the same calculation for their respective methods. Cash received and
+Players paid counts distinct players with payment entries that day. Player
+payments net is fees received minus player refunds recorded that day.
+**Balance after court rent** deducts rental expenses and adds returned court
+rent. Cash balance and GCash balance use the same calculation for their
+respective methods. Cash received and
 change returned count incoming cash payments only. A refund of an earlier
 day's payment appears on the day the money is returned and can make that day's
 net negative.
+
+Use **Record court rent** to enter the court / venue paid, amount, Cash or GCash,
+and an optional reference or note. Rent is recorded for the actual payment day,
+even while viewing an earlier audit, and generates its own expense receipt.
+It does not add any charge to individual players. For example, PHP 1,000 in
+player payments minus PHP 600 in rent leaves PHP 400. Expenses can exceed daily
+collections, in which case the remaining balance is negative.
+
+Open a rent receipt to record a **full rent refund received** with a reason,
+after the venue returns the money. The original expense is preserved and the
+returned amount increases the balance on the day it is received. Rent refunds
+are kept separate from refunds returned to players. Only one full refund is
+allowed for each rent receipt; partial rent refunds are not supported.
+The branded PDF includes an itemized court rent section, rental totals and the
+remaining balance. CSV exports include signed money-in / money-out values.
 
 Open a receipt to record a **full refund**, with a required reason. Return the
 fee using the original payment method. The original receipt stays intact.
@@ -46,11 +63,13 @@ these new private paths. No existing records need to be migrated.
 ## Validation
 
 - `node --test tests/payment-utils.test.mjs` checks exact cash arithmetic,
-  invalid amounts, UTC+8 day boundaries, refund reconciliation, and CSV safety.
+  invalid amounts, UTC+8 day boundaries, refunds, rent and returned-rent
+  reconciliation, method balances, negative balances, and CSV safety.
 - `node tests/payment-browser.mjs` uses an isolated Firebase stub. It checks
   payment entry, automatic receipts, duplicate prevention, refund and replacement
-  workflows, preservation of receipts after player removal, daily filtering,
-  and mobile overflow. It never writes to production Firebase.
+  workflows, court rent and rental refunds, method balances, preservation of
+  receipts after player removal, daily filtering, branded PDFs, and mobile
+  overflow. It never writes to production Firebase.
 - Firebase rules compilation was checked with
   `firebase deploy --only firestore:rules --dry-run --project pickleball-e0ed6`.
   This validates compilation without publishing the rules.
@@ -65,13 +84,16 @@ requests. The existing public queue rules are outside this change.
 | --- | --- |
 | Anonymous or TV link reads / lists of payment entries | Denied; ledger owner authentication is required. |
 | Another authenticated account reads, writes, refunds, or locks | Denied; UID must match the owner path. |
-| Update / delete an existing payment or refund | Denied, including owner requests. |
+| Update / delete an existing payment, court rent or refund | Denied, including owner requests. |
 | Change owner or staff identity | Denied; authenticated UID and stored staff ID must match the owner path. |
 | Negative, fractional, excessive amounts or incorrect change | Denied by integer, range and arithmetic validators. |
 | GCash with change or overpayment | Denied; GCash change must be zero. |
 | Missing fields, extra fields, wrong types or oversized strings | Denied by required/allowed field checks, types and size bounds. |
 | Backdated or future creation timestamp | Denied; timestamp must equal the server request time. |
-| Refund nonexistent receipt, a refund, or another owner's receipt | Denied; original must be a payment in the same owner's ledger. |
+| Refund nonexistent receipt, a refund, or another owner's receipt | Denied; original must be a payment or rent expense in the same owner's ledger. |
+| Return rent using a player refund entry, or refund players using a rent-refund entry | Denied; reversal type must match the original payment or rent type. |
+| Rent expense tied to a player, or with received cash / change | Denied; rent must have an empty player ID and zero incoming cash / change. |
+| Rent refund has wrong amount, method, court or incoming amount | Denied; the original expense is compared, and incoming amount must equal the full rent. |
 | Refund with a different fee, method, player, or no reason | Denied by original-document comparison and reason validation. |
 | Replay a refund under another ID | Denied; refund ID must be `refund_` plus original ID. |
 | Repeat refund under the same ID | Denied; creates only, no update. |

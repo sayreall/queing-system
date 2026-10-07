@@ -1,5 +1,5 @@
 import { db, auth, collection, doc, query, where, onSnapshot, getDoc, serverTimestamp, runTransaction } from "./firebase.js";
-import { AUDIT_TIME_ZONE, auditDate, dayBounds, paymentAmounts, money, entryDate, receiptNumber, summarize, escapeHtml as esc, auditCsv } from "./payment-utils.js";
+import { AUDIT_TIME_ZONE, auditDate, dayBounds, paymentAmounts, toCents, money, entryDate, receiptNumber, summarize, isCourtRent, isReversal, entryLabel, entryImpact, escapeHtml as esc, auditCsv } from "./payment-utils.js";
 import { currentPrintBranding, buildAuditPrint, buildReceiptPrint } from "./payment-print.js";
 
 let context;
@@ -89,15 +89,50 @@ function updatePlayerStatus() {
 
 function renderAudit() {
   const totals = summarize(entries);
-  const cards = [["Players paid", totals.players], ["Net collected", money(totals.collected)], ["Cash net", money(totals.cash)], ["GCash net", money(totals.gcash)], ["Cash received", money(totals.received)], ["Change returned", money(totals.change)], ["Refunds returned", money(totals.refunds)]];
+  const cards = [["Players paid", totals.players], ["Balance after court rent", money(totals.balance)], ["Player payments net", money(totals.collected)], ["Court rent (net)", money(totals.rent)], ["Cash balance", money(totals.cash)], ["GCash balance", money(totals.gcash)], ["Cash received from players", money(totals.received)], ["Change returned", money(totals.change)], ["Player refunds returned", money(totals.refunds)], ["Court rent refunds received", money(totals.rentRefunds)]];
   el("audit-summary").innerHTML = cards.map(([label, value]) => `<div class="audit-stat"><span>${label}</span><strong>${esc(value)}</strong></div>`).join("");
-  el("audit-rows").innerHTML = entries.length ? entries.map(entry => `<tr class="${entry.type === "refund" ? "audit-refund-row" : ""}">
-    <td><strong>${esc(entry.playerName)}</strong><small>${esc(receiptNumber(entry))}</small><small>${esc(timeLabel(entry))}${entry.type === "refund" ? " · REFUND" : ""}</small></td>
+  el("audit-rows").innerHTML = entries.length ? entries.map(entry => `<tr class="${entryImpact(entry) < 0 ? "audit-refund-row" : ""}">
+    <td><strong>${esc(entry.playerName)}</strong><small>${esc(receiptNumber(entry))}</small><small>${esc(timeLabel(entry))} · ${esc(entryLabel(entry))}</small></td>
     <td>${esc(entry.method)}</td><td>${esc(money(entry.feeCents))}</td><td>${esc(money(entry.receivedCents))}</td><td>${esc(money(entry.changeCents))}</td>
-    <td>${esc(money((entry.type === "refund" ? -1 : 1) * entry.feeCents))}</td><td><button type="button" class="btn-secondary text-xs" data-audit-receipt="${esc(entry.id)}">Receipt</button></td>
+    <td>${esc(money(entryImpact(entry)))}</td><td><button type="button" class="btn-secondary text-xs" data-audit-receipt="${esc(entry.id)}">Receipt</button></td>
     </tr>`).join("") : `<tr><td colspan="7" class="text-center text-slate-400 py-8">${auditReady ? "No payments recorded for this day." : "Waiting for confirmed payment records..."}</td></tr>`;
   el("audit-print").disabled = !auditReady;
   el("audit-export").disabled = !auditReady;
+}
+
+async function saveCourtRent(event) {
+  event.preventDefault();
+  if (saving) return;
+  const button = el("court-rent-save");
+  try {
+    el("court-rent-error").textContent = "";
+    if (!navigator.onLine) throw new Error("Connect to the internet to record court rent.");
+    const payee = el("court-rent-payee").value.trim();
+    if (!payee) throw new Error("Enter the court or venue you paid.");
+    const feeCents = toCents(el("court-rent-amount").value);
+    const method = el("court-rent-method").value;
+    if (!["Cash", "GCash"].includes(method)) throw new Error("Choose Cash or GCash.");
+    saving = true;
+    button.disabled = true;
+    button.textContent = "Confirming court rent...";
+    const ref = doc(ledger());
+    const data = { type: "rent", playerId: "", playerName: payee, feeCents, receivedCents: 0, changeCents: 0,
+      method, note: el("court-rent-note").value.trim(), relatedReceiptId: "", staffId: context.user.uid,
+      staffName: (context.user.email || context.user.displayName || "Owner").slice(0, 120), createdAt: serverTimestamp() };
+    await runTransaction(db, async transaction => {
+      const previous = await transaction.get(ref);
+      if (previous.exists()) throw new Error("This court rent receipt already exists.");
+      transaction.set(ref, data);
+    });
+    const saved = await getDoc(ref);
+    const receipt = { ...saved.data(), id: ref.id };
+    el("court-rent-form").reset();
+    el("audit-date").value = auditDate(entryDate(receipt));
+    watchAudit();
+    context.showToast("Court rent saved and deducted from the daily balance.");
+    await showReceipt(receipt);
+  } catch (error) { el("court-rent-error").textContent = friendlyError(error); }
+  finally { saving = false; button.disabled = false; button.textContent = "Save court rent & generate receipt"; }
 }
 
 function updateChange() {
@@ -176,29 +211,33 @@ async function savePayment(event) {
 }
 
 function receiptMarkup(entry) {
-  const fields = [["Receipt number", receiptNumber(entry)], ["Player", entry.playerName], ["Recorded at", `${timeLabel(entry)} (UTC+8)`], ["Payment method", entry.method], ["Fee", money(entry.feeCents)], ["Amount received", money(entry.receivedCents)], ["Change returned", money(entry.changeCents)], [entry.type === "refund" ? "Refund returned" : "Collected", money(entry.feeCents)], ["Recorded by", entry.staffName]];
-  if (entry.note) fields.push([entry.type === "refund" ? "Refund reason" : "Note / Reference", entry.note]);
+  const fields = [["Receipt number", receiptNumber(entry)], [isCourtRent(entry) ? "Court / Paid to" : "Player", entry.playerName], ["Recorded at", `${timeLabel(entry)} (UTC+8)`], ["Payment method", entry.method]];
+  if (entry.type === "payment") fields.push(["Fee", money(entry.feeCents)], ["Amount received", money(entry.receivedCents)], ["Change returned", money(entry.changeCents)]);
+  fields.push([{ payment: "Collected", refund: "Refund returned", rent: "Court rent paid", rent_refund: "Court rent refund received" }[entry.type], money(entry.feeCents)], ["Recorded by", entry.staffName]);
+  if (entry.note) fields.push([isReversal(entry) ? "Refund reason" : "Note / Reference", entry.note]);
   if (entry.relatedReceiptId) fields.push(["Original receipt ID", entry.relatedReceiptId]);
-  return `<p class="audit-receipt-brand">PicklQ · ${entry.type === "refund" ? "Refund" : "Payment"} receipt</p><dl class="audit-receipt-fields">${fields.map(([label, value]) => `<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join("")}</dl><p class="audit-receipt-footnote">Payment acknowledgement for club records.</p>`;
+  return `<p class="audit-receipt-brand">${esc(currentPrintBranding().name)} · ${esc(entryLabel(entry))} receipt</p><dl class="audit-receipt-fields">${fields.map(([label, value]) => `<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join("")}</dl><p class="audit-receipt-footnote">Payment acknowledgement for club records.</p>`;
 }
 
 async function showReceipt(entry) {
   const version = ++receiptVersion;
   selectedReceipt = entry;
-  el("payment-receipt-title").textContent = entry.type === "refund" ? "Refund receipt" : "Payment receipt";
+  el("payment-receipt-title").textContent = `${entryLabel(entry)} receipt`;
   el("payment-receipt-content").innerHTML = receiptMarkup(entry);
-  el("payment-refund-form").classList.toggle("hidden", entry.type !== "payment");
+  el("payment-refund-form").classList.toggle("hidden", isReversal(entry));
+  el("payment-refund-save").textContent = entry.type === "rent" ? "Record full rent refund received" : "Record full refund";
+  el("payment-refund-reason-label").textContent = entry.type === "rent" ? "Reason for court rent refund" : "Reason for full refund";
   el("payment-refund-reason").value = "";
   el("payment-refund-save").disabled = true;
   el("payment-refund-status").textContent = "Checking refund status...";
   el("payment-receipt-modal").classList.remove("hidden");
   el("close-payment-receipt").focus();
-  if (entry.type !== "payment") return;
+  if (isReversal(entry)) return;
   try {
     const refund = await getDoc(entryRef(`refund_${entry.id}`));
     if (version !== receiptVersion) return;
     el("payment-refund-save").disabled = refund.exists();
-    el("payment-refund-status").textContent = refund.exists() ? `Fully refunded: ${timeLabel(refund.data())}. Original receipt preserved.` : "Refunds return the full fee through the original payment method.";
+    el("payment-refund-status").textContent = refund.exists() ? `Fully refunded: ${timeLabel(refund.data())}. Original receipt preserved.` : entry.type === "rent" ? "Record this only after the venue returns the full rent through the original payment method." : "Refunds return the full fee through the original payment method.";
   } catch (error) { if (version === receiptVersion) el("payment-refund-status").textContent = friendlyError(error); }
 }
 
@@ -206,7 +245,7 @@ async function saveRefund(event) {
   event.preventDefault();
   const original = selectedReceipt;
   const reason = el("payment-refund-reason").value.trim();
-  if (!original || original.type !== "payment" || refundSaving || el("payment-refund-save").disabled) return;
+  if (!original || isReversal(original) || refundSaving || el("payment-refund-save").disabled) return;
   refundSaving = true;
   el("payment-refund-save").disabled = true;
   try {
@@ -216,10 +255,10 @@ async function saveRefund(event) {
     await runTransaction(db, async transaction => {
       const payment = await transaction.get(entryRef(original.id));
       const previousRefund = await transaction.get(ref);
-      if (!payment.exists() || payment.data().type !== "payment") throw new Error("Original payment not found.");
+      if (!payment.exists() || !["payment", "rent"].includes(payment.data().type)) throw new Error("Original payment or court rent not found.");
       if (previousRefund.exists()) throw new Error("This receipt has already been refunded.");
       const source = payment.data();
-      transaction.set(ref, { ...source, type: "refund", relatedReceiptId: original.id, receivedCents: 0,
+      transaction.set(ref, { ...source, type: source.type === "rent" ? "rent_refund" : "refund", relatedReceiptId: original.id, receivedCents: source.type === "rent" ? source.feeCents : 0,
         changeCents: 0, note: reason, staffId: context.user.uid,
         staffName: (context.user.email || context.user.displayName || "Owner").slice(0, 120), createdAt: serverTimestamp() });
     });
@@ -286,6 +325,7 @@ export function initPaymentAudit(options) {
   el("payment-player").addEventListener("focus", () => refreshPlayers());
   for (const id of ["payment-fee", "payment-received", "payment-method"]) el(id).addEventListener("input", updateChange);
   el("payment-form").addEventListener("submit", savePayment);
+  el("court-rent-form").addEventListener("submit", saveCourtRent);
   el("payment-refund-form").addEventListener("submit", saveRefund);
   el("audit-rows").addEventListener("click", event => {
     const button = event.target.closest("[data-audit-receipt]");

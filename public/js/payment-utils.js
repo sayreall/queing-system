@@ -38,23 +38,35 @@ export function entryDate(entry) {
 }
 
 export function receiptNumber(entry) {
-  return `${entry.type === "refund" ? "REF" : "PAY"}-${auditDate(entryDate(entry)).replaceAll("-", "")}-${entry.id}`;
+  const prefix = { payment: "PAY", refund: "REF", rent: "RENT", rent_refund: "RENT-REF" }[entry.type];
+  return `${prefix}-${auditDate(entryDate(entry)).replaceAll("-", "")}-${entry.id}`;
 }
 
+export const isReversal = entry => ["refund", "rent_refund"].includes(entry.type);
+export const isCourtRent = entry => ["rent", "rent_refund"].includes(entry.type);
+export const entryLabel = entry => ({ payment: "Payment", refund: "Refund", rent: "Court rent", rent_refund: "Court rent refund" })[entry.type];
+export const entryImpact = entry => (["refund", "rent"].includes(entry.type) ? -1 : 1) * entry.feeCents;
+
 export function summarize(entries) {
-  const summary = { players: 0, collected: 0, cash: 0, gcash: 0, received: 0, change: 0, refunds: 0 };
+  const summary = { players: 0, collected: 0, cash: 0, gcash: 0, received: 0, change: 0, refunds: 0, rent: 0, rentPaid: 0, rentRefunds: 0, balance: 0 };
   const paidPlayers = new Set();
   for (const entry of entries) {
-    const sign = entry.type === "refund" ? -1 : 1;
-    summary.collected += sign * entry.feeCents;
-    summary[entry.method === "Cash" ? "cash" : "gcash"] += sign * entry.feeCents;
+    const impact = entryImpact(entry);
+    if (!isCourtRent(entry)) summary.collected += impact;
+    else {
+      summary.rent -= impact;
+      if (entry.type === "rent") summary.rentPaid += entry.feeCents;
+      else summary.rentRefunds += entry.feeCents;
+    }
+    summary.balance += impact;
+    summary[entry.method === "Cash" ? "cash" : "gcash"] += impact;
     if (entry.type === "payment") {
       paidPlayers.add(entry.playerId);
       if (entry.method === "Cash") {
         summary.received += entry.receivedCents;
         summary.change += entry.changeCents;
       }
-    } else summary.refunds += entry.feeCents;
+    } else if (entry.type === "refund") summary.refunds += entry.feeCents;
   }
   summary.players = paidPlayers.size;
   return summary;
@@ -65,18 +77,19 @@ export function escapeHtml(value) {
 }
 
 export function csvCell(value) {
-  let text = String(value ?? "");
-  if (/^[\s]*[=+\-@]/.test(text)) text = "'" + text;
+  const numeric = typeof value === "number" && Number.isFinite(value);
+  let text = numeric ? value.toFixed(2) : String(value ?? "");
+  if (!numeric && /^[\s]*[=+\-@]/.test(text)) text = "'" + text;
   return '"' + text.replaceAll('"', '""') + '"';
 }
 
 export function auditCsv(entries) {
-  const rows = [["Receipt", "Type", "Player", "Paid at (Philippine time)", "Method", "Fee PHP", "Received PHP", "Change PHP", "Collected PHP", "Staff", "Note / Reason", "Original receipt ID"]];
+  const rows = [["Receipt", "Type", "Player / Payee", "Recorded at (Philippine time)", "Method", "Fee / Amount PHP", "Received PHP", "Change PHP", "Money In / Out PHP", "Staff", "Note / Reason", "Original receipt ID"]];
   for (const entry of entries) rows.push([
     receiptNumber(entry), entry.type, entry.playerName,
     entryDate(entry).toLocaleString("en-PH", { timeZone: AUDIT_TIME_ZONE }), entry.method,
     (entry.feeCents / 100).toFixed(2), (entry.receivedCents / 100).toFixed(2), (entry.changeCents / 100).toFixed(2),
-    ((entry.type === "refund" ? -1 : 1) * entry.feeCents / 100).toFixed(2), entry.staffName, entry.note, entry.relatedReceiptId
+    entryImpact(entry) / 100, entry.staffName, entry.note, entry.relatedReceiptId
   ]);
   return "\uFEFF" + rows.map(row => row.map(csvCell).join(",")).join("\r\n");
 }

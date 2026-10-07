@@ -115,10 +115,40 @@ try {
   await page.waitForFunction(() => !document.getElementById('payment-receipt-modal').classList.contains('hidden'));
   await page.click('#close-payment-receipt');
   await page.waitForFunction(() => document.querySelectorAll('#audit-rows tr').length === 4);
-  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Net collected.*250\.00/);
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Player payments net.*250\.00/);
+  // Court rent is an expense, with an immutable receipt and no player required.
+  await page.type('#court-rent-payee', 'Community Court');
+  await page.type('#court-rent-amount', '50');
+  await page.click('#court-rent-save');
+  await page.waitForFunction(() => document.getElementById('payment-receipt-title').textContent === 'Court rent receipt');
+  assert.match(await page.$eval('#payment-receipt-content', el => el.textContent), /Court rent paid.*50\.00/);
+  await page.click('#close-payment-receipt');
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Balance after court rent.*200\.00/);
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Player payments net.*250\.00/);
+  await page.click('[data-audit-receipt="test4"]');
+  await page.waitForFunction(() => !document.getElementById('payment-refund-save').disabled);
+  await page.type('#payment-refund-reason', 'Venue returned the rent');
+  await page.click('#payment-refund-save');
+  await page.waitForFunction(() => document.getElementById('payment-receipt-title').textContent === 'Court rent refund receipt');
+  await page.click('#close-payment-receipt');
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Balance after court rent.*250\.00/);
+  // A rent receipt cannot be refunded twice.
+  await page.click('[data-audit-receipt="test4"]');
+  await page.waitForFunction(() => document.getElementById('payment-refund-status').textContent.includes('Fully refunded'));
+  assert.equal(await page.$eval('#payment-refund-save', button => button.disabled), true);
+  await page.click('#close-payment-receipt');
+  await page.type('#court-rent-payee', 'Community Court');
+  await page.type('#court-rent-amount', '75');
+  await page.select('#court-rent-method', 'GCash');
+  await page.click('#court-rent-save');
+  await page.waitForFunction(() => document.getElementById('payment-receipt-title').textContent === 'Court rent receipt');
+  await page.click('#close-payment-receipt');
+  await page.waitForFunction(() => document.querySelectorAll('#audit-rows tr').length === 7);
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /Balance after court rent.*175\.00/);
+  assert.match(await page.$eval('#audit-summary', el => el.textContent), /GCash balance.*75\.00/);
   // Player removal leaves the money ledger intact.
   await page.evaluate(() => window.paymentTest.players.splice(0));
-  assert.equal(await page.$$eval('#audit-rows tr', rows => rows.length), 4);
+  assert.equal(await page.$$eval('#audit-rows tr', rows => rows.length), 7);
   await mkdir('artifacts', { recursive: true });
   // Exercise the real print buttons while replacing only Chrome's print dialog.
   await page.evaluate(() => {
@@ -156,7 +186,9 @@ try {
     assert.match(await printPage.$eval('.club-logo', image => image.src), new RegExp(logo.replace('.', '\\.')));
     assert.equal(await printPage.$eval('.club-name', element => element.textContent), name.replace(/\s+(Queuing System|Queuing)$/i, ''));
     assert.equal(await printPage.$$eval('table button', buttons => buttons.length), 0);
-    assert.match(await printPage.$eval('.highlight', element => element.textContent), /250\.00/);
+    assert.match(await printPage.$eval('.highlight', element => element.textContent), /175\.00/);
+    assert.match(await printPage.$eval('.rent-summary', element => element.textContent), /Net court rent expense.*75\.00/);
+    assert.match(await printPage.$eval('.expense-table', element => element.textContent), /Community Court/);
     await printPage.pdf({ path: 'artifacts/payment-audit-' + club + '.pdf', preferCSSPageSize: true, printBackground: true, displayHeaderFooter: false });
     await printPage.screenshot({ path: 'artifacts/payment-audit-print-' + club + '.png', fullPage: true });
   }
@@ -172,6 +204,18 @@ try {
   assert.match(await printPage.$eval('.receipt-total', element => element.textContent), /150\.00/);
   await printPage.pdf({ path: 'artifacts/payment-receipt-balian.pdf', preferCSSPageSize: true, printBackground: true, displayHeaderFooter: false });
   await printPage.screenshot({ path: 'artifacts/payment-receipt-print-balian.png', fullPage: true });
+  await page.bringToFront();
+  await page.click('#close-payment-receipt');
+  await page.click('[data-audit-receipt="test5"]');
+  const priorRentReceipts = await page.evaluate(() => window.printedDocuments.length);
+  await page.click('#payment-receipt-print');
+  await page.waitForFunction(previous => window.printedDocuments.length > previous, {}, priorRentReceipts);
+  const rentHtml = await page.evaluate(() => window.printedDocuments.at(-1));
+  await printPage.bringToFront();
+  await printPage.setContent(rentHtml, { waitUntil: 'load' });
+  assert.match(await printPage.$eval('h1', element => element.textContent), /Court Rent Receipt/);
+  assert.match(await printPage.$eval('.receipt-total', element => element.textContent), /Court rent paid.*75\.00/);
+  await printPage.pdf({ path: 'artifacts/court-rent-receipt-balian.pdf', preferCSSPageSize: true, printBackground: true, displayHeaderFooter: false });
   await page.bringToFront();
   await page.click('#close-payment-receipt');
   // Long reports repeat table headers and paginate without splitting player rows.
@@ -193,7 +237,7 @@ try {
   await page.$eval('#audit-date', input => { input.value = '2026-01-01'; input.dispatchEvent(new Event('change')); });
   await page.waitForFunction(() => document.getElementById('audit-rows').textContent.includes('No payments'));
   assert.deepEqual(errors, []);
-  console.log('PASS: payment workflows, daily filter, mobile layout, club logos for Deuce/Longos/Balian, receipt printing, and multiple-page PDFs.');
+  console.log('PASS: payment and court rent workflows, rent refunds, method balances, daily filter, mobile layout, club logos, receipts, and multiple-page PDFs.');
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

@@ -1,0 +1,18 @@
+{
+  "score": 4,
+  "summary": "Source review of the private payment and court-rent ledger: owner isolation, immutable entries, type and amount validation, and deterministic full-refund IDs are enforced. Firebase compilation passed. Browser tests use a Firebase stub; real SDK security-rule execution was not tested in an emulator. Existing public queue rules are outside this review.",
+  "findings": [
+    {
+      "check": "Validation coverage",
+      "severity": "minor",
+      "issue": "Transaction and security-rule behavior has compilation and source review coverage, but no emulator execution coverage.",
+      "recommendation": "Add authenticated emulator tests for legitimate creates and refunds, unauthorized access, schema changes, timestamp manipulation, and repeated refunds before a broader rollout."
+    },
+    {
+      "check": "Business logic vs. rules",
+      "severity": "minor",
+      "issue": "An authenticated owner can submit player payment entries outside the UI without acquiring the daily payment lock. The lock coordinates legitimate app clients rather than policing trusted cashiers.",
+      "recommendation": "If owners must also be prevented from bypassing daily payment limits, enforce the receipt-and-lock relationship in security rules or a trusted backend."
+    }
+  ]
+}

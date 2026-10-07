@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { auditDate, dayBounds, paymentAmounts, summarize, auditCsv, escapeHtml } from '../public/js/payment-utils.js';
+import { auditDate, dayBounds, paymentAmounts, summarize, auditCsv, escapeHtml, entryImpact, receiptNumber } from '../public/js/payment-utils.js';
 
 test('audit dates follow UTC+8 across midnight and select only that day', () => {
   assert.equal(auditDate(new Date('2026-10-06T15:59:59Z')), '2026-10-06');
@@ -24,10 +24,35 @@ const makeEntry = (overrides = {}) => ({ id: 'abc', type: 'payment', playerId: '
 
 test('audit reconciles cash received minus change minus refunds; counts distinct players', () => {
   const entries = [makeEntry(), makeEntry({ id: 'def', playerId: 'maria', method: 'GCash', receivedCents: 10000, changeCents: 0 }), makeEntry({ id: 'refund_abc', type: 'refund', receivedCents: 0, changeCents: 0, relatedReceiptId: 'abc' })];
-  assert.deepEqual(summarize(entries), { players: 2, collected: 10000, cash: 0, gcash: 10000, received: 50000, change: 40000, refunds: 10000 });
+  assert.deepEqual(summarize(entries), { players: 2, collected: 10000, cash: 0, gcash: 10000, received: 50000, change: 40000, refunds: 10000, rent: 0, rentPaid: 0, rentRefunds: 0, balance: 10000 });
   // A later-day refund belongs to its own day and can yield a negative net.
   assert.equal(summarize([entries[2]]).collected, -10000);
   assert.equal(summarize([makeEntry(), makeEntry()]).players, 1);
+});
+
+test('court rent deducts from the correct method without changing player collections or counts', () => {
+  const rent = makeEntry({ id: 'rent1', type: 'rent', playerId: '', playerName: 'Court A', feeCents: 5000, receivedCents: 0, changeCents: 0 });
+  const otherRent = { ...rent, id: 'rent2', method: 'GCash', feeCents: 3000 };
+  const returnedRent = { ...otherRent, id: 'refund_rent2', type: 'rent_refund', receivedCents: 3000, relatedReceiptId: 'rent2', note: 'Venue returned rent' };
+  const totals = summarize([makeEntry(), makeEntry({ playerId: 'maria', method: 'GCash', receivedCents: 10000, changeCents: 0 }), rent, otherRent, returnedRent]);
+  assert.deepEqual(totals, { players: 2, collected: 20000, cash: 5000, gcash: 10000, received: 50000, change: 40000, refunds: 0, rent: 5000, rentPaid: 8000, rentRefunds: 3000, balance: 15000 });
+  assert.equal(totals.cash + totals.gcash, totals.balance);
+  assert.equal(totals.collected - totals.rent, totals.balance);
+  assert.equal(entryImpact(rent), -5000);
+  assert.equal(entryImpact(returnedRent), 3000);
+  assert.match(receiptNumber(rent), /^RENT-/);
+  assert.match(receiptNumber(returnedRent), /^RENT-REF-/);
+  assert.ok(auditCsv([rent]).includes('"-50.00"'));
+});
+
+test('rent payments and returns belong to the day money moves and allow negative balances', () => {
+  const rent = makeEntry({ type: 'rent', playerId: '', feeCents: 100000, receivedCents: 0, changeCents: 0 });
+  assert.equal(summarize([rent]).balance, -100000);
+  assert.equal(summarize([rent]).players, 0);
+  assert.equal(summarize([rent]).collected, 0);
+  const returnedRent = { ...rent, type: 'rent_refund', receivedCents: 100000 };
+  assert.equal(summarize([returnedRent]).balance, 100000);
+  assert.equal(summarize([returnedRent]).rent, -100000);
 });
 
 test('CSV preserves quote/newline data and neutralizes spreadsheet formulas', () => {

@@ -1,4 +1,4 @@
-import { AUDIT_TIME_ZONE, dayBounds, entryDate, receiptNumber, summarize, money, escapeHtml as esc } from "./payment-utils.js";
+import { AUDIT_TIME_ZONE, dayBounds, entryDate, receiptNumber, summarize, money, isCourtRent, isReversal, entryImpact, escapeHtml as esc } from "./payment-utils.js";
 
 // Read the same branding that the authenticated dashboard currently displays.
 // Do not use a previous account's locally saved club preference.
@@ -42,6 +42,11 @@ const PRINT_STYLES = `
   .reconciliation div:last-child { border:0; }
   .reconciliation span { display:block; font-size:8px; color:#65717c; }
   .reconciliation strong { display:block; font-size:12px; margin-top:4px; }
+  .rent-summary { grid-template-columns:repeat(3,1fr); margin-bottom:12px; }
+  .expense-table th:first-child { width:58%; }
+  .expense-table th:nth-child(2) { width:14%; }
+  .expense-table th:nth-child(3) { width:28%; }
+  .expense-heading { margin-top:24px; }
   .section-heading { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px; }
   .section-heading h2 { margin:0; font-size:13px; }
   .section-heading span { font-size:9px; color:#65717c; }
@@ -99,8 +104,10 @@ function pageShell({ brand, title, day, content, preparedBy = "", generatedAt = 
 export function buildAuditPrint({ entries, day, brand, preparedBy, generatedAt }) {
   const totals = summarize(entries);
   const incoming = entries.filter(entry => entry.type === "payment");
+  const playerEntries = entries.filter(entry => !isCourtRent(entry));
+  const rentEntries = entries.filter(isCourtRent);
   const received = incoming.reduce((sum, entry) => sum + entry.receivedCents, 0);
-  const rows = entries.map(entry => {
+  const rows = playerEntries.map(entry => {
     const refund = entry.type === "refund";
     return `<tr class="${refund ? "refund-row" : ""}"><td><strong class="player-name">${esc(entry.playerName)}${refund ? '<span class="refund-tag">REFUND</span>' : ""}</strong>
       <span class="entry-meta">${esc(timeLabel(entry))} · ${esc(entry.staffName)}</span><span class="entry-meta entry-id">${esc(receiptNumber(entry))}</span>
@@ -108,29 +115,40 @@ export function buildAuditPrint({ entries, day, brand, preparedBy, generatedAt }
       ${refund ? `<span class="entry-meta entry-id">Original: ${esc(entry.relatedReceiptId)}</span>` : ""}</td>
       <td>${esc(entry.method)}</td><td class="amount">${refund ? "—" : esc(money(entry.feeCents))}</td><td class="amount">${refund ? "—" : esc(money(entry.receivedCents))}</td><td class="amount">${refund ? "—" : esc(money(entry.changeCents))}</td><td class="amount collected"><strong>${esc(money((refund ? -1 : 1) * entry.feeCents))}</strong></td></tr>`;
   }).join("");
-  const detailTotals = [["Cash net", totals.cash], ["GCash net", totals.gcash], ["Cash received", totals.received], ["Change returned", totals.change], ["Refunds returned", totals.refunds]];
+  const detailTotals = [["Cash balance", totals.cash], ["GCash balance", totals.gcash], ["Cash received from players", totals.received], ["Change returned", totals.change], ["Player refunds returned", totals.refunds]];
+  const rentRows = rentEntries.map(entry => `<tr class="${entry.type === "rent" ? "refund-row" : ""}"><td><strong class="player-name">${esc(entry.playerName)}<span class="refund-tag">${entry.type === "rent" ? "COURT RENT" : "RENT REFUND"}</span></strong>
+    <span class="entry-meta">${esc(timeLabel(entry))} · ${esc(entry.staffName)}</span><span class="entry-meta entry-id">${esc(receiptNumber(entry))}</span>
+    ${entry.note ? `<span class="entry-meta">${esc(isReversal(entry) ? "Reason" : "Note")}: ${esc(entry.note)}</span>` : ""}
+    ${entry.relatedReceiptId ? `<span class="entry-meta entry-id">Original: ${esc(entry.relatedReceiptId)}</span>` : ""}</td><td>${esc(entry.method)}</td><td class="amount collected"><strong>${esc(money(entryImpact(entry)))}</strong></td></tr>`).join("");
   const content = `<section class="report-heading"><div><h1>Daily Payment Audit</h1><p class="muted">Payment activity for ${esc(dateLabel(dayBounds(day)[0]))}</p></div><span class="status-tag">DAILY COLLECTION REPORT</span></section>
-    <section class="summary"><div class="summary-card"><span>Players paid</span><strong>${totals.players}</strong></div><div class="summary-card"><span>Total payments before refunds</span><strong>${esc(money(totals.collected + totals.refunds))}</strong></div><div class="summary-card highlight"><span>Net collected</span><strong>${esc(money(totals.collected))}</strong></div></section>
+    <section class="summary"><div class="summary-card"><span>Players paid</span><strong>${totals.players}</strong></div><div class="summary-card"><span>Player payments after refunds</span><strong>${esc(money(totals.collected))}</strong></div><div class="summary-card highlight"><span>Balance after court rent</span><strong>${esc(money(totals.balance))}</strong></div></section>
+    <section class="reconciliation rent-summary"><div><span>Court rent paid</span><strong>${esc(money(totals.rentPaid))}</strong></div><div><span>Court rent refunds received</span><strong>${esc(money(totals.rentRefunds))}</strong></div><div><span>Net court rent expense</span><strong>${esc(money(totals.rent))}</strong></div></section>
     <section class="reconciliation">${detailTotals.map(([label, value]) => `<div><span>${label}</span><strong>${esc(money(value))}</strong></div>`).join("")}</section>
-    <div class="section-heading"><h2>Player payments &amp; receipts</h2><span>${incoming.length} payment${incoming.length === 1 ? "" : "s"} · ${entries.length - incoming.length} refund${entries.length - incoming.length === 1 ? "" : "s"} · All amounts in PHP</span></div>
+    <div class="section-heading"><h2>Player payments &amp; receipts</h2><span>${incoming.length} payment${incoming.length === 1 ? "" : "s"} · ${playerEntries.length - incoming.length} refund${playerEntries.length - incoming.length === 1 ? "" : "s"} · All amounts in PHP</span></div>
     <table><thead><tr><th>Player / Receipt</th><th>Method</th><th class="amount">Fee</th><th class="amount">Received</th><th class="amount">Change</th><th class="amount">Collected</th></tr></thead><tbody>${rows || '<tr><td class="empty-row" colspan="6">No payments recorded for this day.</td></tr>'}
-    ${entries.length ? `<tr class="totals-row"><td colspan="2">DAILY TOTAL</td><td class="amount">${esc(money(totals.collected + totals.refunds))}</td><td class="amount">${esc(money(received))}</td><td class="amount">${esc(money(totals.change))}</td><td class="amount">${esc(money(totals.collected))}</td></tr>` : ""}</tbody></table>
-    <p class="report-note">Net collected = total payments − refunds returned. Refunds appear on the day money is returned; original receipts are preserved. Players paid counts distinct players with a payment that day.</p>`;
+    ${playerEntries.length ? `<tr class="totals-row"><td colspan="2">PLAYER PAYMENT TOTAL</td><td class="amount">${esc(money(totals.collected + totals.refunds))}</td><td class="amount">${esc(money(received))}</td><td class="amount">${esc(money(totals.change))}</td><td class="amount">${esc(money(totals.collected))}</td></tr>` : ""}</tbody></table>
+    <div class="section-heading expense-heading"><h2>Court rent &amp; expenses</h2><span>${rentEntries.length} entries · Paid out (−) / Returned (+)</span></div>
+    <table class="expense-table"><thead><tr><th>Court / Paid to</th><th>Method</th><th class="amount">Money In / Out</th></tr></thead><tbody>${rentRows || '<tr><td class="empty-row" colspan="3">No court rent recorded for this day.</td></tr>'}
+    ${rentEntries.length ? `<tr class="totals-row"><td colspan="2">NET COURT RENT</td><td class="amount">${esc(money(-totals.rent))}</td></tr>` : ""}</tbody></table>
+    <div class="receipt-total"><span>Remaining balance after court rent</span><strong>${esc(money(totals.balance))}</strong></div>
+    <p class="report-note">Balance = player payments − player refunds − court rent paid + court rent refunds received. Entries appear on the day money moves; original receipts are preserved. Players paid counts distinct players with a payment that day.</p>`;
   return pageShell({ brand, title: "Daily Payment Audit", day, content, preparedBy, generatedAt });
 }
 
 export function buildReceiptPrint({ entry, brand, generatedAt }) {
-  const refund = entry.type === "refund";
+  const refund = isReversal(entry);
+  const rent = isCourtRent(entry);
   const day = new Date(entryDate(entry).getTime() + 8 * 3600000).toISOString().slice(0, 10);
-  const fields = [["Player", entry.playerName], ["Receipt number", receiptNumber(entry)], ["Recorded at", `${dateLabel(entryDate(entry))} · ${timeLabel(entry)}`], ["Payment method", entry.method], ["Fee", money(entry.feeCents)]];
-  if (!refund) fields.push(["Amount received", money(entry.receivedCents)], ["Change returned", money(entry.changeCents)]);
+  const fields = [[rent ? "Court / Paid to" : "Player", entry.playerName], ["Receipt number", receiptNumber(entry)], ["Recorded at", `${dateLabel(entryDate(entry))} · ${timeLabel(entry)}`], ["Payment method", entry.method]];
+  if (!rent) fields.push(["Fee", money(entry.feeCents)]);
+  if (entry.type === "payment") fields.push(["Amount received", money(entry.receivedCents)], ["Change returned", money(entry.changeCents)]);
   fields.push(["Recorded by", entry.staffName]);
   if (entry.note) fields.push([refund ? "Refund reason" : "Note / Reference", entry.note]);
   if (entry.relatedReceiptId) fields.push(["Original receipt ID", entry.relatedReceiptId]);
-  const title = refund ? "Refund Receipt" : "Payment Receipt";
-  const content = `<section class="report-heading"><div><h1>${title}</h1><p class="muted">${refund ? "Full refund acknowledgement" : "Player payment acknowledgement"}</p></div><span class="status-tag">${refund ? "REFUND RECORDED" : "PAYMENT RECORDED"}</span></section>
+  const title = { payment: "Payment Receipt", refund: "Refund Receipt", rent: "Court Rent Receipt", rent_refund: "Court Rent Refund Receipt" }[entry.type];
+  const content = `<section class="report-heading"><div><h1>${title}</h1><p class="muted">${rent ? "Court rental expense record" : refund ? "Full refund acknowledgement" : "Player payment acknowledgement"}</p></div><span class="status-tag">${rent ? refund ? "RENT REFUND RECEIVED" : "EXPENSE RECORDED" : refund ? "REFUND RECORDED" : "PAYMENT RECORDED"}</span></section>
     <dl class="receipt-details">${fields.map(([label, value]) => `<div><dt>${label}</dt><dd>${esc(value)}</dd></div>`).join("")}</dl>
-    <div class="receipt-total"><span>${refund ? "Amount refunded" : "Total collected"}</span><strong>${esc(money(entry.feeCents))}</strong></div>
-    <p class="report-note">${refund ? "This refund is recorded separately. The original payment receipt remains in the audit history." : "Thank you. Keep this receipt for your club payment records."}</p>`;
+    <div class="receipt-total"><span>${rent ? refund ? "Rent refund received" : "Court rent paid" : refund ? "Amount refunded" : "Total collected"}</span><strong>${esc(money(entry.feeCents))}</strong></div>
+    <p class="report-note">${rent ? refund ? "This returned court rent increases the balance on the day it is received. The original expense receipt is preserved." : "This court rental expense is deducted from the daily balance. Keep the venue's payment receipt as supporting documentation." : refund ? "This refund is recorded separately. The original payment receipt remains in the audit history." : "Thank you. Keep this receipt for your club payment records."}</p>`;
   return pageShell({ brand, title, day, content, preparedBy: entry.staffName, generatedAt });
 }

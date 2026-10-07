@@ -1500,6 +1500,7 @@ body[data-dashboard-theme="custom"] #compact-player-list .compact-player__action
 .audit-stat strong { display:block; margin-top:.35rem; font-size:1.3rem; overflow-wrap:anywhere; }
 .audit-stat:nth-child(2) { border-color:rgba(52,211,153,.5); color:#6ee7b7; }
 .audit-layout { display:grid; grid-template-columns:280px minmax(0,1fr); gap:1.25rem; }
+.audit-entry-forms { display:flex; flex-direction:column; gap:1rem; }
 .audit-payment-form { display:flex; flex-direction:column; gap:.75rem; padding:1rem; border:1px solid var(--border); border-radius:1rem; background:rgba(15,23,42,.25); align-self:start; }
 .audit-payment-form label { font-size:.8rem; display:block; }
 .audit-payment-form label .input-field { margin-top:.3rem; }

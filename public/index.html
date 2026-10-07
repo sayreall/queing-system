@@ -1341,6 +1341,7 @@
       <p id="audit-status" class="mt-3 text-sm text-slate-400" role="status" aria-live="polite"></p>
       <div id="audit-summary" class="audit-summary mt-4"></div>
       <div class="audit-layout mt-5">
+        <div class="audit-entry-forms">
         <form id="payment-form" class="audit-payment-form">
           <h3 class="text-xl font-display font-semibold">Record a payment</h3>
           <p class="text-xs text-slate-400 mb-4">Payments are recorded for today, even when viewing an older audit.</p>
@@ -1354,12 +1355,23 @@
           <p id="payment-error" class="text-sm text-red-300" role="alert"></p>
           <button id="payment-save" type="submit" class="btn-primary w-full">Save payment &amp; generate receipt</button>
         </form>
+        <form id="court-rent-form" class="audit-payment-form">
+          <h3 class="text-xl font-display font-semibold">Record court rent</h3>
+          <p class="text-xs text-slate-400">Record money paid to rent the court. This is deducted from today's balance.</p>
+          <label>Court / Paid to <input id="court-rent-payee" class="input-field w-full" maxlength="200" required placeholder="Court or venue name"></label>
+          <label>Rent paid (PHP) <input id="court-rent-amount" type="number" min="0.01" max="1000000" step="0.01" class="input-field w-full" required placeholder="500.00"></label>
+          <label>Paid through <select id="court-rent-method" class="input-field w-full"><option value="Cash">Cash</option><option value="GCash">GCash</option></select></label>
+          <label>Reference / Note <input id="court-rent-note" class="input-field w-full" maxlength="200" placeholder="Optional hours or rental reference"></label>
+          <p id="court-rent-error" class="text-sm text-red-300" role="alert"></p>
+          <button id="court-rent-save" type="submit" class="btn-primary w-full">Save court rent &amp; generate receipt</button>
+        </form>
+        </div>
         <div class="min-w-0">
-          <h3 class="text-xl font-display font-semibold mb-3">Payment receipts</h3>
+          <h3 class="text-xl font-display font-semibold mb-3">Payments &amp; court rent</h3>
           <div class="overflow-x-auto rounded-xl border border-slate-700/60">
-            <table class="audit-table w-full text-sm"><thead><tr><th>Player / Receipt</th><th>Method</th><th>Fee</th><th>Received</th><th>Change</th><th>Collected</th><th></th></tr></thead><tbody id="audit-rows"></tbody></table>
+            <table class="audit-table w-full text-sm"><thead><tr><th>Player / Expense</th><th>Method</th><th>Fee / Amount</th><th>Received</th><th>Change</th><th>In / Out</th><th></th></tr></thead><tbody id="audit-rows"></tbody></table>
           </div>
-          <p class="text-xs text-slate-400 mt-3">Refunds are separate entries on the day money is returned. To correct a payment, refund it with a reason, then record the correct payment.</p>
+          <p class="text-xs text-slate-400 mt-3">Balance = player payments minus player refunds and court rent, plus rent refunds. Each entry belongs to the day money moves. To correct an entry, open its receipt and record a refund with a reason.</p>
         </div>
       </div>
     </section>
@@ -1372,7 +1384,7 @@
       <div id="payment-receipt-content"></div>
       <button id="payment-receipt-print" type="button" class="btn-primary w-full mt-4">Print receipt / Save PDF</button>
       <form id="payment-refund-form" class="mt-4 space-y-3">
-        <label class="block text-sm">Reason for full refund <input id="payment-refund-reason" class="input-field w-full mt-1" maxlength="200" required placeholder="Explain the refund or correction"></label>
+        <label class="block text-sm"><span id="payment-refund-reason-label">Reason for full refund</span> <input id="payment-refund-reason" class="input-field w-full mt-1" maxlength="200" required placeholder="Explain the refund or correction"></label>
         <button id="payment-refund-save" type="submit" class="btn-secondary w-full">Record full refund</button>
         <p id="payment-refund-status" class="text-sm text-slate-400" role="status"></p>
       </form>
